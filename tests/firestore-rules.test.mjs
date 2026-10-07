@@ -157,11 +157,27 @@ await check("owner can't hand it to someone else", assertFails(updateDoc(doc(as(
 console.log("server-only collections/");
 await check("hiding the plan badge goes through the server only", assertFails(setDoc(doc(as(A), "subscriptions", A), { planBadgeHidden: true }, { merge: true })));
 await check("API keys can't be made from the browser", assertFails(setDoc(doc(as(A), "ai_api_key_index", "f".repeat(64)), { email: A, id: "key_0000000000000000" })));
-for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "arcade_scores/x", "arcade_achievements/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "site_config/features", "ai_connections/" + A, "ai_api_keys/" + A, "ai_api_key_index/0123abcd", "voice_clips/x", "group_bans/x", "group_mutes/x", "group_warnings/x", "group_reports/x", "group_automod/x", "automod_events/x", "message_stars/x", "message_files/x", "message_file_usage/" + A, "ai_usage_daily/2026-10-06", "site_config/announcement_slots"]) {
+for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "arcade_scores/x", "arcade_achievements/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "site_config/features", "ai_connections/" + A, "ai_api_keys/" + A, "ai_api_key_index/0123abcd", "voice_clips/x", "group_bans/x", "group_mutes/x", "group_warnings/x", "group_reports/x", "group_automod/x", "automod_events/x", "message_stars/x", "message_files/x", "message_file_usage/" + A, "ai_usage_daily/2026-10-06", "site_config/announcement_slots", "arcade_ratings/x", "media_reports/x", "media_comments/x", "site_config/backfills"]) {
     const [collectionName, id] = path.split("/");
     await check(`${collectionName} is closed`, assertFails(getDoc(doc(as(A), collectionName, id))));
 }
 await check("a file's parts are closed", assertFails(getDoc(doc(as(A), "message_files", "x", "parts", "0"))));
+
+console.log("Arcade ratings and Media reports/");
+// As /api/arcade/{id}/rating writes them: the server changes a rating and the game's totals in one commit.
+await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "arcade_ratings", "game_rated01_0123456789abcdef0123456789abcdef"), { gameId: "game_rated01", rater: "0123456789abcdef0123456789abcdef", stars: 4, updatedAt: new Date().toISOString() });
+});
+await check("a rating can't be read from the browser", assertFails(getDoc(doc(as(A), "arcade_ratings", "game_rated01_0123456789abcdef0123456789abcdef"))));
+await check("ratings can't be listed", assertFails(getDocs(collection(as(A), "arcade_ratings"))));
+await check("a rating can't be created from the browser", assertFails(setDoc(doc(as(A), "arcade_ratings", "game_rated01_fedcba9876543210fedcba9876543210"), { gameId: "game_rated01", rater: "fedcba9876543210fedcba9876543210", stars: 5 })));
+await check("a rating can't be changed from the browser", assertFails(updateDoc(doc(as(A), "arcade_ratings", "game_rated01_0123456789abcdef0123456789abcdef"), { stars: 1 })));
+await check("a rating can't be deleted from the browser", assertFails(deleteDoc(doc(as(A), "arcade_ratings", "game_rated01_0123456789abcdef0123456789abcdef"))));
+await check("signed-out visitors can't read ratings", assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), "arcade_ratings", "game_rated01_0123456789abcdef0123456789abcdef"))));
+await check("a game's rating totals can't be set from the browser", assertFails(setDoc(doc(as(A), "arcade_games", "game_rated01"), { ratingCount: 99, ratingSum: 495, ratingScore: 5 }, { merge: true })));
+await check("a report (Media or Arcade) can't be filed from the browser", assertFails(setDoc(doc(as(A), "media_reports", "arcade_game_rated01_x"), { kind: "arcade", gameId: "game_rated01", category: "spam", reason: "x", status: "open" })));
+await check("reports can't be read from the browser", assertFails(getDocs(collection(as(A), "media_reports"))));
+await check("comments can't be written from the browser", assertFails(setDoc(doc(as(A), "media_comments", "c1"), { postId: "p1", text: "hi", authorEmail: A })));
 
 await env.cleanup();
 console.log(`\n${passed} passed, ${failed} failed`);

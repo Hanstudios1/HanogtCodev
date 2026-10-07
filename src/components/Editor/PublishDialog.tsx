@@ -10,9 +10,10 @@ import Modal, { buttonClasses } from "@/components/Editor/Modal";
 import { MediaApiError, fetchMediaViewer, mediaAction, mediaErrorText } from "@/components/Editor/media-api";
 import { GUARD_TITLE, failedPrecheck, precheckKey, runPrecheck, type CheckFinding, type Precheck } from "@/components/Editor/media-precheck";
 import {
-    MEDIA_LICENSES, MEDIA_LIMITS, cleanMediaTags, cleanMediaTitle, fitsMediaFile, locateScanLine, mediaPostPath, normalizeMediaFiles, normalizeMediaLicense,
-    splitMediaTags, type MediaLicense, type MediaPublication,
+    MEDIA_LICENSES, MEDIA_LIMITS, cleanMediaTags, cleanMediaTitle, fitsMediaFile, locateScanLine, mediaLanguages, mediaPostPath, mediaTagSuggestions, normalizeMediaFiles,
+    normalizeMediaLicense, type MediaLicense, type MediaPublication,
 } from "@/components/Editor/media-publish";
+import TagInput from "@/components/Media/TagInput";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type { AdvisorReport, AdvisorSeverity } from "@/lib/security/advisor";
 
@@ -56,9 +57,6 @@ const C = {
     fieldDescription: { TR: "Açıklama", EN: "Description" },
     descriptionPlaceholder: { TR: "Proje ne yapıyor, nasıl çalıştırılır?", EN: "What does the project do, and how is it run?" },
     fieldTags: { TR: "Etiketler", EN: "Tags" },
-    tagsHint: { TR: "(virgülle, en fazla 6)", EN: "(comma separated, up to 6)" },
-    tagsPlaceholder: { TR: "web, araç, eğitim", EN: "web, tool, education" },
-    tagsDropped: { TR: "Yalnızca ilk 6 etiket kullanılır.", EN: "Only the first 6 tags are used." },
     fieldLicense: { TR: "Paylaşım lisansı", EN: "Sharing license" },
     showAuthor: { TR: "Adımı göster", EN: "Show my name" },
     showAuthorHint: { TR: "Kapalıysa yayın “Anonim geliştirici” adıyla görünür. E-posta adresiniz hiçbir durumda yayınlanmaz.", EN: "When off, the post appears as “Anonymous developer”. Your e-mail address is never published." },
@@ -135,7 +133,7 @@ const SEVERITY: Record<AdvisorSeverity, { label: Copy; chip: string }> = {
     low: { label: { TR: "Düşük", EN: "Low" }, chip: "bg-sky-500 text-white" },
     info: { label: { TR: "Bilgi", EN: "Info" }, chip: "bg-zinc-400 text-white" },
 };
-type FormState = { title: string; description: string; tags: string; license: MediaLicense; showAuthor: boolean; contribute: boolean };
+type FormState = { title: string; description: string; tags: string[]; license: MediaLicense; showAuthor: boolean; contribute: boolean };
 
 const dangerGhost = "me-auto inline-flex items-center justify-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300";
 const inputClass = "mt-1.5 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-60 dark:border-white/10 dark:bg-zinc-900 dark:text-white";
@@ -150,7 +148,7 @@ export default function PublishDialog({ open, onClose, signedIn, signInHref, fil
     const [gone, setGone] = useState(false);
     const [remote, setRemote] = useState<{ status: "loading" | "ready" | "error"; consent: boolean }>({ status: "loading", consent: false });
     const [attempt, setAttempt] = useState(0);
-    const [form, setForm] = useState<FormState>(() => ({ title: publication?.title || defaultTitle, description: "", tags: "", license: "all-rights-reserved", showAuthor: true, contribute: false }));
+    const [form, setForm] = useState<FormState>(() => ({ title: publication?.title || defaultTitle, description: "", tags: [], license: "all-rights-reserved", showAuthor: true, contribute: false }));
     const [selected, setSelected] = useState<Set<string>>(() => new Set(files.filter((file) => fitsMediaFile(file.code)).map((file) => file.id)));
     const [includeFiles, setIncludeFiles] = useState(true);
     const [acknowledged, setAcknowledged] = useState(false);
@@ -196,7 +194,8 @@ export default function PublishDialog({ open, onClose, signedIn, signInHref, fil
                     goneRef.current(lookupPostId);
                 } else {
                     const post = data.post;
-                    setForm((current) => ({ ...current, title: post.title, description: post.description, tags: post.tags.join(", "), license: normalizeMediaLicense(post.license), showAuthor: post.showAuthor }));
+                    // Tags from before the tag rules that no longer fit are left out.
+                    setForm((current) => ({ ...current, title: post.title, description: post.description, tags: cleanMediaTags(post.tags), license: normalizeMediaLicense(post.license), showAuthor: post.showAuthor }));
                 }
             }
             setRemote({ status: "ready", consent: data.viewer.securityResearchConsent });
@@ -228,8 +227,9 @@ export default function PublishDialog({ open, onClose, signedIn, signInHref, fil
     const result = check && check.key === checkKey ? check : null;
     const checking = sendsFiles && checkFiles.length > 0 && !result;
     const title = cleanMediaTitle(form.title);
-    const typedTags = splitMediaTags(form.tags);
-    const tags = cleanMediaTags(typedTags);
+    const tags = form.tags;
+    // The languages of the files being published are offered as tags.
+    const tagSuggestions = useMemo(() => mediaTagSuggestions(mediaLanguages(chosenFiles.map((file) => ({ lang: file.lang })))), [chosenFiles]);
     const updateNeedsDetails = mode === "update" && remote.status !== "ready";
     const filesReady = !sendsFiles || (checkFiles.length > 0 && !limitError && Boolean(result) && !result?.blocked.length && (!result?.secrets.length || acknowledged));
     const canSubmit = signedIn && !submitting && Boolean(title) && filesReady && !updateNeedsDetails;
@@ -425,24 +425,16 @@ export default function PublishDialog({ open, onClose, signedIn, signInHref, fil
                         </label>
                         <textarea id={ids.description} value={form.description} maxLength={MEDIA_LIMITS.description} rows={3} disabled={disabledForm} placeholder={tx(C.descriptionPlaceholder)} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className={`${inputClass} resize-y`} />
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
-                            <label htmlFor={ids.tags} className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(C.fieldTags)} <span className="font-normal text-zinc-400">{tx(C.tagsHint)}</span></label>
-                            <input id={ids.tags} value={form.tags} maxLength={300} disabled={disabledForm} placeholder={tx(C.tagsPlaceholder)} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} className={inputClass} />
-                            {tags.length > 0 && (
-                                <ul className="mt-1.5 flex flex-wrap gap-1" aria-label={tx(C.fieldTags)}>
-                                    {tags.map((tag) => <li key={tag} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-white/10 dark:text-zinc-300">#{tag}</li>)}
-                                </ul>
-                            )}
-                            {typedTags.length > MEDIA_LIMITS.tags && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{tx(C.tagsDropped)}</p>}
-                        </div>
-                        <div>
-                            <label htmlFor={ids.license} className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(C.fieldLicense)}</label>
-                            <select id={ids.license} value={form.license} disabled={disabledForm} aria-describedby={`${ids.license}-hint`} onChange={(event) => setForm((current) => ({ ...current, license: normalizeMediaLicense(event.target.value) }))} className={inputClass}>
-                                {MEDIA_LICENSES.map((license) => <option key={license} value={license}>{tx(LICENSES[license].label)}</option>)}
-                            </select>
-                            <p id={`${ids.license}-hint`} className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{tx(licenseHint)}</p>
-                        </div>
+                    <div>
+                        <label htmlFor={ids.tags} className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(C.fieldTags)}</label>
+                        <TagInput id={ids.tags} value={form.tags} disabled={disabledForm} suggestions={tagSuggestions} onChange={(next) => setForm((current) => ({ ...current, tags: next }))} />
+                    </div>
+                    <div>
+                        <label htmlFor={ids.license} className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(C.fieldLicense)}</label>
+                        <select id={ids.license} value={form.license} disabled={disabledForm} aria-describedby={`${ids.license}-hint`} onChange={(event) => setForm((current) => ({ ...current, license: normalizeMediaLicense(event.target.value) }))} className={inputClass}>
+                            {MEDIA_LICENSES.map((license) => <option key={license} value={license}>{tx(LICENSES[license].label)}</option>)}
+                        </select>
+                        <p id={`${ids.license}-hint`} className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{tx(licenseHint)}</p>
                     </div>
                     <label htmlFor={ids.showAuthor} className="flex cursor-pointer items-start gap-3 rounded-2xl bg-zinc-50 p-3 dark:bg-white/5">
                         <input id={ids.showAuthor} type="checkbox" role="switch" checked={form.showAuthor} disabled={disabledForm} onChange={(event) => setForm((current) => ({ ...current, showAuthor: event.target.checked }))} className="mt-0.5 h-4 w-4 accent-indigo-600" />

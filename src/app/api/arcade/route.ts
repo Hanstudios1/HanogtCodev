@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ARCADE_LIST_FIELDS, arcadeSummary, type ArcadeRecord } from "@/lib/server/arcade";
-import { runServerQuery } from "@/lib/server/firebase-rest";
-import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { ArcadeListError, arcadeCreator, ensureArcadeBackfill, listArcadePage, listFeaturedArcadeGames, readArcadeListQuery } from "@/lib/server/arcade-feed";
+import { memoryRateLimit } from "@/lib/server/rate-limit";
 import { getClientKey } from "@/lib/server/request-security";
 
 export const runtime = "nodejs";
@@ -10,28 +9,31 @@ function json(payload: unknown, status = 200, cache = "public, max-age=15, s-max
     return NextResponse.json(payload, { status, headers: { "Cache-Control": cache, "X-Content-Type-Options": "nosniff" } });
 }
 
+/**
+ * The Arcade gallery, 24 games a page (?cursor= from the previous page):
+ * ?sort=new|popular|rated, ?genre=, ?dimension=2d|3d, ?q=, or ?creator=<id>
+ * for a creator page (with the creator's public name and picture on the
+ * first page). The unfiltered first page also carries the featured games.
+ * Nothing in it depends on the viewer, so it can be cached.
+ */
 export async function GET(request: NextRequest) {
     try {
-        const rate = await enforceRateLimit(`arcade:list:${getClientKey(request)}`, 120, 60_000);
-        if (!rate.allowed) return json({ error: "Çok fazla istek. Biraz sonra tekrar deneyin." }, 429, "no-store");
-        const params = request.nextUrl.searchParams;
-        const sort = params.get("sort") === "popular" ? "plays" : params.get("sort") === "liked" ? "likes" : "updatedAt";
-        const dimension = params.get("dimension");
-        const query = (params.get("q") || "").trim().toLocaleLowerCase("tr").slice(0, 60);
-        const limit = Math.min(60, Math.max(1, Number(params.get("limit")) || 48));
-        const records = await runServerQuery<ArcadeRecord>({
-            collectionId: "arcade_games",
-            select: ARCADE_LIST_FIELDS,
-            orderBy: [{ field: sort, direction: "DESCENDING" }],
-            limit: query || dimension ? 200 : limit,
-        });
-        const games = records
-            .map((record) => arcadeSummary(record, record._id))
-            .filter((game) => (dimension === "2d" || dimension === "3d" ? game.dimension === dimension : true))
-            .filter((game) => !query || `${game.title} ${game.description} ${game.authorName}`.toLocaleLowerCase("tr").includes(query))
-            .slice(0, limit);
-        return json({ games });
-    } catch {
-        return json({ games: [], error: "Arcade şu anda yüklenemiyor." }, 503, "no-store");
+        // Reading is limited in memory: a stored counter would cost a database write per page.
+        const rate = memoryRateLimit(`arcade:list:${getClientKey(request)}`, 120, 60_000);
+        if (!rate.allowed) return json({ games: [], error: "Çok fazla istek. Biraz sonra tekrar deneyin.", code: "rate_limited" }, 429, "no-store");
+        const query = readArcadeListQuery(request.nextUrl.searchParams);
+        await ensureArcadeBackfill();
+        const first = !query.cursor;
+        const plain = first && !query.genre && !query.dimension && !query.q && !query.creator;
+        const [page, featured, creator] = await Promise.all([
+            listArcadePage(query),
+            plain ? listFeaturedArcadeGames().catch(() => []) : Promise.resolve(null),
+            query.creator && first ? arcadeCreator(query.creator) : Promise.resolve(null),
+        ]);
+        if (query.creator && first && !creator) return json({ games: [], error: "Yapımcı bulunamadı.", code: "creator_not_found" }, 404, "no-store");
+        return json({ ...page, ...(featured ? { featured } : {}), ...(creator ? { creator } : {}) });
+    } catch (error) {
+        if (error instanceof ArcadeListError) return json({ games: [], error: error.message, code: error.code }, error.status, "no-store");
+        return json({ games: [], error: "Arcade şu anda yüklenemiyor.", code: "unavailable" }, 503, "no-store");
     }
 }

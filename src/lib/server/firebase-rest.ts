@@ -308,6 +308,28 @@ export async function getServerDocument<T extends Record<string, unknown>>(path:
     return decodeDocument<T>(document);
 }
 
+/**
+ * Several documents in one request (batchGet), in the order of `paths`, with
+ * null for the ones that don't exist; `fields` reads only those fields. Used
+ * where a page of a list needs one small record per row (e.g. the viewer's
+ * likes of the posts on that page) instead of a query over everything.
+ */
+export async function getServerDocuments<T extends Record<string, unknown>>(paths: readonly string[], options: { fields?: string[] } = {}): Promise<Array<(T & { _id: string; _path: string; _updateTime?: string }) | null>> {
+    const found = new Map<string, T & { _id: string; _path: string; _updateTime?: string }>();
+    const names = paths.map(documentName);
+    for (let index = 0; index < names.length; index += 100) {
+        const chunk = [...new Set(names.slice(index, index + 100))];
+        const response = await firestoreFetch(`${databaseDocumentsUrl()}:batchGet`, {
+            method: "POST",
+            body: JSON.stringify({ documents: chunk, ...(options.fields?.length ? { mask: { fieldPaths: options.fields } } : {}) }),
+        });
+        if (!response.ok) throw new Error(`Firestore toplu okuma hatası (${response.status}).`);
+        const payload = await response.json() as Array<{ found?: FirestoreDocument; missing?: string }>;
+        for (const item of payload) if (item.found) found.set(item.found.name, decodeDocument<T>(item.found));
+    }
+    return names.map((name) => found.get(name) ?? null);
+}
+
 export type FirestoreProbe = { status: number; reason: string | null; message: string | null };
 
 /**

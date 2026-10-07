@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { normalizeArcadeGenre } from "@/lib/arcade-genres";
+import { ratingAverage, readRatingTotals } from "@/lib/arcade-ratings";
 import { normalizeProject } from "@/lib/game-engine/schema";
 import type { GameProjectDocument } from "@/lib/game-engine/types";
 
@@ -26,6 +28,17 @@ export type ArcadeRecord = {
     remixOf?: unknown;
     /** Leaderboard and achievement definitions copied from the game when it was published (V5). */
     arcade?: unknown;
+    /** One of ARCADE_GENRES (src/lib/arcade-genres.ts); older games get "other". */
+    genre?: string;
+    /** creatorIdOf(ownerEmail): the creator page's id, never the address. */
+    creatorId?: string;
+    /** Star ratings (src/lib/arcade-ratings.ts): how many, their total and the "Top rated" sort key. */
+    ratingCount?: number;
+    ratingSum?: number;
+    ratingScore?: number;
+    /** Set by staff in the Admin Panel; featured games lead the gallery. */
+    featured?: boolean;
+    featuredAt?: string;
     createdAt?: string;
     updatedAt?: string;
     _id?: string;
@@ -33,7 +46,10 @@ export type ArcadeRecord = {
     _updateTime?: string;
 };
 
-export const ARCADE_LIST_FIELDS = ["title", "description", "dimension", "thumbnail", "authorName", "authorImage", "templateId", "engineVersion", "languages", "plays", "likes", "allowRemix", "remixOf", "createdAt", "updatedAt"];
+export const ARCADE_LIST_FIELDS = [
+    "title", "description", "dimension", "thumbnail", "authorName", "authorImage", "templateId", "engineVersion", "languages", "plays", "likes", "allowRemix", "remixOf",
+    "genre", "creatorId", "ratingCount", "ratingSum", "featured", "createdAt", "updatedAt",
+];
 
 export type RemixSource = { gameId: string; title: string; authorName: string };
 
@@ -66,10 +82,17 @@ export function arcadeSummary(record: ArcadeRecord, id: string) {
         likes: Number(record.likes || 0),
         allowRemix: record.allowRemix === true,
         remixOf: remixSourceOf(record.remixOf),
+        genre: normalizeArcadeGenre(record.genre),
+        creatorId: isCreatorId(record.creatorId) ? record.creatorId : null,
+        ratingCount: readRatingTotals(record).count,
+        ratingAverage: ratingAverage(readRatingTotals(record)),
+        featured: record.featured === true,
         createdAt: record.createdAt || null,
         updatedAt: record.updatedAt || null,
     };
 }
+
+export type ArcadeSummary = ReturnType<typeof arcadeSummary>;
 
 /** Parses and re-validates the stored game before sending it to players. */
 export function arcadeProject(record: ArcadeRecord, id: string): GameProjectDocument {
@@ -87,6 +110,21 @@ export function likerHash(email: string) {
 
 export function likeDocumentId(gameId: string, email: string) {
     return `${gameId}__${likerHash(email)}`;
+}
+
+/**
+ * The id of a creator's public page (/arcade/creator/{id}): a salted,
+ * one-way hash of the e-mail address, stable while the salt stays. It is a
+ * different hash from likerHash, so it can't be matched with likes, scores
+ * or ratings.
+ */
+export function creatorIdOf(email: string) {
+    const salt = process.env.RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET || "hanogt";
+    return createHash("sha256").update(`${salt}:arcade-creator:${email.trim().toLowerCase()}`).digest("hex").slice(0, 24);
+}
+
+export function isCreatorId(value: unknown): value is string {
+    return typeof value === "string" && /^[a-f0-9]{24}$/.test(value);
 }
 
 export function assertGameId(value: unknown) {

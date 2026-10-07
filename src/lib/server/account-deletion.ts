@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { voterHash } from "./ai-rankings";
 import { likerHash } from "./arcade";
+import { removeArcadeRatingRecord } from "./arcade-ratings";
 import {
     commitServerMutations,
     commitServerPatches,
@@ -27,8 +28,8 @@ import { isOwnedStoragePath, normalizeEmail } from "./validate";
  *
  * scope "all" removes the account and everything it left behind: private
  * chats with their voice messages, calls, code and game projects, published
- * Arcade games, news comments, Arcade likes, leaderboard scores, unlocked
- * achievements and arena votes, Media posts and
+ * Arcade games, news comments, Arcade likes and star ratings, leaderboard
+ * scores, unlocked achievements and arena votes, Media posts and
  * every like, comment, report and security-training contribution, groups it
  * owns (in other groups it leaves and its messages are anonymised), group
  * bans and invite links, friend requests, group invites, its place in other
@@ -38,12 +39,12 @@ import { isOwnedStoragePath, normalizeEmail } from "./validate";
  *
  * scope "content" removes only what other people can see: Media posts with
  * everything attached and the user's comments on other posts, published
- * Arcade games with their likes and scores, the user's entries on other
+ * Arcade games with their likes, ratings and scores, the user's entries on other
  * games' leaderboards, news and changelog comments, feedback items the user
  * wrote and their comments on other items; their group messages are
  * anonymised. The account and sign-in, friends, private chats and calls, code
- * and game projects, likes, achievements, votes, reports and support tickets
- * stay.
+ * and game projects, likes, ratings, achievements, votes, reports and
+ * support tickets stay.
  *
  * Every step and document is handled on its own: a failure is recorded in the
  * summary and the rest carries on, so one broken record (or a missing index)
@@ -422,8 +423,11 @@ async function deleteGameProjects(ctx: Context) {
     )));
 }
 
-/** Records other players left on a published game: likes, leaderboard scores and unlocked achievements. */
-const GAME_RECORDS = [["arcade_likes", "arcadeLikes"], ["arcade_scores", "arcadeScores"], ["arcade_achievements", "arcadeAchievements"]] as const;
+/**
+ * Records other players left on a published game: likes, star ratings,
+ * leaderboard scores, unlocked achievements and reports (as with Media posts).
+ */
+const GAME_RECORDS = [["arcade_likes", "arcadeLikes"], ["arcade_ratings", "arcadeRatings"], ["arcade_scores", "arcadeScores"], ["arcade_achievements", "arcadeAchievements"], ["media_reports", "arcadeReports"]] as const;
 
 async function deleteArcadeGames(ctx: Context) {
     await drain(ctx, "arcadeGames", query("arcade_games", "ownerEmail", "EQUAL", ctx.email), eachDocument(ctx, "arcadeGames", async (game) => {
@@ -458,6 +462,14 @@ async function deleteArcadeLikesAndVotes(ctx: Context) {
         ctx.tally.count("arcadeLikes");
     })));
     await runStep(ctx, "arenaVotes", () => drain(ctx, "arenaVotes", query("arena_votes", "voter", "EQUAL", voterHash(ctx.email)), deleting(ctx, "arenaVotes", "arenaVotes")));
+}
+
+/** Star ratings of other people's games: each leaves its game's totals with it. */
+async function deleteArcadeRatings(ctx: Context) {
+    await drain(ctx, "arcadeRatings", query("arcade_ratings", "rater", "EQUAL", likerHash(ctx.email)), eachDocument(ctx, "arcadeRatings", async (rating) => {
+        await removeArcadeRatingRecord(rating);
+        ctx.tally.count("arcadeRatings");
+    }));
 }
 
 /**
@@ -776,6 +788,7 @@ const STEPS: readonly Step[] = [
     { id: "gameAudio", scopes: ALL, run: deleteGameAudio },
     { id: "newsComments", scopes: BOTH, run: deleteNewsComments },
     { id: "arcadeLikes", scopes: ALL, run: deleteArcadeLikesAndVotes },
+    { id: "arcadeRatings", scopes: ALL, run: deleteArcadeRatings },
     { id: "arcadeScores", scopes: BOTH, run: deleteArcadePlayerRecords },
     { id: "mediaPosts", scopes: BOTH, run: deleteMediaPosts },
     { id: "mediaActivity", scopes: BOTH, run: deleteMediaActivity },

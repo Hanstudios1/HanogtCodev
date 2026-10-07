@@ -358,10 +358,10 @@ export async function unlockArcadeAchievement(input: { gameId: string; email: st
 // Removing a game
 // ---------------------------------------------------------------------------
 
-/** Every like, score and unlock of a game. */
+/** Every like, rating, score and unlock of a game. */
 export async function deleteArcadeGameRecords(gameId: string) {
     let removed = 0;
-    for (const collectionId of ["arcade_likes", ARCADE_SCORES, ARCADE_ACHIEVEMENTS]) {
+    for (const collectionId of ["arcade_likes", "arcade_ratings", ARCADE_SCORES, ARCADE_ACHIEVEMENTS]) {
         removed += await deleteMatching(collectionId, [{ field: "gameId", op: "EQUAL", value: gameId }]);
     }
     return removed;
@@ -369,7 +369,7 @@ export async function deleteArcadeGameRecords(gameId: string) {
 
 /**
  * Takes a game off the Arcade the same way everywhere (its author, deleting
- * the project, staff): likes, scores and unlocks first, then the game with
+ * the project, staff): likes, ratings, scores and unlocks first, then the game with
  * `extra` writes in the same commit (an audit entry), then its own copies of
  * audio and model files. A failure before the game goes leaves it in place,
  * so the removal can simply be repeated.

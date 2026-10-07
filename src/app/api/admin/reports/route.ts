@@ -3,12 +3,15 @@ import {
     MODERATOR_NOTE_MAX,
     type AdminReport,
     type AdminReportActionResponse,
+    type AdminReportGame,
     type AdminReportPost,
     type AdminReportPostFiles,
     type AdminReportsResponse,
-    type ReportCategory,
     type ReportStatus,
 } from "@/components/Admin/types";
+import { normalizeArcadeGenre } from "@/lib/arcade-genres";
+import { ratingAverage, readRatingTotals } from "@/lib/arcade-ratings";
+import { normalizeReportCategory, reportKindOf } from "@/lib/reports";
 import {
     AdminHttpError,
     adminError,
@@ -29,6 +32,8 @@ import {
     writeAuditLog,
 } from "@/lib/server/admin";
 import { decodeCursor, newestPage } from "@/lib/server/admin-pages";
+import { assertGameId, type ArcadeRecord } from "@/lib/server/arcade";
+import { removeArcadeGame } from "@/lib/server/arcade-scores";
 import {
     commitServerMutations,
     countServerQuery,
@@ -40,7 +45,6 @@ import { isDocId } from "@/lib/server/validate";
 
 export const runtime = "nodejs";
 
-const CATEGORIES: readonly ReportCategory[] = ["malware", "copyright", "personal_data", "spam", "other"];
 const ACTIONS = ["resolve", "dismiss", "removeContent", "reopen"] as const;
 const PAGE_SIZE = 40;
 const CLOSED: ReportStatus[] = ["resolved", "dismissed"];
@@ -49,7 +53,10 @@ const VIEW_CHARS = 200_000;
 const RESOLUTION_FIELDS = ["status", "resolution", "resolvedAt", "resolvedBy", "moderatorNote"];
 
 type ReportRecord = {
+    /** "arcade" for reports of Arcade games (gameId); missing or "media" for Media posts (postId). */
+    kind?: unknown;
     postId?: unknown;
+    gameId?: unknown;
     reporterEmail?: unknown;
     category?: unknown;
     reason?: unknown;
@@ -91,11 +98,34 @@ function toReportPost(post: PostRecord): AdminReportPost {
     };
 }
 
-function toAdminReport(record: ReportRecord & { _id: string }, post: PostRecord | null, postReportCount: number): AdminReport {
+/** The fields of a reported game the queue shows (never the game's content). */
+const GAME_FIELDS = ["title", "description", "ownerEmail", "authorName", "dimension", "genre", "plays", "likes", "ratingCount", "ratingSum", "createdAt"];
+
+function toReportGame(game: ArcadeRecord): AdminReportGame {
+    const totals = readRatingTotals(game);
+    return {
+        title: stringOr(game.title, "", 120),
+        description: stringOr(game.description, "", 400),
+        ownerEmail: stringOr(game.ownerEmail, "", 254),
+        authorName: stringOr(game.authorName, "", 80),
+        dimension: game.dimension === "2d" ? "2d" : "3d",
+        genre: normalizeArcadeGenre(game.genre),
+        plays: numberOr(game.plays),
+        likes: numberOr(game.likes),
+        ratingCount: totals.count,
+        ratingAverage: ratingAverage(totals),
+        createdAt: toIso(game.createdAt),
+    };
+}
+
+function toAdminReport(record: ReportRecord & { _id: string }, post: PostRecord | null, game: ArcadeRecord | null, postReportCount: number): AdminReport {
+    const kind = reportKindOf(record);
     return {
         id: record._id,
-        postId: stringOr(record.postId, "", 100),
-        category: (CATEGORIES as readonly unknown[]).includes(record.category) ? record.category as ReportCategory : "other",
+        kind,
+        postId: kind === "media" ? stringOr(record.postId, "", 100) : "",
+        gameId: kind === "arcade" ? stringOr(record.gameId, "", 100) : "",
+        category: normalizeReportCategory(record.category),
         reason: stringOr(record.reason, "", 1_200),
         status: reportStatus(record.status),
         reporterEmail: stringOr(record.reporterEmail, "", 254),
@@ -105,7 +135,8 @@ function toAdminReport(record: ReportRecord & { _id: string }, post: PostRecord 
         resolvedBy: typeof record.resolvedBy === "string" ? record.resolvedBy.slice(0, 254) : null,
         moderatorNote: typeof record.moderatorNote === "string" ? record.moderatorNote.slice(0, MODERATOR_NOTE_MAX) : null,
         postReportCount,
-        post: post ? toReportPost(post) : null,
+        post: kind === "media" && post ? toReportPost(post) : null,
+        game: kind === "arcade" && game ? toReportGame(game) : null,
     };
 }
 
@@ -160,19 +191,27 @@ export async function GET(request: NextRequest) {
             cursor ? Promise.resolve(null) : countDocuments("media_reports", [{ field: "status", op: "IN", value: CLOSED }]).then((value) => value.count, () => null),
         ]);
 
-        const postIds = [...new Set(page.items.map((record) => record.postId).filter((id): id is string => isDocId(id, 100)))];
-        const [posts, perPost] = await Promise.all([
+        const postIds = [...new Set(page.items.filter((record) => reportKindOf(record) === "media").map((record) => record.postId).filter((id): id is string => isDocId(id, 100)))];
+        const gameIds = [...new Set(page.items.filter((record) => reportKindOf(record) === "arcade").map((record) => assertGameId(record.gameId)).filter((id): id is string => Boolean(id)))];
+        // Every open report of each post or game (closed tab: every report), not just those on this page.
+        const countFor = (field: "postId" | "gameId", id: string) => countServerQuery({
+            collectionId: "media_reports",
+            where: [{ field, op: "EQUAL", value: id }, ...(closed ? [] : [{ field: "status", op: "EQUAL" as const, value: "open" }])],
+        }).catch(() => 1);
+        const [posts, games, perPost, perGame] = await Promise.all([
             Promise.all(postIds.map(async (id) => [id, await getServerDocument<PostRecord>(`media_posts/${id}`).catch(() => null)] as const)).then((entries) => new Map(entries)),
-            // Every open report of each post (closed tab: every report), not just those on this page.
-            Promise.all(postIds.map(async (id) => [id, await countServerQuery({
-                collectionId: "media_reports",
-                where: [{ field: "postId", op: "EQUAL", value: id }, ...(closed ? [] : [{ field: "status", op: "EQUAL" as const, value: "open" }])],
-            }).catch(() => 1)] as const)).then((entries) => new Map(entries)),
+            Promise.all(gameIds.map(async (id) => [id, await getServerDocument<ArcadeRecord>(`arcade_games/${id}`, { fields: GAME_FIELDS }).catch(() => null)] as const)).then((entries) => new Map(entries)),
+            Promise.all(postIds.map(async (id) => [id, await countFor("postId", id)] as const)).then((entries) => new Map(entries)),
+            Promise.all(gameIds.map(async (id) => [id, await countFor("gameId", id)] as const)).then((entries) => new Map(entries)),
         ]);
         const payload: AdminReportsResponse = {
             items: page.items.map((record) => {
+                if (reportKindOf(record) === "arcade") {
+                    const gameId = String(record.gameId ?? "");
+                    return toAdminReport(record, null, games.get(gameId) ?? null, Math.max(1, perGame.get(gameId) ?? 1));
+                }
                 const postId = String(record.postId ?? "");
-                return toAdminReport(record, posts.get(postId) ?? null, Math.max(1, perPost.get(postId) ?? 1));
+                return toAdminReport(record, posts.get(postId) ?? null, null, Math.max(1, perPost.get(postId) ?? 1));
             }),
             nextCursor: page.nextCursor,
             counts: { open: openCount, closed: closedCount },
@@ -190,6 +229,8 @@ export async function GET(request: NextRequest) {
  * as the deletion and the audit entry.
  */
 async function removeReportedContent(actor: string, reportId: string, note: string): Promise<AdminReportActionResponse> {
+    const first = await getServerDocument<ReportRecord>(`media_reports/${reportId}`);
+    if (first && reportKindOf(first) === "arcade") return removeReportedGame(actor, reportId, note);
     const { postId, postPath, closedReportIds } = await withConflictRetry(async () => {
         const report = await getServerDocument<ReportRecord>(`media_reports/${reportId}`);
         if (!report) throw new AdminHttpError(404, "not_found");
@@ -251,6 +292,58 @@ async function removeReportedContent(actor: string, reportId: string, note: stri
     return { reportId, status: "resolved", closedReportIds, cleanup };
 }
 
+/**
+ * Takes a reported Arcade game off the Arcade the way staff unpublish one
+ * (likes, ratings, scores, unlocks and its own copies of files go too); every
+ * open report of the game is closed as "content_removed" in the same commit
+ * as the removal and the audit entry. A game that is already gone only has
+ * its reports closed.
+ */
+async function removeReportedGame(actor: string, reportId: string, note: string): Promise<AdminReportActionResponse> {
+    const closedReportIds = await withConflictRetry(async () => {
+        const report = await getServerDocument<ReportRecord>(`media_reports/${reportId}`);
+        if (!report) throw new AdminHttpError(404, "not_found");
+        if (report.status !== "open") throw new AdminHttpError(409, "already_handled");
+        const gameId = assertGameId(report.gameId);
+        if (!gameId) throw new AdminHttpError(400, "invalid_id");
+        const path = `arcade_games/${gameId}`;
+        const [game, reports] = await Promise.all([
+            getServerDocument<ArcadeRecord>(path, { fields: ["title", "ownerEmail", "plays", "likes"] }),
+            queryServerCollection<ReportRecord>("media_reports", "gameId", "EQUAL", gameId, { limit: 450 }),
+        ]);
+        const open = reports.filter((item) => item.status === "open");
+        if (!open.some((item) => item._id === reportId)) {
+            open.push({ ...report, _id: reportId, _path: `media_reports/${reportId}`, _updateTime: report._updateTime });
+        }
+        const now = new Date();
+        const writes = [
+            ...open.map((item) => ({
+                type: "update" as const,
+                path: `media_reports/${item._id}`,
+                data: { status: "resolved", resolution: "content_removed", resolvedAt: now, resolvedBy: actor, moderatorNote: note || undefined },
+                updateFields: RESOLUTION_FIELDS,
+                // A report handled by someone else in the meantime aborts the whole commit.
+                ...(item._updateTime ? { updateTime: item._updateTime } : {}),
+            })),
+            auditLogMutation(actor, "report.remove_game", path, {
+                reportId,
+                gameId,
+                title: game ? stringOr(game.title, "", 120) : null,
+                ownerEmail: game ? stringOr(game.ownerEmail, "", 254) : null,
+                plays: game ? numberOr(game.plays) : null,
+                category: stringOr(report.category, "other", 30),
+                reportsClosed: open.length,
+                gameMissing: !game,
+                note: note || null,
+            }),
+        ];
+        if (game) await removeArcadeGame(gameId, writes);
+        else await commitServerMutations(writes);
+        return open.map((item) => item._id);
+    });
+    return { reportId, status: "resolved", closedReportIds, cleanup: "complete" };
+}
+
 /** Puts a resolved or dismissed report back in the queue (not one whose post was removed: it is gone). */
 async function reopenReport(actor: string, reportId: string): Promise<AdminReportActionResponse> {
     const path = `media_reports/${reportId}`;
@@ -269,7 +362,7 @@ async function reopenReport(actor: string, reportId: string): Promise<AdminRepor
                 ...(report._updateTime ? { updateTime: report._updateTime } : {}),
             },
             auditLogMutation(actor, "report.reopen", path, {
-                postId: stringOr(report.postId, "", 100),
+                ...(reportKindOf(report) === "arcade" ? { gameId: stringOr(report.gameId, "", 100) } : { postId: stringOr(report.postId, "", 100) }),
                 previous: stringOr(report.resolution, stringOr(report.status, "", 30), 30),
             }),
         ]);
@@ -305,7 +398,7 @@ export async function POST(request: NextRequest) {
                     ...(report._updateTime ? { updateTime: report._updateTime } : {}),
                 },
                 auditLogMutation(actor, action === "resolve" ? "report.resolve" : "report.dismiss", path, {
-                    postId: stringOr(report.postId, "", 100),
+                    ...(reportKindOf(report) === "arcade" ? { gameId: stringOr(report.gameId, "", 100) } : { postId: stringOr(report.postId, "", 100) }),
                     category: stringOr(report.category, "other", 30),
                     note: note || null,
                 }),

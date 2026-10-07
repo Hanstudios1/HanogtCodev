@@ -1,23 +1,26 @@
 "use client";
 
-import { ArrowLeft, Copy, ExternalLink, GitFork, Heart, Keyboard, LoaderCircle, Lock, Maximize2, Medal, Pencil, Play, RotateCcw, Share2, Trophy, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, Flag, Gamepad2, GitFork, Heart, Keyboard, LoaderCircle, Lock, Maximize2, Medal, Pencil, Play, RotateCcw, Share2, Star, Trophy, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
+import { ARCADE_GENRES, ARCADE_GENRE_LABELS, isArcadeGenre, type ArcadeGenre } from "@/lib/arcade-genres";
 import { useI18n, type Copy as CopyText } from "@/lib/i18n";
+import { REPORT_CATEGORIES, type ReportCategory } from "@/lib/reports";
 import { formatArcadeScore } from "@/lib/game-engine/arcade";
 import { createEngineId } from "@/lib/game-engine/ids";
 import type { GamePlayer } from "@/lib/game-engine/player/game-player";
 import type { ArcadeState } from "@/lib/game-engine/runtime/arcade-runtime";
 import type { GameProjectDocument } from "@/lib/game-engine/types";
 import { saveLocalProject } from "@/components/GameEngine/editor/persistence";
-import { compactNumber, type ArcadeGameSummary } from "./ArcadeGallery";
+import { CreatorAvatar, RatingBadge, compactNumber, type ArcadeGameSummary } from "./ArcadeGallery";
 import { ArcadeHost, readShareScores, type ArcadeHostEvent } from "./arcade-host";
 import { ARCADE_TOAST_COPY, AchievementsCard, ArcadeToastStack, LeaderboardCard, type ArcadeToast } from "./ArcadeProgress";
 
-type GameInfo = ArcadeGameSummary & { isOwner: boolean; liked: boolean };
+type GameInfo = ArcadeGameSummary & { isOwner: boolean; liked: boolean; myRating: number | null; canRate: boolean };
+type RatingResult = { myRating?: number | null; ratingCount?: number; ratingAverage?: number | null; error?: string; code?: string };
 
 const C = {
     loadFailed: { TR: "Oyun yüklenemedi.", EN: "The game couldn't be loaded." },
@@ -33,7 +36,85 @@ const C = {
     scoreFailedDetail: { TR: "Bağlantıyı kontrol edip yeniden oynayın.", EN: "Check your connection and play again." },
     hasLeaderboard: { TR: "Skor tablosu", EN: "Leaderboard" },
     hasAchievements: { TR: "{count} başarım", EN: "{count} achievements" },
+    featured: { TR: "Öne çıkan", EN: "Featured" },
+    genre: { TR: "Oyun türü", EN: "Genre" },
+    genreSaved: { TR: "Oyun türü güncellendi.", EN: "The genre was updated." },
+    genreFailed: { TR: "Oyun türü kaydedilemedi.", EN: "The genre couldn't be saved." },
+    ratingTitle: { TR: "Puanlar", EN: "Ratings" },
+    noRatings: { TR: "Henüz puan verilmedi.", EN: "No ratings yet." },
+    yourRating: { TR: "Senin puanın", EN: "Your rating" },
+    rateStars: { TR: "{count} yıldız ver", EN: "Give {count} stars" },
+    rateOneStar: { TR: "1 yıldız ver", EN: "Give 1 star" },
+    removeRating: { TR: "Puanımı kaldır", EN: "Remove my rating" },
+    rated: { TR: "Puanın kaydedildi.", EN: "Your rating was saved." },
+    ratingRemoved: { TR: "Puanın kaldırıldı.", EN: "Your rating was removed." },
+    ratingFailed: { TR: "Puan kaydedilemedi.", EN: "Your rating couldn't be saved." },
+    ownGame: { TR: "Kendi oyununu puanlayamazsın.", EN: "You can't rate your own game." },
+    signInToRate: { TR: "Puan vermek için giriş yap", EN: "Sign in to rate" },
+    report: { TR: "Oyunu bildir", EN: "Report the game" },
+    reportReason: { TR: "Bildirim nedeni", EN: "Reason for the report" },
+    reportDetails: { TR: "Neyi incelemeliyiz?", EN: "What should we review?" },
+    reportSend: { TR: "Bildirimi gönder", EN: "Send report" },
+    reportSent: { TR: "Bildirimin moderasyon ekibine iletildi. Teşekkürler!", EN: "Your report was sent to the moderation team. Thank you!" },
+    reportFailed: { TR: "Bildirim gönderilemedi.", EN: "The report couldn't be sent." },
+    signInToReport: { TR: "Bildirmek için giriş yap", EN: "Sign in to report" },
+    creatorGames: { TR: "{name} adlı yapımcının tüm oyunları", EN: "All games by {name}" },
 } satisfies Record<string, CopyText>;
+
+const REPORT_LABELS: Record<ReportCategory, CopyText> = {
+    malware: { TR: "Zararlı davranış veya kod", EN: "Harmful behaviour or code" },
+    copyright: { TR: "Telif hakkı ihlali", EN: "Copyright infringement" },
+    personal_data: { TR: "Kişisel veri", EN: "Personal data" },
+    inappropriate: { TR: "Uygunsuz içerik", EN: "Inappropriate content" },
+    spam: { TR: "Spam veya yanıltıcı", EN: "Spam or misleading" },
+    other: { TR: "Diğer", EN: "Other" },
+};
+
+/** Stars a signed-in player gives (or changes); the average and the count are shown for everyone. */
+function RatingPanel({ game, signedIn, busy, onRate, onClear, signInHref }: { game: GameInfo; signedIn: boolean; busy: boolean; onRate: (stars: number) => void; onClear: () => void; signInHref: string }) {
+    const { tx } = useI18n();
+    const [hover, setHover] = useState<number | null>(null);
+    const shown = hover ?? game.myRating ?? 0;
+    return (
+        <div className="mt-4 rounded-xl border border-zinc-200 p-3 dark:border-white/10">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[12px] font-bold uppercase tracking-wider text-zinc-500">{tx(C.ratingTitle)}</p>
+                {game.ratingCount ? <RatingBadge game={game} size="md" /> : <span className="text-[12px] text-zinc-500">{tx(C.noRatings)}</span>}
+            </div>
+            {game.canRate ? (
+                <>
+                    <div className="mt-2 flex items-center gap-0.5" role="group" aria-label={tx(C.yourRating)} onMouseLeave={() => setHover(null)}>
+                        {[1, 2, 3, 4, 5].map((stars) => (
+                            <button
+                                key={stars}
+                                type="button"
+                                disabled={busy}
+                                aria-pressed={game.myRating === stars}
+                                aria-label={stars === 1 ? tx(C.rateOneStar) : tx(C.rateStars, { count: stars })}
+                                title={stars === 1 ? tx(C.rateOneStar) : tx(C.rateStars, { count: stars })}
+                                onMouseEnter={() => setHover(stars)}
+                                onFocus={() => setHover(stars)}
+                                onBlur={() => setHover(null)}
+                                onClick={() => onRate(stars)}
+                                className="rounded-md p-1 text-amber-500 transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:opacity-50"
+                            >
+                                <Star className={`h-6 w-6 ${stars <= shown ? "fill-current" : "fill-transparent text-zinc-300 dark:text-zinc-600"}`} aria-hidden />
+                            </button>
+                        ))}
+                        {busy ? <LoaderCircle className="ms-1 h-4 w-4 animate-spin text-zinc-400" aria-hidden /> : null}
+                    </div>
+                    {game.myRating ? (
+                        <button type="button" disabled={busy} onClick={onClear} className="mt-1 text-[12px] font-semibold text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline disabled:opacity-50 dark:hover:text-white">{tx(C.removeRating)}</button>
+                    ) : null}
+                </>
+            ) : game.isOwner ? (
+                <p className="mt-2 text-[12px] text-zinc-500">{tx(C.ownGame)}</p>
+            ) : !signedIn ? (
+                <Link href={signInHref} className="mt-2 inline-flex text-[12.5px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.signInToRate)}</Link>
+            ) : null}
+        </div>
+    );
+}
 
 const TOAST_MS = 4500;
 
@@ -63,6 +144,12 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
     const [limitReached, setLimitReached] = useState(false);
+    const [rating, setRating] = useState(false);
+    const [genreBusy, setGenreBusy] = useState(false);
+    const [reportOpen, setReportOpen] = useState(false);
+    const [reportCategory, setReportCategory] = useState<ReportCategory>("inappropriate");
+    const [reportReason, setReportReason] = useState("");
+    const [reporting, setReporting] = useState(false);
     // Leaderboards and achievements (V5).
     const hostRef = useRef<ArcadeHost | null>(null);
     const signedInRef = useRef(signedIn);
@@ -184,6 +271,66 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
         }
     };
 
+    const signInHref = `/login?callbackUrl=${encodeURIComponent(`/arcade/${gameId}`)}`;
+
+    const rate = async (stars: number | null) => {
+        if (!game?.canRate) return;
+        setRating(true);
+        try {
+            const response = await fetch(`/api/arcade/${encodeURIComponent(gameId)}/rating`, stars === null
+                ? { method: "DELETE" }
+                : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stars }) });
+            const payload = await response.json().catch(() => ({})) as RatingResult;
+            if (!response.ok) throw new Error(serverText(payload.error, C.ratingFailed));
+            setGame((current) => (current ? {
+                ...current,
+                myRating: payload.myRating ?? null,
+                ratingCount: payload.ratingCount ?? current.ratingCount,
+                ratingAverage: payload.ratingAverage ?? null,
+            } : current));
+            setNotice(tx(stars === null ? C.ratingRemoved : C.rated));
+        } catch (reason) {
+            setNotice(reason instanceof Error && reason.message ? reason.message : tx(C.ratingFailed));
+        } finally {
+            setRating(false);
+        }
+    };
+
+    const changeGenre = async (value: string) => {
+        if (!game?.isOwner || !isArcadeGenre(value) || value === game.genre) return;
+        const previous = game.genre;
+        setGenreBusy(true);
+        setGame((current) => (current ? { ...current, genre: value } : current));
+        try {
+            const response = await fetch(`/api/arcade/${encodeURIComponent(gameId)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ genre: value }) });
+            const payload = await response.json().catch(() => ({})) as { genre?: ArcadeGenre; error?: string };
+            if (!response.ok) throw new Error(serverText(payload.error, C.genreFailed));
+            setNotice(tx(C.genreSaved));
+        } catch (reason) {
+            setGame((current) => (current ? { ...current, genre: previous } : current));
+            setNotice(reason instanceof Error && reason.message ? reason.message : tx(C.genreFailed));
+        } finally {
+            setGenreBusy(false);
+        }
+    };
+
+    const sendReport = async () => {
+        if (!reportReason.trim()) return;
+        setReporting(true);
+        try {
+            const response = await fetch(`/api/arcade/${encodeURIComponent(gameId)}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category: reportCategory, reason: reportReason.trim() }) });
+            const payload = await response.json().catch(() => ({})) as { error?: string };
+            if (!response.ok) throw new Error(serverText(payload.error, C.reportFailed));
+            setReportOpen(false);
+            setReportReason("");
+            setNotice(tx(C.reportSent));
+        } catch (reason) {
+            setNotice(reason instanceof Error && reason.message ? reason.message : tx(C.reportFailed));
+        } finally {
+            setReporting(false);
+        }
+    };
+
     const canRemix = Boolean(game && (game.allowRemix || game.isOwner));
     const arcadeSettings = project?.settings.arcade ?? null;
     const boards = arcadeSettings?.leaderboards ?? [];
@@ -238,7 +385,7 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
             <div className="min-h-dvh bg-zinc-50 dark:bg-zinc-950">
                 <Header />
                 <main id="main-content" className="mx-auto grid max-w-lg place-items-center px-4 pt-40 text-center">
-                    <div className="grid h-16 w-16 place-items-center rounded-2xl bg-zinc-200 text-3xl dark:bg-white/10">🕹️</div>
+                    <div className="grid h-16 w-16 place-items-center rounded-2xl bg-zinc-200 text-zinc-500 dark:bg-white/10 dark:text-zinc-300"><Gamepad2 className="h-8 w-8" aria-hidden /></div>
                     <h1 className="mt-4 text-xl font-bold text-zinc-900 dark:text-white">{tx({ TR: "Oyun açılamadı", EN: "Couldn't open the game" })}</h1>
                     <p className="mt-2 text-sm text-zinc-500">{serverText(error, C.loadFailed)}</p>
                     <Link href="/arcade" className="mt-6 inline-flex h-10 items-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white dark:bg-white dark:text-zinc-900"><ArrowLeft className="h-4 w-4 rtl:rotate-180" />{tx({ TR: "Arcade'e dön", EN: "Back to the Arcade" })}</Link>
@@ -254,14 +401,14 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                 <Link href="/arcade" className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><ArrowLeft className="h-4 w-4 rtl:rotate-180" />Arcade</Link>
                 <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
                     <div>
-                        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-black shadow-2xl shadow-indigo-500/10 dark:border-white/10">
+                        <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-black shadow-sm dark:border-white/10">
                             <div ref={stageRef} className="aspect-video w-full" />
                             <ArcadeToastStack toasts={toasts} onDismiss={(id) => setToasts((current) => current.filter((item) => item.id !== id))} />
                             {!started ? (
-                                <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-black/30 via-black/50 to-black/80">
+                                <div className="absolute inset-0 grid place-items-center bg-black/60">
                                     {project && readyProject === project ? (
                                         <button type="button" onClick={start} className="group flex flex-col items-center gap-3 text-white">
-                                            <span className="grid h-20 w-20 place-items-center rounded-full bg-white text-zinc-900 shadow-2xl shadow-white/20 transition group-hover:scale-110 animate-pulse-ring"><Play className="h-8 w-8 translate-x-0.5 fill-current" /></span>
+                                            <span className="grid h-20 w-20 place-items-center rounded-full bg-white text-zinc-900 shadow-lg transition group-hover:scale-110 group-focus-visible:ring-4 group-focus-visible:ring-white/60"><Play className="h-8 w-8 translate-x-0.5 fill-current" aria-hidden /></span>
                                             <span className="text-lg font-black">{game?.title ?? tx({ TR: "Oyna", EN: "Play" })}</span>
                                             <span className="text-[12px] text-white/70">{tx({ TR: "Tıkla ve oyna · ses açık", EN: "Click to play · sound on" })}</span>
                                         </button>
@@ -304,12 +451,18 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                             {game ? (
                                 <>
                                     <h1 className="text-2xl font-black leading-tight text-zinc-900 dark:text-white">{game.title}</h1>
-                                    <div className="mt-2 flex items-center gap-2 text-[13px] text-zinc-500">
-                                        {game.authorImage ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={game.authorImage} alt="" className="h-6 w-6 rounded-full object-cover" />
-                                        ) : <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-[11px] font-bold text-white">{game.authorName.charAt(0).toUpperCase()}</span>}
-                                        <span className="font-semibold text-zinc-700 dark:text-zinc-300">{game.authorName}</span>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-zinc-500">
+                                        {game.creatorId ? (
+                                            <Link href={`/arcade/creator/${game.creatorId}`} className="inline-flex min-w-0 items-center gap-2 rounded-md font-semibold text-zinc-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-300" title={tx(C.creatorGames, { name: game.authorName })}>
+                                                <CreatorAvatar name={game.authorName} image={game.authorImage} size="md" />
+                                                <span className="truncate">{game.authorName}</span>
+                                            </Link>
+                                        ) : (
+                                            <span className="inline-flex min-w-0 items-center gap-2 font-semibold text-zinc-700 dark:text-zinc-300">
+                                                <CreatorAvatar name={game.authorName} image={game.authorImage} size="md" />
+                                                <span className="truncate">{game.authorName}</span>
+                                            </span>
+                                        )}
                                         {game.updatedAt ? <span>· {new Date(game.updatedAt).toLocaleDateString(locale)}</span> : null}
                                     </div>
                                     {game.remixOf ? (
@@ -319,6 +472,8 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                                     ) : null}
                                     {game.description ? <p className="mt-3 whitespace-pre-line text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{game.description}</p> : null}
                                     <div className="mt-4 flex flex-wrap gap-1.5">
+                                        {game.featured ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300"><Star className="h-3 w-3 fill-current" aria-hidden />{tx(C.featured)}</span> : null}
+                                        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-600 dark:bg-white/10 dark:text-zinc-300">{tx(ARCADE_GENRE_LABELS[game.genre] ?? ARCADE_GENRE_LABELS.other)}</span>
                                         <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold uppercase text-zinc-600 dark:bg-white/10 dark:text-zinc-300">{game.dimension}</span>
                                         {game.languages.map((language) => <span key={language} className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-300">{language}</span>)}
                                         {game.engineVersion ? <span className="rounded-full bg-fuchsia-500/10 px-2.5 py-1 text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-300">Hanogt Engine V{game.engineVersion}</span> : null}
@@ -332,6 +487,15 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                                             <p className="text-[11px] text-zinc-500">{game.liked ? tx({ TR: "beğendin", EN: "liked" }) : tx({ TR: "beğen", EN: "like" })}</p>
                                         </button>
                                     </div>
+                                    <RatingPanel game={game} signedIn={signedIn} busy={rating} onRate={(stars) => void rate(stars)} onClear={() => void rate(null)} signInHref={signInHref} />
+                                    {game.isOwner ? (
+                                        <label className="mt-3 block text-[12px] font-semibold text-zinc-600 dark:text-zinc-300">
+                                            {tx(C.genre)}
+                                            <select value={game.genre} disabled={genreBusy} onChange={(event) => void changeGenre(event.target.value)} className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-[13px] font-medium text-zinc-800 disabled:opacity-60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100">
+                                                {ARCADE_GENRES.map((value) => <option key={value} value={value}>{tx(ARCADE_GENRE_LABELS[value])}</option>)}
+                                            </select>
+                                        </label>
+                                    ) : null}
                                 </>
                             ) : (
                                 <div className="space-y-2"><div className="h-7 w-2/3 animate-pulse rounded bg-zinc-200 dark:bg-white/10" /><div className="h-4 w-1/2 animate-pulse rounded bg-zinc-100 dark:bg-white/5" /></div>
@@ -345,7 +509,7 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                                 <p className="flex items-start gap-2 rounded-xl bg-zinc-100 px-3 py-2.5 text-[12.5px] leading-snug text-zinc-600 dark:bg-white/5 dark:text-zinc-300"><Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{tx(C.remixLocked)}</p>
                             ) : (
                                 <>
-                                    <button type="button" disabled={!project || busy} onClick={() => void remix()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:brightness-110 disabled:opacity-50">
+                                    <button type="button" disabled={!project || busy} onClick={() => void remix()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 text-[13px] font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50">
                                         {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}{tx({ TR: "Remiksle (kopyasını düzenle)", EN: "Remix (edit a copy)" })}
                                     </button>
                                     {game && !game.isOwner ? <p className="px-1 text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(C.remixAllowed)}</p> : null}
@@ -353,6 +517,34 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                             )}
                             <button type="button" onClick={() => void share()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 text-[13px] font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/10"><Share2 className="h-4 w-4" />{tx({ TR: "Paylaş", EN: "Share" })}</button>
                             <Link href="/game-engine/docs" className="flex h-9 w-full items-center justify-center gap-1.5 text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white">{tx({ TR: "Bu oyun nasıl yapıldı? Belgeler", EN: "How was this made? Docs" })}<ExternalLink className="h-3.5 w-3.5" /></Link>
+                            {game && !game.isOwner ? (
+                                signedIn ? (
+                                    <div className="border-t border-zinc-100 pt-2 dark:border-white/[0.06]">
+                                        <button type="button" onClick={() => setReportOpen((value) => !value)} aria-expanded={reportOpen} className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl text-[12px] font-semibold text-zinc-500 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400">
+                                            <Flag className="h-3.5 w-3.5" aria-hidden />{tx(C.report)}
+                                        </button>
+                                        {reportOpen ? (
+                                            <div className="mt-2 space-y-2 rounded-xl border border-red-200 bg-red-50/60 p-3 dark:border-red-500/20 dark:bg-red-500/[0.06]">
+                                                <label className="block text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">
+                                                    {tx(C.reportReason)}
+                                                    <select value={reportCategory} onChange={(event) => setReportCategory(event.target.value as ReportCategory)} className="mt-1 h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-[12.5px] font-normal dark:border-white/10 dark:bg-zinc-900">
+                                                        {REPORT_CATEGORIES.map((category) => <option key={category} value={category}>{tx(REPORT_LABELS[category])}</option>)}
+                                                    </select>
+                                                </label>
+                                                <label className="block text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">
+                                                    {tx(C.reportDetails)}
+                                                    <textarea value={reportReason} maxLength={1200} rows={3} onChange={(event) => setReportReason(event.target.value)} className="mt-1 w-full resize-none rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[12.5px] font-normal outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 dark:border-white/10 dark:bg-zinc-900" />
+                                                </label>
+                                                <button type="button" disabled={reporting || !reportReason.trim()} onClick={() => void sendReport()} className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-red-600 text-[12.5px] font-bold text-white transition hover:bg-red-700 disabled:opacity-50">
+                                                    {reporting ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Flag className="h-4 w-4" aria-hidden />}{tx(C.reportSend)}
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                ) : (
+                                    <Link href={signInHref} className="flex h-9 w-full items-center justify-center gap-1.5 text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white"><Flag className="h-3.5 w-3.5" aria-hidden />{tx(C.signInToReport)}</Link>
+                                )
+                            ) : null}
                             {notice ? (
                                 <p className="rounded-lg bg-zinc-100 px-3 py-2 text-[12px] text-zinc-600 dark:bg-white/5 dark:text-zinc-300" role="status">
                                     {notice}

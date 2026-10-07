@@ -3,7 +3,9 @@
 import { Camera, CheckCircle2, ExternalLink, Globe, LoaderCircle, Rocket, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ARCADE_GENRES, ARCADE_GENRE_LABELS, isArcadeGenre, type ArcadeGenre } from "@/lib/arcade-genres";
 import type { GameProjectDocument, ProjectSettings } from "@/lib/game-engine/types";
+import { useI18n } from "@/lib/i18n";
 import { useEditor } from "./context";
 import { activeScene, touch } from "./operations";
 import { ArcadeSettingsPanel } from "./ArcadeSettingsPanel";
@@ -208,15 +210,19 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
     const [thumbnail, setThumbnail] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     const [allowRemix, setAllowRemix] = useState(false);
+    const [genre, setGenre] = useState<ArcadeGenre>("other");
+    const { tx } = useI18n();
 
-    // A published game keeps its remix setting; read it so republishing doesn't change it by accident.
+    // A published game keeps its remix setting and genre; read them so republishing doesn't change them by accident.
     useEffect(() => {
         if (!open || !arcadeId) return;
         const controller = new AbortController();
         fetch(`/api/arcade/${encodeURIComponent(arcadeId)}`, { signal: controller.signal, cache: "no-store" })
             .then((response) => (response.ok ? response.json() : null))
-            .then((payload: { game?: { allowRemix?: unknown } } | null) => {
-                if (payload?.game) setAllowRemix(payload.game.allowRemix === true);
+            .then((payload: { game?: { allowRemix?: unknown; genre?: unknown } } | null) => {
+                if (!payload?.game) return;
+                setAllowRemix(payload.game.allowRemix === true);
+                if (isArcadeGenre(payload.game.genre)) setGenre(payload.game.genre);
             })
             .catch(() => undefined);
         return () => controller.abort();
@@ -227,7 +233,7 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
         try {
             if (!(await onSaveFirst())) throw new Error(t("saveFailed"));
             const image = thumbnail ?? await captureThumbnail(snapshot);
-            const result = await publishProject(project.id, { title: title.trim() || project.name, description: description.trim(), thumbnail: image, allowRemix });
+            const result = await publishProject(project.id, { title: title.trim() || project.name, description: description.trim(), thumbnail: image, allowRemix, genre });
             onPublished(result.arcadeId);
             toast(`${t("publishedAt")} 🎉`, "success");
         } catch (error) {
@@ -270,6 +276,9 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
                     ) : null}
                     <FieldRow label={t("publishTitle")}><TextInput value={title} maxLength={80} onChange={setTitle} commitOnBlur={false} /></FieldRow>
                     <FieldRow label={t("publishDescription")}><TextInput multiline value={description} maxLength={500} onChange={setDescription} commitOnBlur={false} /></FieldRow>
+                    <FieldRow label={tx({ TR: "Oyun türü", EN: "Genre" })}>
+                        <SelectInput value={genre} disabled={busy} onChange={setGenre} options={ARCADE_GENRES.map((value) => ({ value, label: tx(ARCADE_GENRE_LABELS[value]) }))} />
+                    </FieldRow>
                     <FieldRow label={t("thumbnail")}>
                         <div className="flex items-center gap-2">
                             {thumbnail ? (

@@ -65,6 +65,7 @@ const NAMES: Record<string, Copy> = {
     projects: { TR: "Kod projeleri", EN: "Code projects" },
     game_projects: { TR: "Oyun projeleri", EN: "Game projects" },
     arcade_games: { TR: "Arcade oyunları", EN: "Arcade games" },
+    arcade_ratings: { TR: "Arcade puanları", EN: "Arcade ratings" },
     media_posts: { TR: "Media gönderileri", EN: "Media posts" },
     security_rate_limits: { TR: "Hız sınırı pencereleri", EN: "Rate-limit windows" },
     calls: { TR: "Arama kayıtları", EN: "Call records" },

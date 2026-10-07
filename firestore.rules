@@ -91,6 +91,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Star ratings, one per player and game ({ gameId, rater, stars, updatedAt },
+    // `rater` a salted hash): /api/arcade/{id}/rating writes them together with
+    // the game's totals, so browsers can neither read nor write them.
+    match /arcade_ratings/{ratingId} {
+      allow read, write: if false;
+    }
+
     // Leaderboard entries and unlocked achievements (V5): only the Arcade
     // routes write them, after checking the play token and the game's rules.
     match /arcade_scores/{entryId} {

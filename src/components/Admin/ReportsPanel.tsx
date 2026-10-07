@@ -1,9 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Code2, Download, FileWarning, Flag, Heart, MessageCircle, RefreshCw, RotateCcw, Trash2, X } from "lucide-react";
+import { Check, Code2, Download, FileWarning, Flag, Gamepad2, Heart, MessageCircle, Play, RefreshCw, RotateCcw, SquareArrowOutUpRight, Star, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { ARCADE_GENRE_LABELS, normalizeArcadeGenre } from "@/lib/arcade-genres";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { REPORT_CATEGORIES } from "@/lib/reports";
 import { adminPost, adminRequest, type ApiFailure } from "./api";
 import { CATEGORY_COPY, COMMON } from "./copy";
 import { useCounters } from "./counters";
@@ -17,7 +19,10 @@ import {
 } from "./ui";
 import { CATEGORY_TONES } from "./tones";
 
-const CATEGORIES: ReportCategory[] = ["malware", "copyright", "personal_data", "spam", "other"];
+const CATEGORIES: readonly ReportCategory[] = REPORT_CATEGORIES;
+
+/** What a report is about, so the reports of one post or game can be closed together. */
+const targetKey = (report: AdminReport) => (report.kind === "arcade" ? `arcade:${report.gameId}` : `media:${report.postId}`);
 
 const RESOLUTION_COPY: Record<string, Copy> = {
     resolved: { TR: "Çözüldü", EN: "Resolved" },
@@ -104,6 +109,21 @@ function CodeViewer({ report, onClose }: { report: AdminReport | null; onClose: 
     );
 }
 
+/** Opens the reported game in a new tab. */
+function GameLink({ gameId }: { gameId: string }) {
+    const { tx } = useI18n();
+    return (
+        <a
+            href={`/arcade/${encodeURIComponent(gameId)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-8 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]"
+        >
+            <SquareArrowOutUpRight className="h-4 w-4" aria-hidden="true" />{tx({ TR: "Oyunu aç", EN: "Open the game" })}
+        </a>
+    );
+}
+
 function ReportCard({ report, closedView, busy, onResolve, onDismiss, onRemove, onReopen, onViewCode }: {
     report: AdminReport;
     closedView: boolean;
@@ -126,10 +146,15 @@ function ReportCard({ report, closedView, busy, onResolve, onDismiss, onRemove, 
         >
             <div className="flex flex-wrap items-center gap-2 text-[12px] text-zinc-500">
                 <Badge tone={CATEGORY_TONES[report.category]} icon={Flag}>{tx(CATEGORY_COPY[report.category])}</Badge>
+                {report.kind === "arcade" ? <Badge tone="indigo" icon={Gamepad2}>Arcade</Badge> : null}
                 {report.postReportCount > 1 ? (
-                    <Badge tone="amber">{closedView
-                        ? tx({ TR: "Bu gönderiye toplam {count} bildirim", EN: "{count} reports on this post in all" }, { count: report.postReportCount })
-                        : tx({ TR: "Bu gönderiye {count} açık bildirim", EN: "{count} open reports on this post" }, { count: report.postReportCount })}
+                    <Badge tone="amber">{report.kind === "arcade"
+                        ? closedView
+                            ? tx({ TR: "Bu oyuna toplam {count} bildirim", EN: "{count} reports on this game in all" }, { count: report.postReportCount })
+                            : tx({ TR: "Bu oyuna {count} açık bildirim", EN: "{count} open reports on this game" }, { count: report.postReportCount })
+                        : closedView
+                            ? tx({ TR: "Bu gönderiye toplam {count} bildirim", EN: "{count} reports on this post in all" }, { count: report.postReportCount })
+                            : tx({ TR: "Bu gönderiye {count} açık bildirim", EN: "{count} open reports on this post" }, { count: report.postReportCount })}
                     </Badge>
                 ) : null}
                 <RelativeTime iso={report.createdAt} />
@@ -139,7 +164,22 @@ function ReportCard({ report, closedView, busy, onResolve, onDismiss, onRemove, 
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-800 dark:text-zinc-200" dir="auto">{report.reason}</p>
 
             <div className="mt-3 rounded-xl border border-zinc-100 bg-zinc-50 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                {post ? (
+                {report.kind === "arcade" ? (report.game ? (
+                    <>
+                        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400"><Gamepad2 className="h-3.5 w-3.5" aria-hidden="true" />{tx({ TR: "Bildirilen Arcade oyunu", EN: "Reported Arcade game" })}</p>
+                        <p className="mt-1 truncate text-sm font-black text-zinc-900 dark:text-white" dir="auto">{report.game.title || tx({ TR: "Adsız oyun", EN: "Untitled game" })}</p>
+                        {report.game.description ? <p className="mt-0.5 line-clamp-2 text-[12px] text-zinc-500" dir="auto">{report.game.description}</p> : null}
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500">
+                            <span>{report.game.authorName || "—"} <span dir="ltr">({report.game.ownerEmail || "—"})</span></span>
+                            <span>{report.game.dimension.toUpperCase()} · {tx(ARCADE_GENRE_LABELS[normalizeArcadeGenre(report.game.genre)])}</span>
+                            <span className="inline-flex items-center gap-1"><Play className="h-3 w-3" aria-hidden="true" />{report.game.plays}</span>
+                            <span className="inline-flex items-center gap-1"><Heart className="h-3 w-3" aria-hidden="true" />{report.game.likes}</span>
+                            {report.game.ratingAverage !== null ? <span className="inline-flex items-center gap-1"><Star className="h-3 w-3" aria-hidden="true" />{report.game.ratingAverage} ({report.game.ratingCount})</span> : null}
+                        </div>
+                    </>
+                ) : (
+                    <p className="flex items-center gap-2 text-[13px] text-zinc-500"><FileWarning className="h-4 w-4" aria-hidden="true" />{tx({ TR: "Oyun artık Arcade'de değil.", EN: "The game is no longer on the Arcade." })}</p>
+                )) : post ? (
                     <>
                         <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">{tx({ TR: "Bildirilen gönderi", EN: "Reported post" })}</p>
                         <p className="mt-1 truncate text-sm font-black text-zinc-900 dark:text-white" dir="auto">{post.title || tx({ TR: "İsimsiz proje", EN: "Untitled project" })}</p>
@@ -165,6 +205,7 @@ function ReportCard({ report, closedView, busy, onResolve, onDismiss, onRemove, 
                     {report.resolvedBy ? <span dir="ltr">· {report.resolvedBy}</span> : null}
                     <span className="flex-1" />
                     {post ? <Button size="sm" variant="ghost" icon={Code2} onClick={onViewCode}>{tx({ TR: "Kodu incele", EN: "Inspect code" })}</Button> : null}
+                    {report.game ? <GameLink gameId={report.gameId} /> : null}
                     {report.resolution !== "content_removed" ? (
                         <Button size="sm" variant="ghost" icon={RotateCcw} disabled={busy} onClick={onReopen}>{tx({ TR: "Yeniden aç", EN: "Reopen" })}</Button>
                     ) : null}
@@ -173,6 +214,7 @@ function ReportCard({ report, closedView, busy, onResolve, onDismiss, onRemove, 
             ) : (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                     {post ? <Button size="sm" variant="ghost" icon={Code2} onClick={onViewCode}>{tx({ TR: "Kodu incele", EN: "Inspect code" })}</Button> : null}
+                    {report.game ? <GameLink gameId={report.gameId} /> : null}
                     {post ? (
                         <a
                             href={`/api/media/${encodeURIComponent(report.postId)}/download`}
@@ -184,7 +226,7 @@ function ReportCard({ report, closedView, busy, onResolve, onDismiss, onRemove, 
                     <span className="flex-1" />
                     <Button size="sm" variant="ghost" icon={X} disabled={busy} onClick={onDismiss}>{tx({ TR: "Reddet", EN: "Dismiss" })}</Button>
                     <Button size="sm" variant="success" icon={Check} disabled={busy} onClick={onResolve}>{tx({ TR: "Çözüldü", EN: "Resolve" })}</Button>
-                    <Button size="sm" variant="danger" icon={Trash2} disabled={busy} onClick={onRemove}>{tx({ TR: "İçeriği kaldır", EN: "Remove content" })}</Button>
+                    <Button size="sm" variant="danger" icon={Trash2} disabled={busy} onClick={onRemove}>{report.kind === "arcade" ? tx({ TR: "Oyunu kaldır", EN: "Remove game" }) : tx({ TR: "İçeriği kaldır", EN: "Remove content" })}</Button>
                 </div>
             )}
         </motion.li>
@@ -209,7 +251,7 @@ export default function ReportsPanel({ view, onViewChange }: { view: "open" | "c
     const showRows = !reports.stale || reports.loading;
     const list = useMemo(() => (showRows ? reports.data?.items ?? [] : []), [reports.data, showRows]);
     const counts = useMemo(() => {
-        const result: Record<ReportCategory, number> = { malware: 0, copyright: 0, personal_data: 0, spam: 0, other: 0 };
+        const result = Object.fromEntries(CATEGORIES.map((category) => [category, 0])) as Record<ReportCategory, number>;
         for (const report of list) result[report.category] += 1;
         return result;
     }, [list]);
@@ -275,12 +317,15 @@ export default function ReportsPanel({ view, onViewChange }: { view: "open" | "c
             return;
         }
         const closed = new Set(result.data.closedReportIds);
-        reports.mutate((current) => ({ ...current, items: current.items.filter((item) => !closed.has(item.id) && item.postId !== removal.postId) }));
+        const removedTarget = targetKey(removal);
+        reports.mutate((current) => ({ ...current, items: current.items.filter((item) => !closed.has(item.id) && targetKey(item) !== removedTarget) }));
         refreshCounters();
         setRemoval(null);
         toast(result.data.cleanup === "partial" ? "info" : "success", result.data.cleanup === "partial"
             ? tx({ TR: "Gönderi kaldırıldı; bazı yorum ve beğeniler sonra temizlenecek.", EN: "Post removed; some comments and likes will be cleaned up later." })
-            : tx({ TR: "Gönderi kaldırıldı ve {count} bildirim kapatıldı.", EN: "Post removed and {count} reports closed." }, { count: result.data.closedReportIds.length }));
+            : removal.kind === "arcade"
+                ? tx({ TR: "Oyun Arcade'den kaldırıldı ve {count} bildirim kapatıldı.", EN: "Game removed from the Arcade and {count} reports closed." }, { count: result.data.closedReportIds.length })
+                : tx({ TR: "Gönderi kaldırıldı ve {count} bildirim kapatıldı.", EN: "Post removed and {count} reports closed." }, { count: result.data.closedReportIds.length }));
     };
 
     const count = (value: number | null | undefined) => (typeof value === "number" ? value : undefined);
@@ -319,7 +364,7 @@ export default function ReportsPanel({ view, onViewChange }: { view: "open" | "c
                 <EmptyState
                     icon={Flag}
                     title={view === "open" ? tx({ TR: "Kuyruk temiz", EN: "The queue is clear" }) : tx({ TR: "Kapatılmış bildirim yok", EN: "No closed reports" })}
-                    description={view === "open" ? tx({ TR: "Açık Media bildirimi yok. Yeni bildirimler burada görünür.", EN: "There are no open Media reports. New ones will appear here." }) : undefined}
+                    description={view === "open" ? tx({ TR: "Açık Media veya Arcade bildirimi yok. Yeni bildirimler burada görünür.", EN: "There are no open Media or Arcade reports. New ones will appear here." }) : undefined}
                 />
             ) : (
                 <ul className={cx("space-y-3 transition-opacity", reports.loading && "opacity-60")}>
@@ -357,9 +402,13 @@ export default function ReportsPanel({ view, onViewChange }: { view: "open" | "c
                 error={removalError}
                 icon={Trash2}
                 title={tx({ TR: "İçerik kaldırılsın mı?", EN: "Remove this content?" })}
-                description={removal?.post
-                    ? tx({ TR: "\"{title}\" gönderisi, dosyaları, yorumları ve beğenileri kalıcı olarak silinir. Bu gönderiye ait tüm açık bildirimler kapatılır.", EN: "The post \"{title}\" and its files, comments and likes are deleted permanently. All open reports on it are closed." }, { title: removal.post.title || "—" })
-                    : tx({ TR: "Gönderi zaten silinmiş; açık bildirimleri kapatılır.", EN: "The post is already gone; its open reports will be closed." })}
+                description={removal?.kind === "arcade"
+                    ? removal.game
+                        ? tx({ TR: "\"{title}\" oyunu Arcade'den kaldırılır; beğenileri, puanları, skorları ve başarımları silinir. Geliştiricinin motor projesi kalır. Bu oyuna ait tüm açık bildirimler kapatılır.", EN: "The game \"{title}\" is removed from the Arcade with its likes, ratings, scores and achievements. The developer's engine project is kept. All open reports on it are closed." }, { title: removal.game.title || "—" })
+                        : tx({ TR: "Oyun zaten Arcade'de değil; açık bildirimleri kapatılır.", EN: "The game is already gone; its open reports will be closed." })
+                    : removal?.post
+                        ? tx({ TR: "\"{title}\" gönderisi, dosyaları, yorumları ve beğenileri kalıcı olarak silinir. Bu gönderiye ait tüm açık bildirimler kapatılır.", EN: "The post \"{title}\" and its files, comments and likes are deleted permanently. All open reports on it are closed." }, { title: removal.post.title || "—" })
+                        : tx({ TR: "Gönderi zaten silinmiş; açık bildirimleri kapatılır.", EN: "The post is already gone; its open reports will be closed." })}
                 confirmLabel={tx({ TR: "Kalıcı olarak kaldır", EN: "Remove permanently" })}
                 confirmDisabled={note.length > MODERATOR_NOTE_MAX}
             >

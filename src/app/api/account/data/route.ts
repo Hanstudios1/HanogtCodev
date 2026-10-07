@@ -223,7 +223,7 @@ export async function GET() {
             return NextResponse.json({ error: "Çok fazla dışa aktarma isteği. Biraz sonra tekrar deneyin." }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }) });
         }
 
-        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats, subscription, waitlist, aiConnections, aiApiKeys, stars, warnings, mutes, reportsMade, arcadeScores, arcadeAchievements] = await Promise.all([
+        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats, subscription, waitlist, aiConnections, aiApiKeys, stars, warnings, mutes, reportsMade, arcadeScores, arcadeAchievements, arcadeRatings] = await Promise.all([
             getServerDocument<Record<string, unknown>>(`users/${email}`),
             queryServerCollection<Record<string, unknown>>("projects", "email", "EQUAL", email),
             queryServerCollection<Record<string, unknown>>("game_projects", "ownerEmail", "EQUAL", email),
@@ -250,6 +250,8 @@ export async function GET() {
             // Arcade leaderboard entries and unlocked achievements (V5), kept under the same pseudonymous id as likes.
             queryServerCollection<Record<string, unknown>>("arcade_scores", "player", "EQUAL", likerHash(email), { limit: 1000 }).catch(() => []),
             queryServerCollection<Record<string, unknown>>("arcade_achievements", "player", "EQUAL", likerHash(email), { limit: 1000 }).catch(() => []),
+            // Arcade star ratings the user gave, under the same pseudonymous id.
+            queryServerCollection<Record<string, unknown>>("arcade_ratings", "rater", "EQUAL", likerHash(email), { limit: 1000 }).catch(() => []),
         ]);
         const exportedProjects = await Promise.all(projects.map(async (project) => ({
             ...publicAccountData(project),
@@ -278,6 +280,7 @@ export async function GET() {
             arcadeLikes: arcadeLikes.map((like) => ({ gameId: like.gameId, createdAt: like.createdAt })),
             arcadeScores: arcadeScores.map((entry) => ({ gameId: entry.gameId, board: entry.boardId, name: entry.name, score: entry.score, achievedAt: entry.achievedAt })),
             arcadeAchievements: arcadeAchievements.map((record) => ({ gameId: record.gameId, unlocked: record.unlocked && typeof record.unlocked === "object" ? record.unlocked : {} })),
+            arcadeRatings: arcadeRatings.map((rating) => ({ gameId: rating.gameId, stars: rating.stars, updatedAt: rating.updatedAt })),
             arenaVotes: arenaVotes.map((vote) => ({ category: vote.category, a: vote.a, b: vote.b, result: vote.result, day: vote.day })),
             mediaPosts: mediaPosts.map((post) => publicAccountData(post)),
             // Other members' e-mail addresses are their personal data, not the requester's:

@@ -4,6 +4,8 @@
  * here so both server and client code can import it.
  */
 
+import type { ReportCategory, ReportKind } from "@/lib/reports";
+
 export type StaffRole = "owner" | "admin" | "moderator";
 export type UserRole = StaffRole | "user";
 /** Roles that can be stored in users/{email}.role ("user" removes the field). */
@@ -233,7 +235,8 @@ export const SUSPEND_REASON_MAX = 500;
 // Moderation
 // ---------------------------------------------------------------------------
 
-export type ReportCategory = "malware" | "copyright" | "personal_data" | "spam" | "other";
+/** Media and Arcade reports share one queue (src/lib/reports.ts). */
+export type { ReportCategory, ReportKind } from "@/lib/reports";
 export type ReportStatus = "open" | "resolved" | "dismissed";
 
 export type AdminReportPost = {
@@ -248,9 +251,27 @@ export type AdminReportPost = {
     createdAt: string | null;
 };
 
+/** The reported Arcade game (without its content). */
+export type AdminReportGame = {
+    title: string;
+    description: string;
+    ownerEmail: string;
+    authorName: string;
+    dimension: "2d" | "3d";
+    genre: string;
+    plays: number;
+    likes: number;
+    ratingCount: number;
+    ratingAverage: number | null;
+    createdAt: string | null;
+};
+
 export type AdminReport = {
     id: string;
+    /** What the report is about: a Media post (postId, post) or an Arcade game (gameId, game). */
+    kind: ReportKind;
     postId: string;
+    gameId: string;
     category: ReportCategory;
     reason: string;
     status: ReportStatus;
@@ -260,10 +281,12 @@ export type AdminReport = {
     resolvedAt: string | null;
     resolvedBy: string | null;
     moderatorNote: string | null;
-    /** Open reports about the same post in this result. */
+    /** Open reports about the same post or game (closed tab: all of them). */
     postReportCount: number;
-    /** `null` when the post no longer exists. */
+    /** `null` when the post no longer exists (or the report is about a game). */
     post: AdminReportPost | null;
+    /** `null` when the game no longer exists (or the report is about a post). */
+    game: AdminReportGame | null;
 };
 
 /** A page of reports (open: newest first; closed: last closed first) and how many each tab holds. */
@@ -401,6 +424,7 @@ export type AdminAuditAction =
     | "report.dismiss"
     | "report.reopen"
     | "report.remove_content"
+    | "report.remove_game"
     | "media.cleanup_incomplete"
     | "news_comment.delete"
     | "arcade.unpublish"

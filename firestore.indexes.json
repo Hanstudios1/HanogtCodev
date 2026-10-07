@@ -133,6 +133,124 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "resolvedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "likeCount", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "downloadCount", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "languages", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "languages", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "likeCount", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "languages", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "downloadCount", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "likeCount", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "downloadCount", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genre", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "plays", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genre", "order": "ASCENDING" },
+        { "fieldPath": "plays", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ratingScore", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genre", "order": "ASCENDING" },
+        { "fieldPath": "ratingScore", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "creatorId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -235,6 +353,45 @@
         { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" },
         { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
       ]
+    },
+    {
+      "collectionGroup": "media_comments",
+      "fieldPath": "text",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "fieldPath": "game",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "arcade_games",
+      "fieldPath": "thumbnail",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "arcade_ratings",
+      "fieldPath": "gameId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_ratings",
+      "fieldPath": "rater",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "arcade_ratings",
+      "fieldPath": "stars",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "arcade_ratings",
+      "fieldPath": "updatedAt",
+      "indexes": []
     }
   ]
 }

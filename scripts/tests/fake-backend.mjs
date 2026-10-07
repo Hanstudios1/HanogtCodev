@@ -328,6 +328,16 @@ export function createBackend(seed, options = {}) {
                 options.afterCommit?.(body.writes);
                 return json(200, result);
             }
+            if (rest === ":batchGet") {
+                // Like the REST API: one entry per name, `found` (with an optional field mask) or `missing`.
+                const fields = body.mask?.fieldPaths;
+                return json(200, body.documents.map((name) => {
+                    const path = pathOf(name);
+                    if (!docs.has(path)) return { missing: name, readTime: "2026-10-01T00:00:00Z" };
+                    const document = documentJson(path);
+                    return { found: fields ? { ...document, fields: Object.fromEntries(Object.entries(document.fields).filter(([key]) => fields.includes(key))) } : document, readTime: "2026-10-01T00:00:00Z" };
+                }));
+            }
             if (rest.endsWith(":runQuery")) {
                 const parent = rest.slice(0, -":runQuery".length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
                 return runQuery(parent, body.structuredQuery);

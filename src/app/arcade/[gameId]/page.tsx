@@ -17,7 +17,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         });
         if (!record) return { title: "Arcade" };
         const description = (record.description || `${record.authorName ?? "Bir geliştirici"} tarafından Hanogt Engine ile yapıldı. Tarayıcıda oyna.`).slice(0, 180);
-        return { title: `${record.title} — Arcade`, description, openGraph: { title: record.title, description } };
+        // og:image comes from ./opengraph-image.tsx; without twitter images, X uses that card too.
+        return {
+            title: `${record.title} — Arcade`,
+            description,
+            openGraph: { title: record.title, description, type: "website" },
+            twitter: { card: "summary_large_image", title: record.title, description },
+        };
     } catch {
         return { title: "Arcade" };
     }

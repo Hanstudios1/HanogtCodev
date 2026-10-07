@@ -9,4 +9,4 @@ export const RISK_TONES: Record<SecurityRisk, Tone> = { critical: "red", high: "
 
 export const FEEDBACK_STATUS_TONES: Record<FeedbackStatus, Tone> = { open: "sky", planned: "violet", "in-progress": "amber", done: "emerald", closed: "zinc" };
 
-export const CATEGORY_TONES: Record<ReportCategory, Tone> = { malware: "red", copyright: "violet", personal_data: "amber", spam: "sky", other: "zinc" };
+export const CATEGORY_TONES: Record<ReportCategory, Tone> = { malware: "red", copyright: "violet", personal_data: "amber", inappropriate: "fuchsia", spam: "sky", other: "zinc" };

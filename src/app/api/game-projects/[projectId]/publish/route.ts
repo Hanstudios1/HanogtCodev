@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
+import { isArcadeGenre, normalizeArcadeGenre } from "@/lib/arcade-genres";
+import { ratingFields, readRatingTotals } from "@/lib/arcade-ratings";
 import { nowIso } from "@/lib/game-engine/ids";
 import { compileScripts } from "@/lib/game-engine/script/compiler";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
-import { MAX_ARCADE_GAME_BYTES, remixSourceOf, type ArcadeRecord } from "@/lib/server/arcade";
+import { MAX_ARCADE_GAME_BYTES, creatorIdOf, remixSourceOf, type ArcadeRecord } from "@/lib/server/arcade";
 import { clearChangedBoards, removeArcadeGame } from "@/lib/server/arcade-scores";
 import { commitServerMutations, getServerDocument, listServerCollection } from "@/lib/server/firebase-rest";
 import { missingGameAudio, syncArcadeAudio } from "@/lib/server/game-assets";
@@ -32,8 +34,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const { email, session, user, rate } = await authorizeGameRequest(request, { mutation: true, bucket: "write" });
         const projectId = assertProjectId((await context.params).projectId);
         const body = await readJsonBody(request, 200 * 1024);
-        assertOnlyKeys(body, ["title", "description", "thumbnail", "allowRemix"]);
+        assertOnlyKeys(body, ["title", "description", "thumbnail", "allowRemix", "genre"]);
         if (body.allowRemix !== undefined && typeof body.allowRemix !== "boolean") throw new GameApiError(400, "Geçersiz remiks ayarı.");
+        if (body.genre !== undefined && !isArcadeGenre(body.genre)) throw new GameApiError(400, "Geçersiz oyun türü.");
         const record = await loadOwnedProject(projectId, email);
         const scripts = (await listServerCollection<GameScriptRecord>(`game_projects/${projectId}/scripts`, 200)).filter((script) => script.ownerEmail === email);
         const project = assembleProject(record, projectId, scripts);
@@ -90,6 +93,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
             likes: Number(existing?.likes || 0),
             // Remixing stays off unless the author turns it on; republishing keeps the last choice.
             allowRemix: typeof body.allowRemix === "boolean" ? body.allowRemix : existing?.allowRemix === true,
+            // One genre per game; republishing without one keeps the current genre ("other" for older games).
+            genre: isArcadeGenre(body.genre) ? body.genre : normalizeArcadeGenre(existing?.genre),
+            creatorId: creatorIdOf(email),
+            // Ratings stay with the game; a new game (or one from before ratings) starts without any.
+            ...(!existing || typeof existing.ratingScore !== "number" ? ratingFields(readRatingTotals(existing ?? {})) : {}),
             remixOf: remixSourceOf(record.remixOf),
             // Leaderboards and achievements (V5): scores are checked against this copy without reading the game.
             arcade: project.settings.arcade,

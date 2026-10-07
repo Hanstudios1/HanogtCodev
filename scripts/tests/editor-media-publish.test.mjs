@@ -43,8 +43,10 @@ test("file limits match the server", () => {
 test("tags, titles, descriptions and licenses are cleaned", () => {
     assert.deepEqual(splitMediaTags("web, araç;oyun، 工具、x"), ["web", "araç", "oyun", "工具", "x"]);
     assert.deepEqual(cleanMediaTags("Web, #Araç, web,  game   dev , İSTANBUL"), ["web", "araç", "game-dev", "istanbul"]);
-    assert.deepEqual(cleanMediaTags(["a", "b", "c", "d", "e", "f", "g"]).length, 6);
-    assert.equal(cleanMediaTags(["x".repeat(40)])[0].length, MEDIA_LIMITS.tagLength);
+    assert.equal(MEDIA_LIMITS.tags, 5);
+    assert.deepEqual(cleanMediaTags(["a", "b", "c", "d", "e", "f", "g"]).length, MEDIA_LIMITS.tags);
+    // The lenient cleaner (older posts, previews) leaves out what the tag rules refuse.
+    assert.deepEqual(cleanMediaTags(["x".repeat(40), "c++", "工具", "ok"]), ["ok"]);
     assert.deepEqual(cleanMediaTags([1, null, "  ", "#"]), []);
     assert.equal(cleanMediaTitle("  Hesap\nmakinesi\u0000 "), "Hesap makinesi");
     assert.equal(cleanMediaTitle("x".repeat(150)).length, MEDIA_LIMITS.title);

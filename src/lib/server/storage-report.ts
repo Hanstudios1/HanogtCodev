@@ -24,6 +24,7 @@ export const STORAGE_COLLECTIONS: readonly CollectionInfo[] = [
     { id: "projects", group: "content" },
     { id: "game_projects", group: "content" },
     { id: "arcade_games", group: "content" },
+    { id: "arcade_ratings", group: "content" },
     { id: "media_posts", group: "content" },
     { id: "security_rate_limits", group: "expiring" },
     { id: "calls", group: "expiring" },

@@ -23,8 +23,12 @@ export const MEDIA_LIMITS = {
     fileBytes: 1_000_000,
     title: 100,
     description: 1200,
-    tags: 6,
+    tags: 5,
     tagLength: 24,
+    /** Characters in a comment. */
+    comment: 500,
+    /** Comments one post can collect. */
+    commentsPerPost: 200,
 } as const;
 
 export const MEDIA_LICENSES = ["all-rights-reserved", "MIT", "Apache-2.0", "GPL-3.0"] as const;
@@ -51,24 +55,76 @@ export function splitMediaTags(text: string): string[] {
     return text.split(/[,،、，;؛]/).map((tag) => tag.trim()).filter(Boolean);
 }
 
-/** "Web, #Araç, web" → ["web", "araç"]: lower case, no "#", spaces as "-", unique, ≤ 6 tags of ≤ 24 characters. */
+/**
+ * A tag is lower case: Latin letters (with the Turkish ç ğ ı ö ş ü), digits
+ * and single hyphens between them, at most 24 characters ("game-dev", "2d",
+ * "araç"). The post's languages are offered as ready tags (registry ids such
+ * as "python" or "objective-c" fit the same pattern).
+ */
+export const MEDIA_TAG_PATTERN = /^[a-z0-9çğıöşü]+(?:-[a-z0-9çğıöşü]+)*$/;
+
+/** What a typed tag becomes: "#Game Dev" → "game-dev", "İSTANBUL" → "istanbul"; "" when nothing is left. */
+export function normalizeMediaTag(value: unknown): string {
+    if (typeof value !== "string") return "";
+    return value
+        .normalize("NFC")
+        .replace(/[\u0000-\u001f\u007f]/g, "")
+        // "İ".toLowerCase() is "i" plus a combining dot.
+        .replace(/İ/g, "i")
+        .toLowerCase()
+        .trim()
+        .replace(/^#+/, "")
+        .replace(/[\s_]+/g, "-")
+        .replace(/-{2,}/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+export function isValidMediaTag(tag: unknown): tag is string {
+    return typeof tag === "string" && tag.length > 0 && tag.length <= MEDIA_LIMITS.tagLength && MEDIA_TAG_PATTERN.test(tag);
+}
+
+/** The post's languages that can be offered as tags, in order. */
+export function mediaTagSuggestions(languages: readonly string[]): string[] {
+    return [...new Set(languages.map(normalizeMediaTag).filter(isValidMediaTag))].slice(0, 12);
+}
+
+export type MediaTagsError = "too_many_tags" | "invalid_tag";
+
+/**
+ * The server's check of the tags sent with a post: each one is normalized
+ * (see normalizeMediaTag), empty ones and repeats are dropped, and the rest
+ * must fit MEDIA_TAG_PATTERN, at most MEDIA_LIMITS.tags of them. `languages`
+ * (the post's languages) are accepted as tags as they are.
+ */
+export function checkMediaTags(value: unknown, languages: readonly string[] = []): { ok: true; tags: string[] } | { ok: false; error: MediaTagsError; tag?: string } {
+    if (value === undefined || value === null || value === "") return { ok: true, tags: [] };
+    const list: unknown[] = typeof value === "string" ? splitMediaTags(value) : Array.isArray(value) ? value : [value];
+    if (list.length > 50) return { ok: false, error: "too_many_tags" };
+    const offered = new Set(mediaTagSuggestions(languages));
+    const tags: string[] = [];
+    for (const item of list) {
+        if (typeof item !== "string") return { ok: false, error: "invalid_tag", tag: "" };
+        const tag = normalizeMediaTag(item);
+        if (!tag || tags.includes(tag)) continue;
+        if (!offered.has(tag) && !isValidMediaTag(tag)) return { ok: false, error: "invalid_tag", tag: item.trim().slice(0, 40) };
+        tags.push(tag);
+    }
+    if (tags.length > MEDIA_LIMITS.tags) return { ok: false, error: "too_many_tags" };
+    return { ok: true, tags };
+}
+
+/**
+ * Lenient version for display and for older posts: "Web, #Araç, web" →
+ * ["web", "araç"]; tags that don't fit the pattern are left out, at most
+ * MEDIA_LIMITS.tags remain.
+ */
 export function cleanMediaTags(value: unknown): string[] {
     const list: unknown[] = typeof value === "string" ? splitMediaTags(value) : Array.isArray(value) ? value : [];
     const tags: string[] = [];
     for (const item of list) {
         if (tags.length >= MEDIA_LIMITS.tags) break;
-        if (typeof item !== "string") continue;
-        const tag = item
-            .replace(/[\u0000-\u001f\u007f]/g, "")
-            // "İ".toLowerCase() is "i" plus a combining dot.
-            .replace(/İ/g, "i")
-            .toLowerCase()
-            .replace(/^[\s#]+/, "")
-            .trim()
-            .replace(/\s+/g, "-")
-            .slice(0, MEDIA_LIMITS.tagLength)
-            .replace(/-+$/, "");
-        if (tag && !tags.includes(tag)) tags.push(tag);
+        const tag = normalizeMediaTag(item);
+        if (isValidMediaTag(tag) && !tags.includes(tag)) tags.push(tag);
     }
     return tags;
 }

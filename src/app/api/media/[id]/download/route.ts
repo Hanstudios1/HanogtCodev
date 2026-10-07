@@ -1,8 +1,9 @@
 import JSZip from "jszip";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { fileExtensionFor, languageFromFileName, normalizeLanguageId } from "@/lib/runtimes/languages";
 import { getServerDocument, listServerCollection } from "@/lib/server/firebase-rest";
-import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { countMediaDownload } from "@/lib/server/media";
+import { enforceRateLimit, memoryRateLimit } from "@/lib/server/rate-limit";
 import { getClientKey, jsonSecurityHeaders } from "@/lib/server/request-security";
 
 type MediaPost = { title?: string; status?: string; license?: string };
@@ -47,6 +48,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     if (!post || post.status !== "published") return NextResponse.json({ error: "Proje bulunamadı." }, { status: 404 });
     const files = await listServerCollection<MediaFile>(`media_posts/${id}/files`, 50);
     if (!files.length) return NextResponse.json({ error: "Dosya bulunamadı." }, { status: 404 });
+    // "Most downloaded" counts a visitor once per post every six hours; the check lives in memory, so nothing is stored for it.
+    if (memoryRateLimit(`media-download-count:${getClientKey(request)}:${id}`, 1, 6 * 60 * 60_000).allowed) {
+        after(() => countMediaDownload(id).catch(() => undefined));
+    }
     const sorted = files.sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
     if (sorted.length === 1) {
         const file = sorted[0];
