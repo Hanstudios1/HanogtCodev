@@ -1,22 +1,22 @@
 import { after, NextRequest, NextResponse } from "next/server";
-import { PLAN_RUN_LIMITS, RUN_FILES_PER_REQUEST } from "@/lib/plans";
+import { PLAN_RUN_LIMITS, PLAN_RUN_SIZES, RUN_FILES_PER_REQUEST } from "@/lib/plans";
 import { normalizeLanguageId } from "@/lib/runtimes/languages";
 import { RunnerError, SERVER_LANGUAGES, runFiles, runnerName, type RunFile } from "@/lib/server/code-runner";
 import { createServerDocument, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
 import { memoryRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
-import { enforceRunQuota } from "@/lib/server/run-limits";
+import { checkRunSize, enforceRunQuota } from "@/lib/server/run-limits";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
 import { getSignedInSession } from "@/lib/server/active-session";
 
 // Compiling on the public runner can take a while (Rust, Swift, Haskell).
 export const maxDuration = 60;
 
-const MAX_CODE_LENGTH = 50_000;
-const MAX_PROJECT_LENGTH = 150_000;
 /** Files one request runs; the editor splits a bigger run (up to the plan's PLAN_RUN_LIMITS) into several requests. */
 const MAX_RUNNABLE_FILES = RUN_FILES_PER_REQUEST;
-const MAX_STDIN_LENGTH = 10_000;
+/** Sizes are the plan's (PLAN_RUN_SIZES); a request bigger than any plan allows is refused before anything is read. */
+const ANY_PLAN_SIZES = PLAN_RUN_SIZES.pro;
+const count = (value: number) => value.toLocaleString("tr-TR");
 /** Requests a minute from one person on one server instance, before anything is read: the plan's file count is the real limit. */
 const REQUESTS_PER_MINUTE = Math.ceil(Math.max(...Object.values(PLAN_RUN_LIMITS).map((limits) => limits.perMinute)) / 2);
 
@@ -91,13 +91,24 @@ export async function POST(request: NextRequest) {
     const unsupported = requestedFiles.find((file) => !SERVER_LANGUAGES.has(file.language));
     if (unsupported) return fail(`"${unsupported.language || "?"}" dili çalıştırılamıyor.`, 400, "unsupported_language", { language: unsupported.language.slice(0, 40) });
     if (requestedFiles.some((file) => !file.code.trim())) return fail("Çalıştırılacak dosyalar boş olamaz.", 400, "empty_file");
-    if (requestedFiles.some((file) => file.code.length > MAX_CODE_LENGTH) || requestedFiles.reduce((total, file) => total + file.code.length, 0) > MAX_PROJECT_LENGTH) {
-        return fail("Çalıştırma, dosya başına 50.000 ve toplam 150.000 karakter sınırını aşıyor.", 413, "too_large");
+    // How big a run may be is the plan's: Free 50,000 characters a file, 150,000 a request and 10,000 of input; Plus and Pro more.
+    const fileChars = requestedFiles.map((file) => file.code.length);
+    const onLate = (work: Promise<unknown>) => after(() => work.then(() => undefined, () => undefined));
+    const tooBigForAnyPlan = fileChars.some((chars) => chars > ANY_PLAN_SIZES.fileChars) || fileChars.reduce((total, chars) => total + chars, 0) > ANY_PLAN_SIZES.requestChars || stdin.length > ANY_PLAN_SIZES.stdinChars;
+    const size = tooBigForAnyPlan ? null : await checkRunSize(email, fileChars, stdin.length, { onLate });
+    if (!size || !size.ok) {
+        // Bigger than every plan allows: the largest sizes are shown (largest: true) and no plan is read.
+        const sizes = size?.sizes ?? ANY_PLAN_SIZES;
+        return fail(
+            `${size ? "Çalıştırma, planınızın sınırını aşıyor" : "Çalıştırma, en büyük planın sınırını da aşıyor"}: dosya başına ${count(sizes.fileChars)}, toplam ${count(sizes.requestChars)} karakter ve ${count(sizes.stdinChars)} karakter girdi.`,
+            413,
+            "too_large",
+            { sizes: { fileChars: sizes.fileChars, requestChars: sizes.requestChars, stdinChars: sizes.stdinChars }, ...(size ? { plan: size.plan, upgrade: size.upgrade } : { upgrade: null, largest: true }) },
+        );
     }
-    if (stdin.length > MAX_STDIN_LENGTH) return fail("Program girdisi (stdin) en fazla 10.000 karakter olabilir.", 413, "too_large");
 
     // Every file counts in the plan's minute (Free 40, Plus 150, Pro 400 files); a purchase Paddle hasn't reported is looked up first.
-    const quota = await enforceRunQuota(email, requestedFiles.length, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
+    const quota = await enforceRunQuota(email, requestedFiles.length, { subscription: size.subscription, onLate });
     if (!quota.allowed) {
         return fail(`Planınızın çalıştırma sınırına ulaştınız (dakikada ${quota.limit} dosya). Kısa süre sonra tekrar deneyin.`, 429, "rate_limited", { limit: quota.limit, plan: quota.plan, upgrade: quota.upgrade }, { "Retry-After": String(quota.retryAfterSeconds) });
     }
@@ -127,7 +138,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const jobs = await runFiles(requestedFiles, stdin);
+        const jobs = await runFiles(requestedFiles, stdin, { outputChars: size.sizes.outputChars });
         const first = jobs[0];
         return NextResponse.json({
             run: first.run,

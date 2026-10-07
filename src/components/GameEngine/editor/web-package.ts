@@ -67,7 +67,7 @@ async function renderIcons(snapshot: string | null, name: string): Promise<Map<s
 export type WebPackageFailure = { kind: "player" } | { kind: "files"; names: string[] };
 
 /** Builds and downloads the ZIP; resolves to what went wrong, or null. */
-export async function exportWebPackage(project: GameProjectDocument, snapshot: (() => string) | undefined): Promise<WebPackageFailure | null> {
+export async function exportWebPackage(project: GameProjectDocument, snapshot: (() => string) | undefined, branding: { badge?: boolean } = {}): Promise<WebPackageFailure | null> {
     const response = await fetch("/engine/player.js", { cache: "no-cache" }).catch(() => null);
     if (!response?.ok) return { kind: "player" };
     const playerJs = await response.text();
@@ -87,7 +87,7 @@ export async function exportWebPackage(project: GameProjectDocument, snapshot: (
         picture = null;
     }
     const icons = await renderIcons(picture, project.name);
-    const files = await webPackageFiles({ project, playerJs, assets, icons, siteUrl: SITE_URL });
+    const files = await webPackageFiles({ project, playerJs, assets, icons, siteUrl: SITE_URL, badge: branding.badge });
     const zip = await zipWebPackage(files);
     downloadBlob(new Blob([zip as BlobPart], { type: "application/zip" }), `${safeFileName(project.name)}-web.zip`);
     return null;

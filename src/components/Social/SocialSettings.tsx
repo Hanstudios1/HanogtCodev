@@ -71,7 +71,6 @@ const C = {
     everyone: { TR: "Herkes", EN: "Everyone" },
     friendsOfFriends: { TR: "Arkadaşlarımın arkadaşları", EN: "Friends of friends" },
     nobody: { TR: "Hiç kimse", EN: "Nobody" },
-    hideFriends: { TR: "Arkadaş listemi gizle", EN: "Hide my friends list" },
     morePrivacy: { TR: "Diğer gizlilik ayarları Hesap Ayarları'nda", EN: "More privacy settings in Account Settings" },
     blocked: { TR: "Engellenen kişiler", EN: "Blocked people" },
     noBlocked: { TR: "Kimseyi engellemedin.", EN: "You haven't blocked anyone." },
@@ -98,7 +97,7 @@ const TABS: Array<{ id: SocialSettingsTab; icon: ReactNode; label: Copy }> = [
     { id: "bots", icon: <Bot className="h-4 w-4" aria-hidden />, label: C.bots },
 ];
 
-type PrivacyFields = { showOnlineStatus: boolean; showLastSeen: boolean; whoCanAdd: "everyone" | "friends_of_friends" | "nobody"; hideFriendList: boolean };
+type PrivacyFields = { showOnlineStatus: boolean; showLastSeen: boolean; whoCanAdd: "everyone" | "friends_of_friends" | "nobody" };
 
 function Toggle({ label, hint, checked, onChange, disabled = false }: { label: string; hint?: string; checked: boolean; onChange: (value: boolean) => void; disabled?: boolean }) {
     return (
@@ -140,7 +139,7 @@ export default function SocialSettingsDialog({ open, initialTab, onClose }: { op
         void fetchOwnProfileResponse(email).then((data) => {
             if (!active || !data) return;
             const fields = data.fields;
-            setPrivacy({ showOnlineStatus: fields.showOnlineStatus, showLastSeen: fields.showLastSeen, whoCanAdd: fields.whoCanAdd, hideFriendList: fields.hideFriendList });
+            setPrivacy({ showOnlineStatus: fields.showOnlineStatus, showLastSeen: fields.showLastSeen, whoCanAdd: fields.whoCanAdd });
         });
         return () => { active = false; };
     }, [email, open]);
@@ -160,7 +159,7 @@ export default function SocialSettingsDialog({ open, initialTab, onClose }: { op
             return;
         }
         const fields = result.data.fields;
-        setPrivacy({ showOnlineStatus: fields.showOnlineStatus, showLastSeen: fields.showLastSeen, whoCanAdd: fields.whoCanAdd, hideFriendList: fields.hideFriendList });
+        setPrivacy({ showOnlineStatus: fields.showOnlineStatus, showLastSeen: fields.showLastSeen, whoCanAdd: fields.whoCanAdd });
     };
     const privacyValue = <K extends keyof PrivacyFields>(key: K): PrivacyFields[K] | undefined => (pending[key] as PrivacyFields[K] | undefined) ?? privacy?.[key];
 
@@ -253,7 +252,6 @@ export default function SocialSettingsDialog({ open, initialTab, onClose }: { op
                                 <option value="nobody">{tx(C.nobody)}</option>
                             </select>
                         </label>
-                        <Toggle label={tx(C.hideFriends)} checked={privacyValue("hideFriendList") ?? false} onChange={(value) => void save("hideFriendList", value)} />
                     </Section>
                     <Link href="/account-settings" className="text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.morePrivacy)}</Link>
                 </>

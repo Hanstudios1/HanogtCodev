@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { PLAN_COPY, PLAN_MESSAGE_CHARS } from "@/lib/plans";
 import type { GifSearchResult, MessageGif } from "./gif";
 import type { StarScope, StarredMessage } from "./stars";
 import {
@@ -51,7 +52,7 @@ export const SOCIAL_ERROR_COPY: Record<SocialErrorCode, Copy> = {
     forbidden: { TR: "Bu işlem için yetkin yok.", EN: "You don't have permission to do that." },
     message_not_found: { TR: "Mesaj bulunamadı; silinmiş olabilir.", EN: "The message wasn't found; it may have been deleted." },
     empty_message: { TR: "Boş mesaj gönderilemez.", EN: "You can't send an empty message." },
-    message_too_long: { TR: "Mesaj en fazla 4000 karakter olabilir.", EN: "A message can be at most 4000 characters." },
+    message_too_long: { TR: "Bir mesaj en fazla {limit} karakter olabilir.", EN: "A message can be at most {limit} characters." },
     invalid_tag: { TR: "Biçim geçersiz. Örnek: Oyuncu#1234", EN: "Invalid format. Example: Player#1234" },
     user_not_found: { TR: "Bu takma ad ve etikete sahip bir kullanıcı bulunamadı.", EN: "No user with that nickname and tag was found." },
     already_friends: { TR: "Bu kişiyle zaten arkadaşsınız.", EN: "You're already friends with this person." },
@@ -90,10 +91,12 @@ async function request<T>(url: string, body?: Record<string, unknown>, options: 
     } catch {
         throw new SocialRequestError("network");
     }
-    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown; limit?: unknown };
+    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown; limit?: unknown; upgrade?: unknown };
     if (!response.ok) {
         const fallback: SocialErrorCode = response.status === 429 ? "rate_limited" : response.status === 401 ? "unauthorized" : response.status === 404 ? "not_found" : "server_error";
-        const vars: Record<string, number> = typeof data.limit === "number" ? { limit: data.limit } : {};
+        const vars: Record<string, string | number> = typeof data.limit === "number" ? { limit: data.limit } : {};
+        // The plan that allows more (message_too_long): the text names it and its limit.
+        if (typeof data.limit === "number" && (data.upgrade === "plus" || data.upgrade === "pro")) vars.upgrade = data.upgrade;
         throw new SocialRequestError(isCode(data.code) ? data.code : fallback, typeof data.error === "string" ? data.error : "", response.status, vars);
     }
     return data;
@@ -189,16 +192,30 @@ export const socialApi = {
     },
 };
 
+/** "On your plan a message can be at most 4,000 characters. With Plus you can write up to 6,000." */
+export const MESSAGE_TOO_LONG_UPGRADE: Copy = { TR: "Planında bir mesaj en fazla {limit} karakter olabilir. {plan} ile {more} karaktere kadar yazabilirsin.", EN: "On your plan a message can be at most {limit} characters. With {plan} you can write up to {more}." };
+
+/** message_too_long with numbers in the reader's format and, when a plan allows more, its name and limit. */
+export function messageTooLongText(tx: (copy: Copy, vars?: Record<string, string | number>) => string, locale: string, vars: Record<string, string | number>) {
+    const number = (value: string | number) => typeof value === "number" ? new Intl.NumberFormat(locale).format(value) : value;
+    const upgrade = vars.upgrade === "plus" || vars.upgrade === "pro" ? vars.upgrade : null;
+    const limit = number(vars.limit);
+    return upgrade
+        ? tx(MESSAGE_TOO_LONG_UPGRADE, { limit, plan: tx(PLAN_COPY[upgrade].name), more: number(PLAN_MESSAGE_CHARS[upgrade]) })
+        : tx(SOCIAL_ERROR_COPY.message_too_long, { limit });
+}
+
 /** Localized text for any thrown value (API codes and client codes alike). */
 export function useSocialErrorText() {
-    const { tx } = useI18n();
+    const { tx, locale } = useI18n();
     return useCallback((error: unknown, fallback: Copy = SOCIAL_ERROR_COPY.server_error) => {
         if (error instanceof SocialRequestError) {
             // The star limit without its number (an older server) reads as a generic failure.
-            if (error.code === "stars_limit" && error.vars.limit === undefined) return tx(fallback);
+            if ((error.code === "stars_limit" || error.code === "message_too_long") && error.vars.limit === undefined) return tx(fallback);
+            if (error.code === "message_too_long") return messageTooLongText(tx, locale, error.vars);
             return tx(SOCIAL_ERROR_COPY[error.code] ?? fallback, error.vars);
         }
         if (isCode(error)) return tx(SOCIAL_ERROR_COPY[error]);
         return tx(fallback);
-    }, [tx]);
+    }, [locale, tx]);
 }

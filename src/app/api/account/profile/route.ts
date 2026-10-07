@@ -299,7 +299,7 @@ export async function PATCH(request: NextRequest) {
                     force: true,
                 });
             }
-            // Retired fields still stored (an old status emoji, appearance settings that did nothing) go with any save.
+            // Retired fields still stored (an old status emoji, settings that never did anything) go with any save.
             const retired = RETIRED_ACCOUNT_KEYS;
             const userData = { ...patch, email, updatedAt: now, ...presence?.user.data };
             const writes: Parameters<typeof commitServerPatches>[0] = [{ path: `users/${email}`, data: userData, updateFields: maskOf(userData, [...presence?.user.mask ?? [], ...retired]) }];

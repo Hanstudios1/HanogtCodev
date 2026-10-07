@@ -17,7 +17,7 @@ import { ATTACHMENT_ERROR_COPY, FileUploadError, isAttachmentErrorCode, isRetrya
 import { attachmentPreview } from "@/lib/social/attachments";
 import type { GifItem } from "@/lib/social/gif";
 import { useConversation, useVoiceMessagePlayer } from "@/lib/social/hooks";
-import { SOCIAL_LIMITS, dmChatId, messagePreview, type DmMessage, type SocialPerson, type SocialProfileResponse } from "@/lib/social/model";
+import { dmChatId, messagePreview, type DmMessage, type SocialPerson, type SocialProfileResponse } from "@/lib/social/model";
 import { CHAT_BACKGROUND_CLASS, MESSAGE_FONT_CLASS } from "@/lib/social/prefs";
 import Composer from "../chat/Composer";
 import { useSocial } from "../context";
@@ -26,6 +26,7 @@ import { DropdownMenu, EmptyState, IconButton, MainHeader, SocialAside } from ".
 import UserPopout, { nextPopout, type PopoutState } from "../UserPopout";
 import DmMessages, { ConversationIntro, formatDuration } from "./DmMessages";
 import DmProfileAside from "./DmProfileAside";
+import { useMessageMax } from "@/lib/social/message-limit";
 
 const C = {
     profile: { TR: "Profil", EN: "Profile" },
@@ -99,6 +100,7 @@ export default function DmView({ email }: { email: string }) {
 }
 
 function Conversation({ partnerEmail }: { partnerEmail: string }) {
+    const messageMax = useMessageMax();
     const { tx } = useI18n();
     const router = useRouter();
     const social = useSocial();
@@ -411,7 +413,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
                     draftKey={`dm:${chatId}`}
                     placeholder={tx(C.placeholder, { name: partner.username })}
                     label={tx(C.label, { name: partner.username })}
-                    maxLength={SOCIAL_LIMITS.messageMax}
+                    maxLength={messageMax}
                     disabled={disabledNotice}
                     status={conversation.typing && friend ? <><span className="me-1 inline-flex gap-0.5 align-middle" aria-hidden>{[0, 150, 300].map((delay) => <span key={delay} className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: `${delay}ms` }} />)}</span>{tx(C.typing, { name: partner.username })}</> : null}
                     reply={replyTo ? { author: replyTo.fromEmail === meState.email ? meState.username : partner.username, excerpt: excerptOf(replyTo, 80) } : null}

@@ -26,9 +26,12 @@ export type RunJob = {
     run: { stdout: string; stderr: string; output: string; code: number };
     /** Wall-clock time of this file's run on the remote runner, in milliseconds. */
     durationMs?: number;
+    /** Set when the output was cut to the plan's length (PLAN_RUN_SIZES.outputChars). */
+    outputLimit?: number;
 };
 
-export const MAX_OUTPUT_LENGTH = 64_000;
+/** The most output any plan gets back from one file (PLAN_RUN_SIZES); runFiles cuts it to the person's plan. */
+export const MAX_OUTPUT_LENGTH = 256_000;
 
 /** An error whose message is safe and useful to show to the user as-is. */
 export class RunnerError extends Error {}
@@ -227,15 +230,23 @@ export function runnerName() {
     return process.env.CODE_RUNNER_URL ? "custom" : "public";
 }
 
-export async function runFiles(files: RunFile[], stdin: string, timeoutMs = 25_000) {
-    const signal = AbortSignal.timeout(timeoutMs);
+/** Output cut to `limit` characters; `cut` tells whether anything was dropped. */
+function clipRun(run: RunJob["run"], limit: number) {
+    const cut = [run.stdout, run.stderr, run.output].some((text) => text.length > limit);
+    return { run: cut ? { ...run, stdout: run.stdout.slice(0, limit), stderr: run.stderr.slice(0, limit), output: run.output.slice(0, limit) } : run, cut };
+}
+
+export async function runFiles(files: RunFile[], stdin: string, options: { timeoutMs?: number; outputChars?: number } = {}) {
+    const signal = AbortSignal.timeout(options.timeoutMs ?? 25_000);
     const url = process.env.CODE_RUNNER_URL;
-    return Promise.all(files.map(async (file) => {
+    const limit = Math.min(options.outputChars ?? MAX_OUTPUT_LENGTH, MAX_OUTPUT_LENGTH);
+    return Promise.all(files.map(async (file): Promise<RunJob> => {
         const started = Date.now();
         const result = url
             ? await runWithPiston(url, file, stdin, signal)
             : file.language === "kotlin" ? await runKotlin(file, stdin, signal) : await runWithWandbox(file, stdin, signal);
-        return { ...result, durationMs: Date.now() - started };
+        const { run, cut } = clipRun(result.run, limit);
+        return { ...result, run, ...(cut ? { outputLimit: limit } : {}), durationMs: Date.now() - started };
     }));
 }
 

@@ -13,7 +13,7 @@ export type BrowserStatusCode = "loading_python" | "loading_sqlite" | "loading_l
 export type BrowserRunNotice =
     | { code: "timeout"; seconds: number }
     | { code: "stopped" }
-    | { code: "output_truncated" }
+    | { code: "output_truncated"; limit?: number }
     | { code: "worker_crashed"; message: string }
     | { code: "worker_unavailable"; message: string };
 

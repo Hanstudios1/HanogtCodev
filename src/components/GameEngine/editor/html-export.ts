@@ -19,7 +19,9 @@ function embedJson(value: unknown) {
     return JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 }
 
-export async function buildStandaloneHtml(project: GameProjectDocument): Promise<string> {
+/** `badge: false` leaves out "Made with Hanogt Engine" (Plus and Pro, PLAN_UNBRANDED_EXPORT). */
+export async function buildStandaloneHtml(project: GameProjectDocument, branding: { badge?: boolean } = {}): Promise<string> {
+    const badge = branding.badge !== false;
     const response = await fetch("/engine/player.js", { cache: "no-cache" });
     if (!response.ok) throw new Error("Oynatıcı paketi indirilemedi. Sayfayı yenileyip tekrar deneyin.");
     const runtime = (await response.text()).replace(/<\/script/gi, "<\\/script");
@@ -52,16 +54,15 @@ html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,
 </head>
 <body>
 <div id="game"></div>
-<div id="start"><div class="card"><h1>${title}</h1><p>${turkish ? `${ENGINE_VERSION_LABEL} ile yapıldı` : `Made with ${ENGINE_VERSION_LABEL}`}</p><button type="button" id="play">${turkish ? "▶ Oyna" : "▶ Play"}</button></div></div>
-<a id="badge" href="${escapeHtml(SITE_URL)}/arcade" target="_blank" rel="noopener">Made with ${ENGINE_VERSION_LABEL}</a>
-<script type="application/json" id="hanogt-game">${embedJson({ format: "hanogt-engine-project", version: GAME_ENGINE_SCHEMA_VERSION, project })}</script>
+<div id="start"><div class="card"><h1>${title}</h1>${badge ? `<p>${turkish ? `${ENGINE_VERSION_LABEL} ile yapıldı` : `Made with ${ENGINE_VERSION_LABEL}`}</p>` : ""}<button type="button" id="play">${turkish ? "▶ Oyna" : "▶ Play"}</button></div></div>
+${badge ? `<a id="badge" href="${escapeHtml(SITE_URL)}/arcade" target="_blank" rel="noopener">Made with ${ENGINE_VERSION_LABEL}</a>\n` : ""}<script type="application/json" id="hanogt-game">${embedJson({ format: "hanogt-engine-project", version: GAME_ENGINE_SCHEMA_VERSION, project })}</script>
 <script type="application/json" id="hanogt-audio">${embedJson(audio.files)}</script>
 <script>${runtime}</script>
 </body>
 </html>`;
 }
 
-export async function exportStandaloneHtml(project: GameProjectDocument) {
-    const html = await buildStandaloneHtml(project);
+export async function exportStandaloneHtml(project: GameProjectDocument, branding: { badge?: boolean } = {}) {
+    const html = await buildStandaloneHtml(project, branding);
     downloadBlob(new Blob([html], { type: "text/html;charset=utf-8" }), `${safeFileName(project.name)}.html`);
 }

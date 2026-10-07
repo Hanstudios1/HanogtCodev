@@ -1,5 +1,57 @@
 # Değişiklik Günlüğü
 
+## 0.3.32 — 2026-10-07
+
+### Ücretli planlara yeni avantajlar, yenilenen Hesap Ayarları
+
+- **Ücretli planlara yeni avantajlar (Ücretsiz plandan hiçbir şey kısılmadı):**
+  - **Sunucuda daha büyük çalıştırmalar:** Plus'ta dosya başına 100.000,
+    istek başına 300.000 karakter kod, 50.000 karakter girdi ve dosya başına
+    128.000 karakter çıktı; Pro'da 200.000 / 600.000 / 100.000 / 256.000
+    (Ücretsiz 50.000 / 150.000 / 10.000 / 64.000 olarak kalır). Sınırı aşan
+    çalıştırmada konsol, kodu kaldıran en küçük planı gösterir (`too_large`,
+    413); hiçbir planın kaldıramadığı kodda "en büyük planın sınırını da
+    aşıyor" der. Girdi kutusundaki sayaç planın sınırını gösterir.
+  - **Hanogt Social'da daha uzun mesajlar:** Plus 6.000, Pro 8.000 karakter
+    (Ücretsiz 4.000). Doğrudan mesajlarda ve gruplarda gönderirken ve
+    düzenlerken sunucu gönderenin planına bakar (`message_too_long`, 413;
+    plan yalnızca 4.000 karakteri aşan metinlerde okunur). Yazma kutusu planın
+    sınırında durur; hata metni yeten planı ve sınırını söyler. Sohbetlerin
+    Markdown'ı 12.000 karaktere kadar biçimlendirir; DM ve grup sohbeti
+    isteklerinin boyut sınırı 48 KB'a çıktı.
+  - **Gruplarda Hanogt AI'dan daha uzun yanıtlar:** soranın planına göre Plus
+    2.000, Pro 3.000 token (8.000 / 12.000 karakter) ve soruyla birlikte
+    kanalın son 20 / 30 mesajı (Ücretsiz 1.200 token, 4.000 karakter, 12
+    mesaj).
+  - **Daha uzun ekiple düzenleme:** oturumu başlatanın planına göre Plus 24
+    saat ve 40 dosya, Pro 48 saat ve 100 dosya (Ücretsiz 12 saat ve 20 dosya).
+    Oturum, başladığı andaki sınırlarla sürer.
+  - **Rozetsiz dışa aktarma:** Plus ve Pro'da Engine'in "Dışa aktar"
+    menüsünden "Hanogt Engine ile yapıldı" rozeti gizlenebilir (oynanabilir
+    HTML ve web paketi); Ücretsiz planda seçenek kilitli görünür.
+  - Fiyatlandırma tablosu, SSS, Hanogt AI bilgi tabanı, Kullanım Şartları
+    (avantaj listesi ve plan düşürme maddesi), Gizlilik Politikası ve
+    `docs/ENVIRONMENT.md` ("Plan limits that need no variables") güncellendi.
+- **Hesap Ayarları yeniden tasarlandı:** geniş ekranda aramalı ve gruplu yan
+  menü (Kullanıcı ayarları, Uygulama ayarları, Hesap; arama sitenin dilinde ve
+  İngilizce çalışır, Enter ilk sonucu açar), telefonda kategori listesi ve
+  geri düğmesi. "Hesabım"da hesap özeti: profil resmi, ad, kullanıcı adı ve
+  etiket, plan ve ekip rozeti, üyelik tarihi, son giriş ve güvenlik durumu.
+  Bütün bölümler aynı satır düzeninde; tek ve sade kaydetme çubuğu (Ctrl/⌘+S,
+  Geri al), anında kaydedilen ayarlarda "Anında kaydedilir" notu, editör
+  ayarlarını sıfırlamadan önce onay ve sayfada tek "Çıkış yap" düğmesi. Renk
+  geçişli simgeler, bayrak ve onay emojileri kaldırıldı; açık ve koyu tema,
+  RTL ve 375 px denetlendi. Bölümler `src/components/AccountSettings/`
+  altında ayrı bileşenlere bölündü.
+- **Hiçbir şey yapmayan tercihler kaldırıldı:** e-posta bildirimleri ve yeni
+  özellik duyuruları (site e-posta göndermiyor), beğeni bildirimleri, bildirim
+  sesi, sessiz saatler, bağlantı önizlemeleri, çıkartma önerileri, sohbet
+  baloncuğu rengi, fotoğraf görünürlüğü ve Hanogt Social ayarlarındaki
+  "Arkadaş listemi gizle" (arkadaş listesi zaten kimseye gösterilmiyor) artık
+  gösterilmiyor ve kaydedilmiyor; eski değerleri ayarların bir sonraki
+  kaydında silinir (`RETIRED_ACCOUNT_KEYS`).
+- Yasal metinler 5.8.
+
 ## 0.3.31 — 2026-10-06
 
 ### Hanogt Social'da Discord'daki gibi kurallar bölümü, yenilenen Hanogt AI ayarları

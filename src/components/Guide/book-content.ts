@@ -1,5 +1,4 @@
 import type { Copy } from "@/lib/i18n";
-import { COLLAB_LIMITS } from "@/lib/collab/protocol";
 import { GROUP_LIMITS } from "@/lib/groups";
 import { LIST_PRICES, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_FEATURES, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { STATUS_PREFERENCE_COPY } from "@/lib/presence";
@@ -160,7 +159,7 @@ export const PAGES: BookPage[] = [
                 type: "steps",
                 items: [
                     { TR: "Editörün araç çubuğunda \"Ekiple düzenle\"ye bas (giriş gerekir).", EN: "Press \"Edit with your team\" in the editor toolbar (sign-in required)." },
-                    { TR: "Oturuma ad ver ve paylaşılacak dosyaları seç (en fazla {files} dosya).", EN: "Name the session and pick the files to share (up to {files} files).", vars: { files: COLLAB_LIMITS.maxFiles } },
+                    { TR: "Oturuma ad ver ve paylaşılacak dosyaları seç. Oturumun kaç dosya tutacağı ve ne kadar süreceği planına bağlı: Ücretsiz {freeFiles} dosya ve {freeHours} saat, Plus {plusFiles} dosya ve {plusHours} saat, Pro {proFiles} dosya ve {proHours} saat.", EN: "Name the session and pick the files to share. How many files a session holds and how long it lasts depend on your plan: Free {freeFiles} files and {freeHours} hours, Plus {plusFiles} files and {plusHours} hours, Pro {proFiles} files and {proHours} hours.", vars: { freeFiles: PLAN_COLLAB_LIMITS.free.files, freeHours: PLAN_COLLAB_LIMITS.free.hours, plusFiles: PLAN_COLLAB_LIMITS.plus.files, plusHours: PLAN_COLLAB_LIMITS.plus.hours, proFiles: PLAN_COLLAB_LIMITS.pro.files, proHours: PLAN_COLLAB_LIMITS.pro.hours } },
                     { TR: "Arkadaşlarını davet et: bildirim alırlar, davet bağlantısıyla da katılabilirler. Bir oturumda kaç kişi olabileceği oturumu başlatanın planına bağlı (sen dahil): Ücretsiz {free}, Plus {plus}, Pro {pro} kişi. Sesli sohbete aynı anda en fazla 5 kişi katılır.", EN: "Invite your friends: they get a notification and can also join with the invite link. How many people a session holds depends on the plan of whoever starts it (you included): Free {free}, Plus {plus}, Pro {pro}. Up to 5 people can talk in voice at once.", vars: { free: PLAN_COLLAB_LIMITS.free.people, plus: PLAN_COLLAB_LIMITS.plus.people, pro: PLAN_COLLAB_LIMITS.pro.people } },
                     { TR: "Herkesin imlecini canlı görürsün; Ekip panelinden yazışır, sesli sohbete katılırsın.", EN: "You see everyone's cursor live; chat and join the voice chat from the Team panel." },
                 ],

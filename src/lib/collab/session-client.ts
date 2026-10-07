@@ -1032,7 +1032,7 @@ export class CollabSession {
             this.notice({ kind: "rejected" });
             return;
         }
-        const result = applyTabOps(this.doc, ops, TABS);
+        const result = applyTabOps(this.doc, ops, TABS, this.state.meta?.maxFiles);
         if (result.rejected) this.notice({ kind: "limit", code: result.rejected });
         this.clearTimer("files");
         this.computeFiles();

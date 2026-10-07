@@ -22,7 +22,7 @@ const C = {
     tooMany: { TR: "En fazla {count} dosya seçebilirsin.", EN: "You can select up to {count} files." },
     invite: { TR: "Arkadaşlarını davet et", EN: "Invite friends" },
     inviteHint: { TR: "Yalnızca arkadaşların davet edilebilir. Davet edilenlere bildirim gider; davet bağlantısıyla da katılabilirler.", EN: "Only your friends can be invited. They get a notification and can also join with the invite link." },
-    planPeople: { TR: "{plan} planınla oturumda sen dahil en fazla {people} kişi olabilir.", EN: "With your {plan} plan, a session holds up to {people} people, you included." },
+    planPeople: { TR: "{plan} planınla oturumda sen dahil en fazla {people} kişi ve {files} dosya olabilir; oturum {hours} saat sürer.", EN: "With your {plan} plan, a session holds up to {people} people, you included, and {files} files, and lasts {hours} hours." },
     planUpgrade: { TR: "Plus ile {plus}, Pro ile {pro} kişi.", EN: "Plus allows {plus}, Pro {pro} people." },
     pricing: { TR: "Fiyatlandırma", EN: "Pricing" },
     later: { TR: "Davetleri sonra da gönderebilirsin.", EN: "You can also invite people later." },
@@ -35,12 +35,12 @@ const C = {
 
 type SourceFile = { id: string; name: string; lang: string; code: string };
 
-/** Files selected by default: in tab order while they fit the session's limits. */
-function defaultSelection(files: readonly SourceFile[]) {
+/** Files selected by default: in tab order while they fit the session's limits (`maxFiles` is the plan's). */
+function defaultSelection(files: readonly SourceFile[], maxFiles: number) {
     const selected = new Set<string>();
     let total = 0;
     for (const file of files) {
-        if (selected.size >= COLLAB_LIMITS.maxFiles || file.code.length > COLLAB_LIMITS.maxFileChars || total + file.code.length > COLLAB_LIMITS.maxTotalChars) continue;
+        if (selected.size >= maxFiles || file.code.length > COLLAB_LIMITS.maxFileChars || total + file.code.length > COLLAB_LIMITS.maxTotalChars) continue;
         selected.add(file.id);
         total += file.code.length;
     }
@@ -58,25 +58,27 @@ export default function CollabStartDialog({ open, onClose, files, defaultTitle, 
     const { tx } = useI18n();
     const titleId = useId();
     const [title, setTitle] = useState(defaultTitle);
-    const [chosen, setChosen] = useState<Set<string>>(() => defaultSelection(files));
+    const [chosen, setChosen] = useState<Set<string>>(() => defaultSelection(files, PLAN_COLLAB_LIMITS.free.files));
     const [invite, setInvite] = useState<Set<string>>(() => new Set());
     const { friends, limits, failed, retry } = useCollabFriends(open);
     // Until the plan is known, the Free plan's numbers (the server checks again).
     const people = limits?.people ?? PLAN_COLLAB_LIMITS.free.people;
+    const maxFiles = limits?.files ?? PLAN_COLLAB_LIMITS.free.files;
+    const hours = limits?.hours ?? PLAN_COLLAB_LIMITS.free.hours;
     // Every opening starts from the current tabs.
     const [wasOpen, setWasOpen] = useState(open);
     if (open !== wasOpen) {
         setWasOpen(open);
         if (open) {
             setTitle(defaultTitle);
-            setChosen(defaultSelection(files));
+            setChosen(defaultSelection(files, maxFiles));
             setInvite(new Set());
         }
     }
 
     const selectedFiles = useMemo(() => files.filter((file) => chosen.has(file.id)), [chosen, files]);
     const total = selectedFiles.reduce((sum, file) => sum + file.code.length, 0);
-    const tooMany = selectedFiles.length > COLLAB_LIMITS.maxFiles;
+    const tooMany = selectedFiles.length > maxFiles;
     const tooLarge = total > COLLAB_LIMITS.maxTotalChars;
     const canStart = !busy && selectedFiles.length > 0 && !tooMany && !tooLarge;
 
@@ -143,7 +145,7 @@ export default function CollabStartDialog({ open, onClose, files, defaultTitle, 
                     </div>
                     <fieldset className="min-w-0">
                         <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">{tx(C.files)}</legend>
-                        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.filesHint, { files: COLLAB_LIMITS.maxFiles })}</p>
+                        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.filesHint, { files: maxFiles })}</p>
                         <ul className="max-h-64 space-y-1 overflow-y-auto pe-1 [scrollbar-width:thin]">
                             {files.map((file) => {
                                 const oversized = file.code.length > COLLAB_LIMITS.maxFileChars;
@@ -166,7 +168,7 @@ export default function CollabStartDialog({ open, onClose, files, defaultTitle, 
                         {(tooMany || tooLarge) && (
                             <p role="alert" className="mt-2 flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-300">
                                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                                {tooMany ? tx(C.tooMany, { count: COLLAB_LIMITS.maxFiles }) : tx(C.totalTooLarge)}
+                                {tooMany ? tx(C.tooMany, { count: maxFiles }) : tx(C.totalTooLarge)}
                             </p>
                         )}
                     </fieldset>
@@ -176,7 +178,7 @@ export default function CollabStartDialog({ open, onClose, files, defaultTitle, 
                     <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.inviteHint)}</p>
                     {limits ? (
                         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400" data-collab-plan>
-                            {tx(C.planPeople, { plan: tx(PLAN_COPY[limits.plan].name), people: limits.people })}
+                            {tx(C.planPeople, { plan: tx(PLAN_COPY[limits.plan].name), people: limits.people, files: maxFiles, hours })}
                             {limits.plan !== "pro" ? <> {tx(C.planUpgrade, { plus: PLAN_COLLAB_LIMITS.plus.people, pro: PLAN_COLLAB_LIMITS.pro.people })} <Link href="/plans" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-300">{tx(C.pricing)}</Link></> : null}
                         </p>
                     ) : null}

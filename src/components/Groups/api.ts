@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { messageTooLongText } from "@/lib/social/api";
 import type { AutoModConfig } from "@/lib/social/automod-config";
 import type { EphemeralReply } from "@/lib/social/bots";
 import type {
@@ -51,11 +52,12 @@ export class GroupRequestError extends Error {
  * unlimited plans aren't refused), how long a mute or slow mode lasts, and
  * which AutoMod rule stopped a message.
  */
-function limitVars(data: { limit?: unknown; plan?: unknown; minutes?: unknown; seconds?: unknown; rule?: unknown }): Record<string, string | number> {
+function limitVars(data: { limit?: unknown; plan?: unknown; upgrade?: unknown; minutes?: unknown; seconds?: unknown; rule?: unknown }): Record<string, string | number> {
     const vars: Record<string, string | number> = {};
     if (typeof data.limit === "number") {
         vars.limit = data.limit;
         if (typeof data.plan === "string") vars.plan = data.plan;
+        if (data.upgrade === "plus" || data.upgrade === "pro") vars.upgrade = data.upgrade;
     }
     if (typeof data.minutes === "number") vars.minutes = data.minutes;
     if (typeof data.seconds === "number") vars.seconds = data.seconds;
@@ -69,6 +71,7 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     rate_limited: { TR: "Çok fazla işlem yaptınız. Biraz bekleyip tekrar deneyin.", EN: "Too many actions. Wait a moment and try again." },
     invalid_request: { TR: "İstek geçersiz.", EN: "The request is invalid." },
     payload_too_large: { TR: "İstek çok büyük.", EN: "The request is too large." },
+    message_too_long: { TR: "Bir mesaj en fazla {limit} karakter olabilir.", EN: "A message can be at most {limit} characters." },
     invalid_id: { TR: "Geçersiz bağlantı veya kimlik.", EN: "Invalid link or id." },
     invalid_email: { TR: "Geçersiz kullanıcı.", EN: "Invalid user." },
     not_found: { TR: "Grup bulunamadı veya artık erişiminiz yok.", EN: "The group wasn't found or you no longer have access." },
@@ -190,6 +193,7 @@ const LIMIT_WITHOUT_NUMBER: Partial<Record<GroupClientErrorCode, Copy>> = {
     group_limit: GROUP_ERROR_COPY.server_error,
     target_group_limit: GROUP_ERROR_COPY.server_error,
     group_full: { TR: "Grup üye sınırına ulaştı.", EN: "The group has reached its member limit." },
+    message_too_long: { TR: "Mesaj, planının izin verdiğinden uzun.", EN: "The message is longer than your plan allows." },
     pin_limit: { TR: "Sabitlenebilecek mesaj sınırına ulaşıldı; önce bir mesajın sabitlemesini kaldırın.", EN: "The pin limit is reached; unpin a message first." },
     commands_limit: { TR: "Bu grubun özel komut sınırına ulaşıldı.", EN: "This group's custom command limit is reached." },
     words_limit: { TR: "Bu grubun yasaklı kelime sınırına ulaşıldı.", EN: "This group's banned word limit is reached." },
@@ -198,14 +202,15 @@ const LIMIT_WITHOUT_NUMBER: Partial<Record<GroupClientErrorCode, Copy>> = {
 
 /** Turns any thrown value into localized text (API codes and client codes alike). */
 export function useGroupErrorText() {
-    const { tx } = useI18n();
+    const { tx, locale } = useI18n();
     return useCallback((error: unknown, fallback: Copy = GROUP_ERROR_COPY.server_error) => {
         if (error instanceof GroupRequestError) {
             const withoutNumber = LIMIT_WITHOUT_NUMBER[error.code];
             if (withoutNumber && error.vars.limit === undefined) return tx(withoutNumber);
+            if (error.code === "message_too_long" && error.vars.limit !== undefined) return messageTooLongText(tx, locale, error.vars);
             return tx(GROUP_ERROR_COPY[error.code] ?? fallback, error.vars);
         }
         if (isClientCode(error)) return tx(GROUP_ERROR_COPY[error]);
         return tx(fallback);
-    }, [tx]);
+    }, [locale, tx]);
 }

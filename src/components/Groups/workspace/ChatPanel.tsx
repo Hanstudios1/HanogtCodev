@@ -24,7 +24,6 @@ import { messagePreview } from "@/lib/social/model";
 import { CHAT_BACKGROUND_CLASS, MESSAGE_FONT_CLASS } from "@/lib/social/prefs";
 import {
     BOT_NAMES,
-    GROUP_LIMITS,
     GROUP_SYSTEM_EVENT_COPY,
     SYSTEM_SENDER,
     canModerate,
@@ -40,6 +39,7 @@ import { useWorkspace } from "./context";
 import { useVoicePlayer } from "./hooks";
 import MessageItem, { RichText, type ReactionOverrides } from "./MessageItem";
 import { messageFromData, type GroupChatMessage } from "./model";
+import { useMessageMax } from "@/lib/social/message-limit";
 
 const C = {
     loadOlder: { TR: "Daha eski mesajları yükle", EN: "Load older messages" },
@@ -156,6 +156,8 @@ type ChatPanelProps = {
 export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, topic, onTopicChange, search, channelName, onServerChange, onOpenUser, onOpenRules }: ChatPanelProps) {
     const { tx, locale, language } = useI18n();
     const { groupId, group, me, role, members, usernames, now, notify, confirm, errorText, live, mustAcceptRules } = useWorkspace();
+    // The sender's plan sets the length (Free 4,000, Plus 6,000, Pro 8,000 characters).
+    const messageMax = useMessageMax();
     const social = useSocial();
     const { prefs } = social;
     const plan = useMyPlan(me.email);
@@ -371,16 +373,16 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
     }, [addEphemeral, excerptOf, groupId, knownIds, lang, live, me.avatarUrl, me.email, me.username, onServerChange, sendFailed]);
 
     const sendText = useCallback(async (value: string) => {
-        let text = value.slice(0, GROUP_LIMITS.messageMax);
+        let text = value.slice(0, messageMax);
         // In a #topic channel the message carries the topic (that is what puts it in the channel).
-        if (topic && !text.startsWith("/") && !hasTopic(text, topic)) text = `#${topic} ${text}`.slice(0, GROUP_LIMITS.messageMax);
+        if (topic && !text.startsWith("/") && !hasTopic(text, topic)) text = `#${topic} ${text}`.slice(0, messageMax);
         onStopTyping();
         const reply = replyTo;
         setReplyTo(null);
         const sent = await deliver({ text }, reply);
         if (!sent) setReplyTo(reply);
         return sent;
-    }, [deliver, onStopTyping, replyTo, topic]);
+    }, [deliver, messageMax, onStopTyping, replyTo, topic]);
 
     const sendGif = useCallback((gif: GifItem) => {
         const reply = replyTo;
@@ -581,13 +583,13 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
     const cancelEdit = useCallback(() => setEditingId(""), []);
     const saveEdit = useCallback(async (message: GroupChatMessage, text: string) => {
         try {
-            await groupsApi.chat({ action: "edit", groupId, messageId: message.id, text: text.slice(0, GROUP_LIMITS.messageMax) });
+            await groupsApi.chat({ action: "edit", groupId, messageId: message.id, text: text.slice(0, messageMax) });
             if (!live) onServerChange?.();
             setEditingId("");
         } catch (error) {
             sendFailed(error);
         }
-    }, [groupId, live, onServerChange, sendFailed]);
+    }, [groupId, live, messageMax, onServerChange, sendFailed]);
 
     const editLast = useCallback(() => {
         const last = [...allMessages].reverse().find((message) => message.fromEmail === me.email && message.type === "text" && !message.pending && !message.bot);
@@ -759,7 +761,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                 draftKey={`group:${groupId}:${channel}`}
                 placeholder={tx(C.placeholderChannel, { channel: shownChannel })}
                 label={tx(C.composerLabel, { channel: shownChannel })}
-                maxLength={GROUP_LIMITS.messageMax}
+                maxLength={messageMax}
                 disabled={rulesGate ?? undefined}
                 status={status}
                 footer={footer}

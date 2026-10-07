@@ -72,16 +72,18 @@ export function announceOwnProfile(email: string, data: AccountProfileResponse) 
  * custom status. Every change is saved at once. The header shows it in the
  * account menu; Account Settings shows it in its "Durum" section.
  */
-export default function StatusMenu({ email, onSaved, className = "" }: {
+export default function StatusMenu({ email, onSaved, className = "", variant = "menu" }: {
     email: string;
     /** Called with the saved profile (Account Settings keeps its form in step). */
     onSaved?: (data: AccountProfileResponse) => void;
     className?: string;
+    /** "settings": inside a titled card, so its own title is only for screen readers, and the choices are a radio group. */
+    variant?: "menu" | "settings";
 }) {
     const { tx } = useI18n();
     const profile = useOwnProfile(email);
     const titleId = useId();
-    const customId = useId();
+    const generatedCustomId = useId();
     const hintId = useId();
     const [pending, setPending] = useState<StatusPreference | null>(null);
     const [savingCustom, setSavingCustom] = useState(false);
@@ -90,6 +92,10 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
     const current = pending ?? profile?.statusPreference ?? null;
     const text = draft ?? profile?.customStatus ?? "";
     const customChanged = draft !== null && draft.trim() !== (profile?.customStatus ?? "");
+    const inSettings = variant === "settings";
+    const itemRole = inSettings ? "radio" : "menuitemradio";
+    // Account Settings' save errors and search reach the custom status as #field-customStatus.
+    const customId = inSettings ? "field-customStatus" : generatedCustomId;
 
     const failure = (result: Extract<SaveResult, { ok: false }>) => {
         if (result.status === 429) return tx(C.rateLimited);
@@ -139,9 +145,9 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
         setSavingCustom(false);
     };
 
-    // Menu keys: arrows and Home/End move between the choices; Enter or Space picks one.
+    // Arrows and Home/End move between the choices; Enter or Space picks one (each pick is saved).
     const onMenuKey = (event: KeyboardEvent<HTMLDivElement>) => {
-        const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("[role='menuitemradio']"));
+        const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>(`[role='${itemRole}']`));
         const index = items.indexOf(document.activeElement as HTMLButtonElement);
         let next = -1;
         if (event.key === "ArrowDown") next = (index + 1) % items.length;
@@ -158,15 +164,15 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
 
     return (
         <div className={className}>
-            <p id={titleId} className="px-1 pb-1.5 text-[11px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{tx(C.title)}</p>
-            <div role="menu" aria-labelledby={titleId} onKeyDown={onMenuKey} className="space-y-0.5">
+            <p id={titleId} className={inSettings ? "sr-only" : "px-1 pb-1.5 text-[11px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400"}>{tx(C.title)}</p>
+            <div role={inSettings ? "radiogroup" : "menu"} aria-labelledby={titleId} onKeyDown={onMenuKey} className="space-y-0.5">
                 {STATUS_PREFERENCES.map((preference) => {
                     const checked = current === preference;
                     return (
                         <button
                             key={preference}
                             type="button"
-                            role="menuitemradio"
+                            role={itemRole}
                             aria-checked={checked}
                             aria-disabled={pending !== null || undefined}
                             tabIndex={checked || (current === null && preference === "auto") ? 0 : -1}
@@ -188,8 +194,8 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
                 })}
             </div>
 
-            <form onSubmit={(event) => void saveCustom(event)} className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.08]">
-                <label htmlFor={customId} className="block px-1 text-[11px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{tx(C.custom)}</label>
+            <form onSubmit={(event) => void saveCustom(event)} className={inSettings ? "mt-4 border-t border-zinc-100 pt-4 dark:border-white/[0.06]" : "mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.08]"}>
+                <label htmlFor={customId} className={inSettings ? "block text-[14px] font-medium text-zinc-900 dark:text-zinc-100" : "block px-1 text-[11px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400"}>{tx(C.custom)}</label>
                 <input
                     id={customId}
                     type="text"
@@ -200,7 +206,7 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
                     aria-describedby={hintId}
                     className="mt-1.5 h-10 w-full min-w-0 rounded-xl border border-zinc-200 bg-white px-3 text-[14px] outline-none transition placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-zinc-950"
                 />
-                <p id={hintId} className="mt-2 px-1 text-[11.5px] text-zinc-500 dark:text-zinc-400">
+                <p id={hintId} className={inSettings ? "mt-1.5 text-[12.5px] text-zinc-500 dark:text-zinc-400" : "mt-2 px-1 text-[11.5px] text-zinc-500 dark:text-zinc-400"}>
                     {tx(C.customHint)} <span className="tabular-nums">{tx(C.left, { count: Math.max(0, remaining) })}</span>
                 </p>
                 <div className="mt-2.5 flex justify-end gap-2">

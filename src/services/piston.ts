@@ -24,6 +24,8 @@ export interface RunFailure {
     retryAfterSeconds?: number;
     /** A plan's run limit refused it: the files a minute it allows, and the plan that allows more (null after Pro). */
     limit?: { perMinute: number; upgrade: "plus" | "pro" | null };
+    /** The run was bigger than the plan allows (too_large): its sizes in characters, and the plan that allows more. */
+    sizes?: { fileChars: number; requestChars: number; stdinChars: number; upgrade: "plus" | "pro" | null; largest?: boolean };
 }
 
 export type RunNotice = BrowserRunNotice;
@@ -89,7 +91,12 @@ function failureFromResponse(status: number, body: Record<string, unknown>, head
     const declared = typeof body.code === "string" && KNOWN_CODES.has(body.code as RunErrorCode) ? body.code as RunErrorCode : null;
     const retryAfter = Number.parseInt(headers.get("Retry-After") ?? "", 10);
     const perMinute = typeof body.limit === "number" && Number.isInteger(body.limit) && body.limit > 0 ? body.limit : null;
-    const upgrade = body.upgrade === "plus" || body.upgrade === "pro" ? body.upgrade : null;
+    const upgrade: "plus" | "pro" | null = body.upgrade === "plus" || body.upgrade === "pro" ? body.upgrade : null;
+    const sizes = body.sizes && typeof body.sizes === "object" ? body.sizes as Record<string, unknown> : null;
+    const positive = (value: unknown) => typeof value === "number" && Number.isInteger(value) && value > 0;
+    const runSizes = sizes && positive(sizes.fileChars) && positive(sizes.requestChars) && positive(sizes.stdinChars)
+        ? { fileChars: Number(sizes.fileChars), requestChars: Number(sizes.requestChars), stdinChars: Number(sizes.stdinChars), upgrade, ...(body.largest === true ? { largest: true } : {}) }
+        : null;
     const code: RunErrorCode = declared ?? (
         status === 401 ? "auth_required"
             : status === 429 ? "rate_limited"
@@ -99,7 +106,7 @@ function failureFromResponse(status: number, body: Record<string, unknown>, head
                             : status === 400 ? "invalid_request"
                                 : "unknown"
     );
-    return { code, message, status, ...(Number.isFinite(retryAfter) ? { retryAfterSeconds: retryAfter } : {}), ...(code === "rate_limited" && perMinute ? { limit: { perMinute, upgrade } } : {}) };
+    return { code, message, status, ...(Number.isFinite(retryAfter) ? { retryAfterSeconds: retryAfter } : {}), ...(code === "rate_limited" && perMinute ? { limit: { perMinute, upgrade } } : {}), ...(code === "too_large" && runSizes ? { sizes: runSizes } : {}) };
 }
 
 type ServerOutcome =
@@ -132,8 +139,10 @@ async function executeOnServer(files: RunFile[], stdin: string, signal?: AbortSi
     }
     if (!response.ok) return { kind: "failed", failure: failureFromResponse(response.status, result, response.headers), durationMs: elapsed };
     if (!Array.isArray(result.jobs)) return { kind: "failed", failure: { code: "invalid_response", message: "" }, durationMs: elapsed };
-    const jobs = (result.jobs as Array<Partial<ExecuteJob> & { durationMs?: unknown }>).map((job, index): ExecuteJob => {
+    const jobs = (result.jobs as Array<Partial<ExecuteJob> & { durationMs?: unknown; outputLimit?: unknown }>).map((job, index): ExecuteJob => {
         const run = job.run ?? { stdout: "", stderr: "", code: 1, output: "" };
+        // The server cut the output to the plan's length (PLAN_RUN_SIZES.outputChars).
+        const outputLimit = typeof job.outputLimit === "number" && Number.isInteger(job.outputLimit) && job.outputLimit > 0 ? job.outputLimit : null;
         return {
             name: typeof job.name === "string" ? job.name : files[index]?.name ?? "main",
             language: typeof job.language === "string" ? job.language : files[index]?.language ?? "",
@@ -146,6 +155,7 @@ async function executeOnServer(files: RunFile[], stdin: string, signal?: AbortSi
             },
             engine: "server",
             durationMs: typeof job.durationMs === "number" && Number.isFinite(job.durationMs) ? Math.round(job.durationMs) : elapsed,
+            ...(outputLimit ? { notices: [{ code: "output_truncated", limit: outputLimit }] } : {}),
         };
     });
     return { kind: "jobs", jobs };

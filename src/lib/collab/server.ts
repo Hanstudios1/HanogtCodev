@@ -84,7 +84,7 @@ const MESSAGES: Record<CollabErrorCode, string> = {
     frozen: "Oturum boyut sınırını aştı; yeni değişiklikler kaydedilemiyor.",
     forbidden: "Bu işlem için yetkiniz yok.",
     invalid_file: "Geçersiz dosya.",
-    too_many_files: "Bir oturumda en fazla 20 dosya olabilir.",
+    too_many_files: "Oturum, sahibinin planındaki dosya sınırına ulaştı (Ücretsiz 20, Plus 40, Pro 100).",
     file_too_large: "Bir dosya en fazla 500.000 karakter olabilir.",
     content_too_large: "Oturumdaki kod toplam 1.000.000 karakteri aşamaz.",
     invalid_update: "Geçersiz değişiklik verisi.",
@@ -252,6 +252,7 @@ function sessionData(view: CollabSessionView): Record<string, unknown> {
         endReason: view.endReason,
         maxPeople: view.maxPeople,
         maxInvites: view.maxInvites,
+        maxFiles: view.maxFiles,
         purgeAt: purgeAt(view),
     };
 }
@@ -503,12 +504,12 @@ export type CreateInput = { title: unknown; files: unknown; invite: unknown };
 
 /** Starts a session from the owner's files; their earlier active sessions end ("replaced"). */
 export async function createSession(user: CollabUser, input: CreateInput): Promise<{ id: string; meta: CollabMeta }> {
-    const validated = validateInitialFiles(input.files);
+    // The owner's plan: Free 2 people (4 invitations), 12 hours and 20 files; Plus 5 (12), 24 hours, 40 files; Pro 30 (60), 48 hours, 100 files.
+    const limits = await collabLimitsFor(user.email).catch(freeCollabLimits);
+    const validated = validateInitialFiles(input.files, limits.files);
     if (!validated.ok) throw new CollabApiError(validated.code === "invalid_file" ? 400 : 413, validated.code);
     const requested = Array.isArray(input.invite) ? input.invite.map(normalizeEmail).filter(Boolean) : [];
     if (requested.length > COLLAB_LIMITS.maxInvites) throw new CollabApiError(400, "invalid_request");
-    // The owner's plan: Free 2 people (4 invitations), Plus 5 (12), Pro 30 (60).
-    const limits = await collabLimitsFor(user.email).catch(freeCollabLimits);
     if (requested.length > limits.invites) throw new CollabApiError(409, "invite_limit");
     if (requested.some((email) => email === user.email || !user.friends.includes(email))) throw new CollabApiError(403, "not_friend");
 
@@ -552,11 +553,12 @@ export async function createSession(user: CollabUser, input: CreateInput): Promi
         chatAt: 0,
         compactingUntil: 0,
         createdAt: now,
-        expiresAt: now + COLLAB_LIMITS.sessionMs,
+        expiresAt: now + Math.min(limits.hours * 60 * 60_000, COLLAB_LIMITS.maxSessionMs),
         endedAt: 0,
         endReason: null,
         maxPeople: limits.people,
         maxInvites: limits.invites,
+        maxFiles: limits.files,
     };
     await commitServerMutations([
         { type: "create", path: sessionPath(id), data: sessionData(view) },
@@ -818,6 +820,7 @@ export async function joinSession(id: string, user: CollabUser): Promise<CollabS
         if (limits) {
             current.maxPeople = limits.people;
             current.maxInvites = limits.invites;
+            current.maxFiles = Math.max(current.maxFiles, limits.files);
         }
         decision = joinDecision(current, user.email, friends);
         if (decision !== "ok") return null;
@@ -860,6 +863,7 @@ export async function inviteToSession(id: string, user: CollabUser, emails: read
         if (limits) {
             current.maxPeople = limits.people;
             current.maxInvites = limits.invites;
+            current.maxFiles = Math.max(current.maxFiles, limits.files);
         }
         const { accepted, rejected } = invitableEmails(current, emails, user.friends);
         if (rejected.length) throw new CollabApiError(403, "not_friend");

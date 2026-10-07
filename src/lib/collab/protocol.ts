@@ -29,10 +29,15 @@ export const COLLAB_LIMITS = {
     maxParticipants: 30,
     /** Pending and accepted invitations of one session, on any plan (Pro's 60). */
     maxInvites: 60,
-    /** What sessions from before per-plan limits allowed (Plus). */
+    /** What sessions from before per-plan limits allowed (Plus; 20 files on every plan). */
     legacyPeople: 5,
     legacyInvites: 12,
-    maxFiles: 20,
+    legacyFiles: 20,
+    /**
+     * Files in one session on any plan (Pro's 100); the session itself holds
+     * its owner's plan limit (maxFiles, PLAN_COLLAB_LIMITS).
+     */
+    maxFiles: 100,
     /** Same limits as the editor and the cloud projects. */
     maxFileChars: 500_000,
     maxTotalChars: 1_000_000,
@@ -61,8 +66,13 @@ export const COLLAB_LIMITS = {
     updatesPageChars: 3_000_000,
     /** Base64 characters of updates one compaction folds in (the rest waits for the next one). */
     compactBatchChars: 6_000_000,
-    /** An active session ends by itself after this long. */
+    /**
+     * An active session ends by itself after this long: Free's 12 hours, also
+     * what sessions from before per-plan lengths got. Plus and Pro sessions
+     * last longer (PLAN_COLLAB_LIMITS.hours); maxSessionMs is the longest.
+     */
     sessionMs: 12 * 60 * 60_000,
+    maxSessionMs: 48 * 60 * 60_000,
     /** An ended session's final state stays readable this long ("Kopyayı sakla"). */
     keepEndedMs: 24 * 60 * 60_000,
     /** Updates younger than this are never deleted by a compaction (live listeners still deliver them). */
@@ -333,10 +343,10 @@ export type CollabInitialFile = { id: string; name: string; lang: string; code: 
 
 export type CollabFileError = "invalid_file" | "too_many_files" | "file_too_large" | "content_too_large";
 
-/** The files a session starts with: ids unique, names valid, sizes within the editor's limits. */
-export function validateInitialFiles(value: unknown): { ok: true; files: CollabInitialFile[] } | { ok: false; code: CollabFileError } {
+/** The files a session starts with: ids unique, names valid, sizes within the editor's limits, at most `maxFiles` (the owner's plan). */
+export function validateInitialFiles(value: unknown, maxFiles: number = COLLAB_LIMITS.legacyFiles): { ok: true; files: CollabInitialFile[] } | { ok: false; code: CollabFileError } {
     if (!Array.isArray(value) || value.length === 0) return { ok: false, code: "invalid_file" };
-    if (value.length > COLLAB_LIMITS.maxFiles) return { ok: false, code: "too_many_files" };
+    if (value.length > Math.min(maxFiles, COLLAB_LIMITS.maxFiles)) return { ok: false, code: "too_many_files" };
     const files: CollabInitialFile[] = [];
     const ids = new Set<string>();
     let total = 0;
@@ -490,6 +500,8 @@ export type CollabSessionView = {
     maxPeople: number;
     /** Invitations it may hold. */
     maxInvites: number;
+    /** Files it may hold. */
+    maxFiles: number;
 };
 
 export type CollabFileMeta = { id: string; name: string; lang: string; chars: number };
@@ -570,6 +582,7 @@ export function readSessionRecord(raw: Record<string, unknown>): CollabSessionVi
         endReason,
         maxPeople: limitOf(raw.maxPeople, COLLAB_LIMITS.maxParticipants, COLLAB_LIMITS.legacyPeople),
         maxInvites: limitOf(raw.maxInvites, COLLAB_LIMITS.maxInvites, COLLAB_LIMITS.legacyInvites),
+        maxFiles: limitOf(raw.maxFiles, COLLAB_LIMITS.maxFiles, COLLAB_LIMITS.legacyFiles),
     };
 }
 
@@ -653,6 +666,8 @@ export type CollabMeta = {
     /** People the session may hold (the owner's plan). */
     maxPeople: number;
     maxInvites: number;
+    /** Files the session may hold (the owner's plan). */
+    maxFiles: number;
 };
 
 export function publicMeta(id: string, session: CollabSessionView): CollabMeta {
@@ -677,6 +692,7 @@ export function publicMeta(id: string, session: CollabSessionView): CollabMeta {
         endReason: session.endReason,
         maxPeople: session.maxPeople,
         maxInvites: session.maxInvites,
+        maxFiles: session.maxFiles,
     };
 }
 
@@ -712,6 +728,7 @@ export function readMeta(value: unknown): CollabMeta | null {
         endReason: record.endReason === "owner" || record.endReason === "expired" || record.endReason === "replaced" ? record.endReason : null,
         maxPeople: limitOf(record.maxPeople, COLLAB_LIMITS.maxParticipants, COLLAB_LIMITS.legacyPeople),
         maxInvites: limitOf(record.maxInvites, COLLAB_LIMITS.maxInvites, COLLAB_LIMITS.legacyInvites),
+        maxFiles: limitOf(record.maxFiles, COLLAB_LIMITS.maxFiles, COLLAB_LIMITS.legacyFiles),
     };
 }
 
@@ -793,7 +810,7 @@ export type CollabInfoResponse = {
 export type CollabFriend = { email: string; name: string; avatar: string | null; status: "online" | "idle" | "dnd" | "offline" };
 
 /** The signed-in person's team-editing limits (their plan), with GET /api/collab?view=friends. */
-export type CollabPlanLimits = { plan: "free" | "plus" | "pro"; people: number; invites: number };
+export type CollabPlanLimits = { plan: "free" | "plus" | "pro"; people: number; invites: number; hours?: number; files?: number };
 
 export type CollabErrorCode =
     | "unauthorized" | "bad_origin" | "rate_limited" | "invalid_request" | "payload_too_large"

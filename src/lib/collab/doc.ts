@@ -196,10 +196,10 @@ export type TabOpsResult = { applied: number; rejected: "too_many_files" | "file
 
 /**
  * Applies tab operations to the document in one transaction. Limits are the
- * session's: at most 20 files, 500 000 characters per file, 1 000 000 in all;
- * the last file can't be removed.
+ * session's: at most `maxFiles` files (the owner's plan: 20, 40 or 100),
+ * 500 000 characters per file, 1 000 000 in all; the last file can't be removed.
  */
-export function applyTabOps(doc: Y.Doc, ops: readonly TabOp[], origin: unknown): TabOpsResult {
+export function applyTabOps(doc: Y.Doc, ops: readonly TabOp[], origin: unknown, maxFiles: number = COLLAB_LIMITS.legacyFiles): TabOpsResult {
     let applied = 0;
     let rejected: TabOpsResult["rejected"] = null;
     doc.transact(() => {
@@ -226,7 +226,7 @@ export function applyTabOps(doc: Y.Doc, ops: readonly TabOp[], origin: unknown):
                     continue;
                 }
                 if (map.has(op.id)) continue;
-                if (files.length >= COLLAB_LIMITS.maxFiles) {
+                if (files.length >= Math.min(maxFiles, COLLAB_LIMITS.maxFiles)) {
                     rejected ??= "too_many_files";
                     continue;
                 }

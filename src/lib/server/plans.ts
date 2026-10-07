@@ -16,6 +16,7 @@ import {
     isPlanId,
     type PaidPlanId,
     type PlanCatalog,
+    type PlanCollabLimits,
     type PlanId,
     type PlanPrice,
     type UserSubscription,
@@ -163,12 +164,12 @@ export async function groupLimitFor(email: string): Promise<{ plan: PlanId; limi
  * can't be read, so a running session keeps the limits it has instead of
  * dropping to Free over a database hiccup.
  */
-export async function collabLimitsFor(email: string): Promise<{ plan: PlanId; people: number; invites: number }> {
+export async function collabLimitsFor(email: string): Promise<{ plan: PlanId } & PlanCollabLimits> {
     const plan = effectivePlan(await getSubscription(email));
     return { plan, ...PLAN_COLLAB_LIMITS[plan] };
 }
 
 /** Free's team-editing limits: what a new session gets when the plan can't be read. */
-export function freeCollabLimits(): { plan: PlanId; people: number; invites: number } {
+export function freeCollabLimits(): { plan: PlanId } & PlanCollabLimits {
     return { plan: "free", ...PLAN_COLLAB_LIMITS.free };
 }

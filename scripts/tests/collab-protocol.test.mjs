@@ -340,3 +340,29 @@ test("documents read from Firestore or the API are validated", () => {
     assert.equal(readSignal("0000abcd-ABCDEFGH", { from: "bbbbbbbbbbbb", fromClient: 1, toClient: 2, kind: "exec", data: "{}" }), null);
     assert.equal(readSignal("0000abcd-ABCDEFGH", { from: "bbbbbbbbbbbb", fromClient: 1, toClient: 2, kind: "offer", data: "x".repeat(COLLAB_LIMITS.maxSignalChars + 1) }), null);
 });
+
+test("the owner's plan sets how many files a session holds and how long it lasts; Free stays at 20 files and 12 hours", async () => {
+    const { PLAN_COLLAB_LIMITS } = await load("lib/plans.ts");
+    assert.deepEqual(PLAN_COLLAB_LIMITS.free, { people: 2, invites: 4, hours: 12, files: 20 });
+    for (const key of ["hours", "files"]) {
+        assert.ok(PLAN_COLLAB_LIMITS.free[key] < PLAN_COLLAB_LIMITS.plus[key] && PLAN_COLLAB_LIMITS.plus[key] < PLAN_COLLAB_LIMITS.pro[key], key);
+    }
+    assert.equal(COLLAB_LIMITS.maxFiles, PLAN_COLLAB_LIMITS.pro.files, "no plan above the hard cap");
+    assert.equal(COLLAB_LIMITS.maxSessionMs, PLAN_COLLAB_LIMITS.pro.hours * 3_600_000);
+    assert.equal(COLLAB_LIMITS.sessionMs, PLAN_COLLAB_LIMITS.free.hours * 3_600_000);
+    assert.equal(COLLAB_LIMITS.legacyFiles, PLAN_COLLAB_LIMITS.free.files);
+    const files = (count) => Array.from({ length: count }, (_, index) => ({ id: `f${index}`, name: `f${index}.js`, lang: "javascript", code: "" }));
+    assert.deepEqual(validateInitialFiles(files(21)), { ok: false, code: "too_many_files" }, "Free and older callers: 20");
+    assert.equal(validateInitialFiles(files(40), PLAN_COLLAB_LIMITS.plus.files).ok, true);
+    assert.deepEqual(validateInitialFiles(files(41), PLAN_COLLAB_LIMITS.plus.files), { ok: false, code: "too_many_files" });
+    assert.equal(validateInitialFiles(files(100), PLAN_COLLAB_LIMITS.pro.files).ok, true);
+    assert.deepEqual(validateInitialFiles(files(101), 1_000), { ok: false, code: "too_many_files" }, "never more than any plan allows");
+    // Stored sessions: older ones hold 20 files, junk never makes room, and the meta carries the limit.
+    assert.equal(readSessionRecord(stored()).maxFiles, COLLAB_LIMITS.legacyFiles);
+    assert.equal(readSessionRecord(stored({ maxFiles: 40 })).maxFiles, 40);
+    assert.equal(readSessionRecord(stored({ maxFiles: 5_000 })).maxFiles, COLLAB_LIMITS.maxFiles);
+    assert.equal(readSessionRecord(stored({ maxFiles: "40" })).maxFiles, COLLAB_LIMITS.legacyFiles);
+    const meta = publicMeta("A1b2C3d4E5f6G7h8I9j0", readSessionRecord(stored({ maxFiles: 100 })));
+    assert.equal(meta.maxFiles, 100);
+    assert.equal(readMeta(meta).maxFiles, 100);
+});

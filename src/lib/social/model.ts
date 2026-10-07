@@ -11,6 +11,7 @@ import { readMessageAttachment, type MessageAttachment } from "./attachments";
 import { readMessageGif, type MessageGif } from "./gif";
 import { markdownToPlain } from "./markdown";
 import type { PlanBadge } from "@/lib/plan-badge";
+import { MESSAGE_CHARS_MAX } from "@/lib/plans";
 import type { PresenceStatus } from "@/lib/presence";
 
 /* -------------------------------------------------------------------------- */
@@ -320,7 +321,7 @@ export function dmMessageFromData(id: string, data: Record<string, unknown>, pen
     return {
         id,
         fromEmail: str(data.fromEmail, 254).toLowerCase(),
-        text: deleted ? "" : str(data.text, SOCIAL_LIMITS.messageMax),
+        text: deleted ? "" : str(data.text, MESSAGE_CHARS_MAX),
         type,
         voicePath: !deleted && typeof data.voicePath === "string" && data.voicePath ? data.voicePath.slice(0, 400) : null,
         voiceDuration: duration,

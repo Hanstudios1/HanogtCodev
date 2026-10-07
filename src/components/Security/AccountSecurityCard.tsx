@@ -2,6 +2,7 @@
 
 import { CheckCircle2, CircleAlert, Info, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useRawSession } from "@/components/Provider";
 import { openActions, securityChecks, type SecurityCheck, type SecurityCheckId } from "@/lib/account-security";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -42,6 +43,35 @@ const C = {
 
 const SETTINGS = "/account-settings#privacy";
 
+type Variant = "page" | "settings";
+
+/** The Security page shows the card on its own; Account Settings shows it like its other cards (h3 title, row paddings). */
+const STYLES: Record<Variant, { frame: string; head: string; title: string; body: string; list: string; item: string; foot: string }> = {
+    page: {
+        frame: "rounded-2xl border border-zinc-200 bg-white p-5 dark:border-white/10 dark:bg-zinc-900 sm:p-6",
+        head: "",
+        title: "text-lg font-black text-zinc-900 dark:text-white",
+        body: "mt-4",
+        list: "mt-4 divide-y divide-zinc-100 dark:divide-white/[0.06]",
+        item: "flex items-start gap-3 py-3 first:pt-0 last:pb-0",
+        foot: "mt-4 border-t border-zinc-100 pt-3 text-[12px] text-zinc-500 dark:border-white/[0.06]",
+    },
+    settings: {
+        frame: "rounded-2xl border border-zinc-200 bg-white dark:border-white/[0.08] dark:bg-zinc-900",
+        head: "px-5 pb-3.5 pt-4 sm:px-6",
+        title: "text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-white",
+        body: "border-t border-zinc-100 px-5 py-4 sm:px-6 dark:border-white/[0.06]",
+        list: "divide-y divide-zinc-100 border-t border-zinc-100 dark:divide-white/[0.06] dark:border-white/[0.06]",
+        item: "flex items-start gap-3 px-5 py-3.5 sm:px-6",
+        foot: "border-t border-zinc-100 px-5 py-3 text-[12px] text-zinc-500 sm:px-6 dark:border-white/[0.06] dark:text-zinc-400",
+    },
+};
+
+function Title({ variant, children }: { variant: Variant; children: string }) {
+    return variant === "settings"
+        ? <h3 id="account-security-title" className={STYLES.settings.title}>{children}</h3>
+        : <h2 id="account-security-title" className={STYLES.page.title}>{children}</h2>;
+}
 
 function StateIcon({ state }: { state: SecurityCheck["state"] }) {
     if (state === "ok") return <CheckCircle2 className="h-5 w-5 shrink-0 text-brand-green" aria-hidden />;
@@ -53,9 +83,10 @@ function StateIcon({ state }: { state: SecurityCheck["state"] }) {
  * The account's security at a glance (GET /api/account/security), with a
  * link to the setting behind each suggestion. Signed out: a sign-in prompt.
  */
-export default function AccountSecurityCard({ onAction }: {
+export default function AccountSecurityCard({ onAction, variant = "page" }: {
     /** In Account Settings: go to the setting on this page instead of following the link. */
     onAction?: (check: SecurityCheckId) => void;
+    variant?: Variant;
 } = {}) {
     const { tx, locale } = useI18n();
     const auth = useRawSession();
@@ -71,24 +102,32 @@ export default function AccountSecurityCard({ onAction }: {
         }
     };
 
-    const frame = "rounded-3xl border border-zinc-200 bg-white p-5 dark:border-white/10 dark:bg-zinc-900 sm:p-6";
+    const style = STYLES[variant];
+    const header = (extra?: ReactNode) => (
+        <div className={style.head}>
+            <Title variant={variant}>{tx(C.title)}</Title>
+            {extra}
+        </div>
+    );
 
     if (shown.state === "signedOut") {
         return (
-            <section aria-labelledby="account-security-title" className={frame} data-account-security="signed-out">
-                <h2 id="account-security-title" className="text-lg font-black text-zinc-900 dark:text-white">{tx(C.title)}</h2>
-                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(C.signedOut)}</p>
-                <Link href="/login?callbackUrl=%2Fsecurity" className="mt-4 inline-flex h-11 items-center rounded-xl bg-zinc-900 px-5 text-[14px] font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">{tx(C.signIn)}</Link>
+            <section aria-labelledby="account-security-title" className={style.frame} data-account-security="signed-out">
+                {header()}
+                <div className={variant === "settings" ? style.body : ""}>
+                    <p className={`${variant === "settings" ? "" : "mt-2 "}text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400`}>{tx(C.signedOut)}</p>
+                    <Link href="/login?callbackUrl=%2Fsecurity" className="mt-4 inline-flex h-11 items-center rounded-xl bg-zinc-900 px-5 text-[14px] font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">{tx(C.signIn)}</Link>
+                </div>
             </section>
         );
     }
 
     if (shown.state === "loading") {
         return (
-            <section aria-labelledby="account-security-title" aria-busy="true" className={frame} data-account-security="loading">
-                <h2 id="account-security-title" className="text-lg font-black text-zinc-900 dark:text-white">{tx(C.title)}</h2>
+            <section aria-labelledby="account-security-title" aria-busy="true" className={style.frame} data-account-security="loading">
+                {header()}
                 <p className="sr-only">{tx(C.loading)}</p>
-                <div className="mt-4 space-y-3" aria-hidden>
+                <div className={`${style.body} space-y-3`} aria-hidden>
                     {[0, 1, 2, 3].map((row) => <div key={row} className="h-12 animate-pulse rounded-xl bg-zinc-100 dark:bg-white/[0.06]" />)}
                 </div>
             </section>
@@ -97,12 +136,14 @@ export default function AccountSecurityCard({ onAction }: {
 
     if (shown.state === "failed") {
         return (
-            <section aria-labelledby="account-security-title" className={frame} data-account-security="failed">
-                <h2 id="account-security-title" className="text-lg font-black text-zinc-900 dark:text-white">{tx(C.title)}</h2>
-                <p role="alert" className="mt-2 text-[14px] text-zinc-600 dark:text-zinc-400">{tx(C.failed)}</p>
-                <button type="button" onClick={retry} className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 px-4 text-[13.5px] font-bold transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/5">
-                    <RefreshCw className="h-4 w-4" aria-hidden />{tx(C.retry)}
-                </button>
+            <section aria-labelledby="account-security-title" className={style.frame} data-account-security="failed">
+                {header()}
+                <div className={variant === "settings" ? style.body : ""}>
+                    <p role="alert" className={`${variant === "settings" ? "" : "mt-2 "}text-[14px] text-zinc-600 dark:text-zinc-400`}>{tx(C.failed)}</p>
+                    <button type="button" onClick={retry} className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 px-4 text-[13.5px] font-bold transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/5">
+                        <RefreshCw className="h-4 w-4" aria-hidden />{tx(C.retry)}
+                    </button>
+                </div>
             </section>
         );
     }
@@ -128,18 +169,24 @@ export default function AccountSecurityCard({ onAction }: {
                 return { title: C.sessions, detail: [summary.lastLoginAt ? tx(C.lastLogin, { date: date(summary.lastLoginAt) }) : "", tx(C.sessionsHint)].filter(Boolean).join(" "), action: C.manage };
         }
     };
+    // Account Settings uses its own accent for the suggested step; the Security page keeps its dark buttons.
+    const actionTone = (check: SecurityCheck) => check.state === "action"
+        ? (variant === "settings" ? "bg-indigo-600 text-white hover:bg-indigo-500" : "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200")
+        : (variant === "settings" ? "text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400" : "text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300");
+    const actionClass = (check: SecurityCheck) => `shrink-0 rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${actionTone(check)}`;
 
     return (
-        <section aria-labelledby="account-security-title" className={frame} data-account-security="ready" data-open-actions={open}>
-            <h2 id="account-security-title" className="text-lg font-black text-zinc-900 dark:text-white">{tx(C.title)}</h2>
-            <p className={`mt-1 flex items-center gap-2 text-[14px] font-bold ${open === 0 ? "text-brand-green" : "text-amber-700 dark:text-amber-300"}`}>
-                {open === 0 ? tx(C.good) : <>{tx(C.improve)}<span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11.5px]">{open === 1 ? tx(C.suggestion) : tx(C.suggestions, { count: open })}</span></>}
-            </p>
-            <ul className="mt-4 divide-y divide-zinc-100 dark:divide-white/[0.06]">
+        <section aria-labelledby="account-security-title" className={style.frame} data-account-security="ready" data-open-actions={open}>
+            {header(
+                <p className={`mt-1 flex flex-wrap items-center gap-2 ${variant === "settings" ? "text-[13px]" : "text-[14px]"} font-bold ${open === 0 ? "text-brand-green" : "text-amber-700 dark:text-amber-300"}`}>
+                    {open === 0 ? tx(C.good) : <>{tx(C.improve)}<span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11.5px]">{open === 1 ? tx(C.suggestion) : tx(C.suggestions, { count: open })}</span></>}
+                </p>,
+            )}
+            <ul className={style.list}>
                 {checks.map((check) => {
                     const { title, detail, action } = row(check);
                     return (
-                        <li key={check.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0" data-security-check={check.id} data-state={check.state}>
+                        <li key={check.id} className={style.item} data-security-check={check.id} data-state={check.state}>
                             <StateIcon state={check.state} />
                             <div className="min-w-0 flex-1">
                                 <p className="text-[14px] font-bold text-zinc-900 dark:text-white">{tx(title)}</p>
@@ -147,11 +194,11 @@ export default function AccountSecurityCard({ onAction }: {
                             </div>
                             {action ? (
                                 onAction ? (
-                                    <button type="button" onClick={() => onAction(check.id)} className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${check.state === "action" ? "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200" : "text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"}`} data-security-action={check.id}>
+                                    <button type="button" onClick={() => onAction(check.id)} className={actionClass(check)} data-security-action={check.id}>
                                         {tx(action)}
                                     </button>
                                 ) : (
-                                    <Link href={SETTINGS} className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${check.state === "action" ? "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200" : "text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"}`}>
+                                    <Link href={SETTINGS} className={actionClass(check)}>
                                         {tx(action)}
                                     </Link>
                                 )
@@ -160,7 +207,7 @@ export default function AccountSecurityCard({ onAction }: {
                     );
                 })}
             </ul>
-            <p className="mt-4 border-t border-zinc-100 pt-3 text-[12px] text-zinc-500 dark:border-white/[0.06]">{tx(C.private)}</p>
+            <p className={style.foot}>{tx(C.private)}</p>
         </section>
     );
 }

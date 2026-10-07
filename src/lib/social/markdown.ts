@@ -19,8 +19,12 @@ export type MdBlock =
     | { type: "code"; lang: string; text: string }
     | { type: "quote"; children: MdBlock[] };
 
-/** Longer texts are not parsed at all (messages are at most 4000 characters). */
-export const MARKDOWN_MAX_LENGTH = 8_000;
+/**
+ * Longer texts are not parsed at all: messages are at most 8,000 characters
+ * (Pro, PLAN_MESSAGE_CHARS) and Hanogt AI's answers in groups 12,000
+ * (Pro, PLAN_GROUP_AI.answerChars).
+ */
+export const MARKDOWN_MAX_LENGTH = 12_000;
 const MAX_DEPTH = 6;
 
 const FENCE = /^```([A-Za-z0-9+#._-]{0,20})\s*$/;

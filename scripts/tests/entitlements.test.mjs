@@ -213,3 +213,48 @@ test("runs: a Plus purchase Paddle never reported raises the minute before refus
         assert.ok(api.calls.length > 0);
     });
 });
+
+test("run sizes: Free keeps 50,000 / 150,000 / 10,000 / 64,000 characters; Plus and Pro take bigger runs", () => {
+    assert.deepEqual(plans.PLAN_RUN_SIZES.free, { fileChars: 50_000, requestChars: 150_000, stdinChars: 10_000, outputChars: 64_000 });
+    for (const key of ["fileChars", "requestChars", "stdinChars", "outputChars"]) {
+        assert.ok(plans.PLAN_RUN_SIZES.free[key] < plans.PLAN_RUN_SIZES.plus[key] && plans.PLAN_RUN_SIZES.plus[key] < plans.PLAN_RUN_SIZES.pro[key], key);
+    }
+    for (const plan of plans.PLAN_IDS) {
+        const sizes = plans.PLAN_RUN_SIZES[plan];
+        assert.ok(sizes.requestChars >= sizes.fileChars, `${plan}: one full file fits a request`);
+        // A request stays well under the 4.5 MB request size of the host, even in four-byte characters.
+        assert.ok((sizes.requestChars + sizes.stdinChars) * 4 < 4.5 * 1024 * 1024, plan);
+    }
+    const { runSizeProblem } = runLimits;
+    const free = plans.PLAN_RUN_SIZES.free;
+    assert.equal(runSizeProblem(free, [50_000, 50_000, 50_000], 10_000), null);
+    assert.equal(runSizeProblem(free, [50_001], 0), "file");
+    assert.equal(runSizeProblem(free, [50_000, 50_000, 50_000, 1], 0), "request");
+    assert.equal(runSizeProblem(free, [10], 10_001), "stdin");
+    assert.equal(runSizeProblem(plans.PLAN_RUN_SIZES.plus, [100_000], 50_000), null);
+});
+
+test("run sizes: the check follows the plan, names the next plan and asks Paddle once before refusing", async () => {
+    await withPaddle(seed({ plan: "free", status: "active" }), [], async (db, api) => {
+        const fits = await runLimits.checkRunSize(ALI, [40_000], 500);
+        assert.deepEqual([fits.ok, fits.plan, fits.sizes.outputChars], [true, "free", 64_000]);
+        const refused = await runLimits.checkRunSize(ALI, [80_000], 0);
+        assert.deepEqual([refused.ok, refused.plan, refused.problem, refused.upgrade, refused.sizes.fileChars], [false, "free", "file", "plus", 50_000]);
+        assert.deepEqual(api.calls, [], "nothing at Paddle could change it");
+    });
+    await withPaddle(seed({ plan: "pro", status: "active" }), [], async () => {
+        const big = await runLimits.checkRunSize(ALI, [200_000, 200_000, 200_000], 100_000);
+        assert.deepEqual([big.ok, big.plan, big.sizes.outputChars], [true, "pro", 256_000]);
+        const tooBig = await runLimits.checkRunSize(ALI, [200_001], 0);
+        assert.deepEqual([tooBig.ok, tooBig.upgrade], [false, null]);
+    });
+    // A Plus purchase Paddle never reported: the bigger run is allowed after asking once.
+    await withPaddle(seed(UNRECORDED), [PLUS], async (db, api) => {
+        const healed = await runLimits.checkRunSize(ALI, [90_000], 0);
+        assert.deepEqual([healed.ok, healed.plan], [true, "plus"]);
+        assert.ok(api.calls.length > 0);
+        // The subscription it read is handed to the minute count, which doesn't read it again.
+        const counted = await runLimits.enforceRunQuota(ALI, 1, { subscription: healed.subscription });
+        assert.deepEqual([counted.allowed, counted.plan, counted.limit], [true, "plus", 150]);
+    });
+});

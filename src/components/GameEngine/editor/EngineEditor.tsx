@@ -3,6 +3,7 @@
 import {
     Activity,
     ArrowLeft,
+    BadgeCheck,
     BookOpen,
     Check,
     ChevronDown,
@@ -18,6 +19,7 @@ import {
     HardDrive,
     Info,
     LoaderCircle,
+    Lock,
     Magnet,
     Move3d,
     Package,
@@ -39,9 +41,12 @@ import {
     VolumeX,
     X,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
+import { useMyPlan } from "@/lib/plan-client";
+import { PLAN_UNBRANDED_EXPORT } from "@/lib/plans";
 import type { GamePlayer, PlayerState } from "@/lib/game-engine/player/game-player";
 import type { GizmoMode, SnapSettings } from "@/lib/game-engine/render/renderer";
 import { compileScripts } from "@/lib/game-engine/script/compiler";
@@ -195,6 +200,11 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const t = useEngineText();
     const { language } = useI18n();
     const { toasts, push: toast, dismiss } = useToasts();
+    // Plus and Pro may export without the "Made with Hanogt Engine" badge (PLAN_UNBRANDED_EXPORT).
+    const { data: account } = useSession();
+    const plan = useMyPlan(account?.user?.email ?? null);
+    const [hideBadge, setHideBadge] = useState(false);
+    const exportBadge = !(PLAN_UNBRANDED_EXPORT[plan] && hideBadge);
     const program = useMemo(() => compileScripts(project.scripts), [project.scripts]);
 
     const [gizmoMode, setGizmoMode] = useState<GizmoMode>("translate");
@@ -533,7 +543,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             return;
         }
         try {
-            await exportStandaloneHtml(store.getState().project);
+            await exportStandaloneHtml(store.getState().project, { badge: exportBadge });
             toast(t("htmlExported"), "success");
         } catch (error) {
             toast(error instanceof Error ? error.message : t("exportFailed"), "error");
@@ -549,7 +559,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             return;
         }
         try {
-            const failure = await exportWebPackage(store.getState().project, snapshotScene);
+            const failure = await exportWebPackage(store.getState().project, snapshotScene, { badge: exportBadge });
             if (!failure) toast(t("webZipExported"), "success");
             else if (failure.kind === "player") toast(t("webZipPlayerFailed"), "error");
             else toast(t("webZipMissingFiles").replace("{names}", failure.names.slice(0, 3).join(", ")), "error");
@@ -688,6 +698,9 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                                 { label: t("exportHtml"), icon: Globe, onSelect: () => void exportHtml() },
                                 { label: t("exportWebZip"), icon: PackageOpen, onSelect: () => void exportWeb() },
                                 { label: t("exportJson"), icon: FileJson, onSelect: () => exportProjectJson(store.getState().project) },
+                                PLAN_UNBRANDED_EXPORT[plan]
+                                    ? { label: exportBadge ? t("exportBadgeOn") : t("exportBadgeOff"), icon: BadgeCheck, onSelect: () => setHideBadge((hidden) => !hidden) }
+                                    : { label: t("exportBadgePaid"), icon: Lock, disabled: true, onSelect: () => undefined },
                                 { separator: true, label: "" },
                                 { label: t("importProject"), icon: Upload, disabled: playing, onSelect: () => importInput.current?.click() },
                             ]}

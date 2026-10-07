@@ -1,6 +1,8 @@
 import { after, type NextRequest } from "next/server";
 import { isReactionKey } from "@/lib/groups";
+import { MESSAGE_CHARS_MAX } from "@/lib/plans";
 import { commitServerPatches, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { checkMessageLength } from "@/lib/server/message-limits";
 import { deleteMessageFiles } from "@/lib/server/message-files";
 import { clearMessageTraces, refreshMessageTraces } from "@/lib/server/message-traces";
 import { clearDirectMessageNotification } from "@/lib/server/social-notify";
@@ -111,9 +113,10 @@ async function edit(user: SocialUser, partner: string, body: Record<string, unkn
     await assertRateLimit(`social:dm-write:${user.email}`, 60);
     const { chatId, id, message, newest } = await ownMessage(user, partner, body.messageId);
     if (message.deleted === true || message.type !== "text") throw new SocialApiError(400, "invalid_request", "Bu mesaj düzenlenemez.");
-    const text = cleanMessageText(body.text, SOCIAL_LIMITS.messageMax * 2);
+    const text = cleanMessageText(body.text, MESSAGE_CHARS_MAX * 2);
     if (!text) throw new SocialApiError(400, "empty_message", "Mesaj boş olamaz.");
-    if (text.length > SOCIAL_LIMITS.messageMax) throw new SocialApiError(413, "message_too_long", "Mesaj en fazla 4000 karakter olabilir.");
+    const length = await checkMessageLength(user.email, text.length);
+    if (!length.allowed) throw new SocialApiError(413, "message_too_long", `Mesaj planınızda en fazla ${length.limit} karakter olabilir.`, {}, { limit: length.limit, plan: length.plan, upgrade: length.upgrade });
     await commitServerPatches([
         { path: messagePath(chatId, id), data: { text, edited: true }, updateFields: ["text", "edited"], updateTime: message._updateTime },
         ...(newest ? [{ path: chatPath(chatId), data: { lastMessage: messagePreview(text) }, updateFields: ["lastMessage"], exists: true }] : []),
@@ -241,7 +244,7 @@ export async function POST(request: NextRequest) {
     try {
         assertSameOrigin(request);
         const user = await requireSocialUser();
-        const body = await readBody(request, 24_576);
+        const body = await readBody(request, 49_152);
         const partner = readPartner(body.with, user.email);
         switch (body.action) {
             case "send": return socialJson(await sendDirect(user, partner, body), 201);

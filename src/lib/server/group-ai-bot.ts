@@ -1,7 +1,7 @@
 import "server-only";
 
 import { reasoningOf, splitThinkingText } from "@/lib/ai/thinking";
-import { PLAN_AI_FEATURES, type PlanId } from "@/lib/plans";
+import { PLAN_AI_FEATURES, PLAN_GROUP_AI, type PlanId } from "@/lib/plans";
 import { hanogtRequestBody, knowledgeNotes, providerConfig, systemPrompt, toolNotes } from "./hanogt-ai";
 
 /*
@@ -11,11 +11,16 @@ import { hanogtRequestBody, knowledgeNotes, providerConfig, systemPrompt, toolNo
  * where the question is handled (src/app/api/groups/_messages.ts).
  */
 
-/** Group answers stay short: at most this many tokens (or the plan's own limit when lower). */
-export const GROUP_AI_MAX_TOKENS = 1_200;
-/** How many of the channel's latest messages go with the question. */
-export const GROUP_AI_HISTORY = 12;
-const ANSWER_MAX = 4_000;
+/**
+ * Group answers stay shorter than chat answers: the asker's plan sets the
+ * tokens, the posted characters and how many of the channel's messages go
+ * with the question (PLAN_GROUP_AI: Free 1,200 tokens and 12 messages, Plus
+ * 2,000 and 20, Pro 3,000 and 30).
+ */
+export function groupAiLimits(plan: PlanId) {
+    const limits = PLAN_GROUP_AI[plan];
+    return { maxTokens: Math.min(PLAN_AI_FEATURES[plan].maxTokens, limits.answerTokens), answerChars: limits.answerChars, history: limits.history };
+}
 const TIMEOUT_MS = 45_000;
 
 export type GroupAiFailure = "not_configured" | "timeout" | "unreachable" | "upstream" | "empty";
@@ -46,7 +51,7 @@ export async function askGroupModel(input: { question: string; history: string; 
     const fields = {
         model: config.model,
         messages: [{ role: "system", content: prompt }, { role: "user", content: question }],
-        max_tokens: Math.min(PLAN_AI_FEATURES[input.plan].maxTokens, GROUP_AI_MAX_TOKENS),
+        max_tokens: groupAiLimits(input.plan).maxTokens,
         temperature: 0.45,
         stream: false,
     };
@@ -78,6 +83,6 @@ export async function askGroupModel(input: { question: string; history: string; 
     const data = await response.json().catch(() => null) as Completion | null;
     const choice = data?.choices?.[0];
     const { text } = splitThinkingText(choice?.message?.content ?? "", reasoningOf(choice?.message), { complete: choice?.finish_reason !== "length" });
-    const answer = text.trim().slice(0, ANSWER_MAX);
+    const answer = text.trim().slice(0, groupAiLimits(input.plan).answerChars);
     return answer ? { ok: true, text: answer } : { ok: false, reason: "empty" };
 }

@@ -54,7 +54,7 @@ import { readEditorSettings, useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type { MonacoApi } from "@/lib/monaco";
 import { useMyPlan } from "@/lib/plan-client";
-import { PLAN_COPY, PLAN_RUN_LIMITS, nextPlanUp } from "@/lib/plans";
+import { PLAN_COPY, PLAN_RUN_LIMITS, PLAN_RUN_SIZES, nextPlanUp } from "@/lib/plans";
 import {
     BROWSER_LANGUAGES, PLAINTEXT_LANGUAGE, ensureFileExtension, fileExtensionFor, getLanguage, isProgramLanguage,
     languageFromFileName, normalizeLanguageId, type LanguageInfo,
@@ -1896,6 +1896,7 @@ function EditorContent() {
                                                 onClearHistory={() => setHistory([])}
                                                 stdin={stdin}
                                                 onStdinChange={setStdin}
+                                                stdinLimit={PLAN_RUN_SIZES[plan].stdinChars}
                                                 onClear={() => setRun(null)}
                                                 onRun={handleRun}
                                                 onStop={stopRun}

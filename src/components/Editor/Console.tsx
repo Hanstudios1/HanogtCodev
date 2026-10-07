@@ -11,7 +11,7 @@ import { linkifyOutput, stripAnsi } from "@/components/Editor/output-links";
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
 import { useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy as CopyText } from "@/lib/i18n";
-import { PLAN_COPY, PLAN_RUN_LIMITS } from "@/lib/plans";
+import { PLAN_COPY, PLAN_RUN_LIMITS, PLAN_RUN_SIZES } from "@/lib/plans";
 import { LANGUAGES, languageDisplayName } from "@/lib/runtimes/languages";
 import type { RunFailure, RunNotice } from "@/services/piston";
 
@@ -33,11 +33,16 @@ interface ConsoleProps {
     onGoToLine: (tabId: string, line: number, column?: number) => void;
     tab: ConsoleTab;
     onTabChange: (tab: ConsoleTab) => void;
+    /** Characters of program input the person's plan sends to the server (PLAN_RUN_SIZES.stdinChars). */
+    stdinLimit?: number;
 }
 
 const C = {
     runLimit: { TR: "Planının çalıştırma sınırına ulaştın: derlenen dillerde dakikada {count} dosya.", EN: "You reached your plan's run limit: {count} files a minute for compiled languages." },
     runLimitUpgrade: { TR: "{plan} ile dakikada {count} dosya", EN: "{count} files a minute with {plan}" },
+    tooLargeFor: { TR: "Kod planının sınırını aşıyor: dosya başına {file}, toplamda {total} karakter ve {stdin} karakter girdi.", EN: "The code is over your plan's limits: {file} characters per file, {total} in total and {stdin} characters of input." },
+    tooLargeAny: { TR: "Kod, en büyük planın sınırını da aşıyor: dosya başına {file}, toplamda {total} karakter ve {stdin} karakter girdi. Kodu birkaç dosyaya bölün.", EN: "The code is over the largest plan's limits too: {file} characters per file, {total} in total and {stdin} characters of input. Split it into several files." },
+    tooLargeUpgrade: { TR: "{plan} ile dosya başına {file} karakter", EN: "{file} characters per file with {plan}" },
     output: { TR: "Çıktı", EN: "Output" },
     input: { TR: "Girdi", EN: "Input" },
     history: { TR: "Geçmiş", EN: "History" },
@@ -61,7 +66,7 @@ const C = {
     goToLine: { TR: "{line}. satıra git", EN: "Go to line {line}" },
     stdinLabel: { TR: "Programınızın okuyacağı girdiyi yazın. Her satır bir input() / Scanner / cin / read-line okumasına karşılık gelir; web önizlemesinde prompt() da bu satırları okur.", EN: "Type the input your program reads. Each line answers one input() / Scanner / cin / read-line call; in the web preview prompt() reads these lines too." },
     stdinPlaceholder: { TR: "Örnek:\nAli\n42", EN: "Example:\nAlice\n42" },
-    stdinCount: { TR: "{count} satır · {chars}/10.000 karakter", EN: "{count} lines · {chars}/10,000 characters" },
+    stdinCount: { TR: "{count} satır · {chars}/{max} karakter", EN: "{count} lines · {chars}/{max} characters" },
     historyEmpty: { TR: "Henüz çalıştırma yok.", EN: "No runs yet." },
     clearHistory: { TR: "Geçmişi temizle", EN: "Clear history" },
     files: { TR: "{count} dosya", EN: "{count} files" },
@@ -79,7 +84,7 @@ const FAILURES: Record<RunFailure["code"], CopyText> = {
     rate_limited: { TR: "Çalıştırma sınırına ulaştınız. Kısa süre sonra tekrar deneyin.", EN: "You reached the run limit. Try again shortly." },
     invalid_request: { TR: "Çalıştırma isteği geçersiz.", EN: "The run request was invalid." },
     unsupported_language: { TR: "Bu dil sunucuda çalıştırılamıyor.", EN: "This language can't run on the server." },
-    too_large: { TR: "Kod çok büyük: dosya başına 50.000, toplamda 150.000 karakter ve 10.000 karakter girdi sınırı var.", EN: "The code is too large: the limits are 50,000 characters per file, 150,000 in total and 10,000 characters of input." },
+    too_large: { TR: "Kod, planının çalıştırma boyutu sınırını aşıyor.", EN: "The code is over your plan's run size limit." },
     empty_file: { TR: "Boş dosyalar çalıştırılamaz.", EN: "Empty files can't be run." },
     timeout: { TR: "Sunucudaki çalıştırma 25 saniye içinde bitmedi. Sonsuz döngü olmadığından emin olup tekrar deneyin.", EN: "The run didn't finish within 25 seconds on the server. Make sure there is no infinite loop and try again." },
     unavailable: { TR: "Kod çalıştırma hizmetine şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.", EN: "The code runner is unreachable right now. Try again in a moment." },
@@ -91,14 +96,14 @@ const FAILURES: Record<RunFailure["code"], CopyText> = {
     unknown: { TR: "Çalıştırma tamamlanamadı.", EN: "The run could not be completed." },
 };
 
-function noticeCopy(notice: RunNotice): CopyText {
+function noticeCopy(notice: RunNotice, locale: string): CopyText {
     switch (notice.code) {
         case "timeout":
             return { TR: "Program {seconds} saniye içinde bitmediği için durduruldu (sonsuz döngü olabilir).", EN: "The program was stopped because it didn't finish within {seconds} seconds (it may contain an infinite loop).", vars: { seconds: notice.seconds } };
         case "stopped":
             return { TR: "Çalıştırma durduruldu.", EN: "The run was stopped." };
         case "output_truncated":
-            return { TR: "Çıktı 64.000 karakterle sınırlandı; fazlası gösterilmiyor.", EN: "The output was limited to 64,000 characters; the rest is not shown." };
+            return { TR: "Çıktı {limit} karakterle sınırlandı; fazlası gösterilmiyor.", EN: "The output was limited to {limit} characters; the rest is not shown.", vars: { limit: new Intl.NumberFormat(locale).format(notice.limit ?? PLAN_RUN_SIZES.free.outputChars) } };
         case "worker_crashed":
             return { TR: "Tarayıcı çalışma ortamı beklenmedik biçimde durdu.", EN: "The browser runtime stopped unexpectedly." };
         case "worker_unavailable":
@@ -126,7 +131,7 @@ async function copyText(text: string) {
     }
 }
 
-export default function Console({ run, history, onClearHistory, stdin, onStdinChange, onClear, onRun, onStop, runDisabledReason, runShortcut, onGoToLine, tab, onTabChange }: ConsoleProps) {
+export default function Console({ run, history, onClearHistory, stdin, onStdinChange, onClear, onRun, onStop, runDisabledReason, runShortcut, onGoToLine, tab, onTabChange, stdinLimit = PLAN_RUN_SIZES.free.stdinChars }: ConsoleProps) {
     const { tx, locale } = useI18n();
     // The chosen file belongs to one run; a new run shows every file again.
     const [selection, setSelection] = useState<{ runId: number | undefined; key: string }>({ runId: undefined, key: "all" });
@@ -261,12 +266,12 @@ export default function Console({ run, history, onClearHistory, stdin, onStdinCh
                         <textarea
                             id="program-stdin"
                             value={stdin}
-                            onChange={(event) => onStdinChange(event.target.value.slice(0, 10_000))}
+                            onChange={(event) => onStdinChange(event.target.value.slice(0, stdinLimit))}
                             spellCheck={false}
                             placeholder={tx(C.stdinPlaceholder)}
                             className="min-h-28 flex-1 resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-sm text-zinc-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
                         />
-                        <p className="text-end text-[11px] tabular-nums text-zinc-400">{tx(C.stdinCount, { count: inputLines, chars: new Intl.NumberFormat(locale).format(stdin.length) })}</p>
+                        <p className="text-end text-[11px] tabular-nums text-zinc-400">{tx(C.stdinCount, { count: inputLines, chars: new Intl.NumberFormat(locale).format(stdin.length), max: new Intl.NumberFormat(locale).format(stdinLimit) })}</p>
                     </div>
                 )}
 
@@ -357,7 +362,8 @@ function OutputText({ text, entry, onGoToLine, className }: { text: string; entr
 }
 
 function EntryCard({ entry, running, formatDuration, onGoToLine }: { entry: RunEntry; running: boolean; formatDuration: (ms: number) => string; onGoToLine: ConsoleProps["onGoToLine"] }) {
-    const { tx } = useI18n();
+    const { tx, locale } = useI18n();
+    const number = (value: number) => new Intl.NumberFormat(locale).format(value);
     const [copied, setCopied] = useState(false);
     const job = entry.job;
     const state = entryState(entry);
@@ -405,10 +411,15 @@ function EntryCard({ entry, running, formatDuration, onGoToLine }: { entry: RunE
                 {!job && !running && <p className="text-xs text-zinc-500 dark:text-zinc-400">{tx(C.notRunHint)}</p>}
                 {failure && (
                     <div className="space-y-1 text-xs text-red-700 dark:text-red-300">
-                        <p>{failure.code === "rate_limited" && failure.limit ? tx(C.runLimit, { count: failure.limit.perMinute }) : tx(FAILURES[failure.code])}</p>
+                        <p>{failure.code === "rate_limited" && failure.limit ? tx(C.runLimit, { count: failure.limit.perMinute })
+                            : failure.code === "too_large" && failure.sizes ? tx(failure.sizes.largest ? C.tooLargeAny : C.tooLargeFor, { file: number(failure.sizes.fileChars), total: number(failure.sizes.requestChars), stdin: number(failure.sizes.stdinChars) })
+                                : tx(FAILURES[failure.code])}</p>
                         {failure.code === "rate_limited" && failure.retryAfterSeconds ? <p className="text-zinc-500">{tx({ TR: "{seconds} saniye sonra tekrar deneyin.", EN: "Try again in {seconds} seconds." }, { seconds: failure.retryAfterSeconds })}</p> : null}
                         {failure.code === "rate_limited" && failure.limit?.upgrade ? (
                             <Link href="/plans" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.runLimitUpgrade, { plan: tx(PLAN_COPY[failure.limit.upgrade].name), count: PLAN_RUN_LIMITS[failure.limit.upgrade].perMinute })}</Link>
+                        ) : null}
+                        {failure.code === "too_large" && failure.sizes?.upgrade ? (
+                            <Link href="/plans" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline dark:text-indigo-300" data-run-size-upgrade>{tx(C.tooLargeUpgrade, { plan: tx(PLAN_COPY[failure.sizes.upgrade].name), file: number(PLAN_RUN_SIZES[failure.sizes.upgrade].fileChars) })}</Link>
                         ) : null}
                         {failure.code === "auth_required" && (
                             <Link href="/login?callbackUrl=%2Feditor" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline dark:text-indigo-300"><LogIn className="h-3.5 w-3.5" aria-hidden />{tx(C.signIn)}</Link>
@@ -422,7 +433,7 @@ function EntryCard({ entry, running, formatDuration, onGoToLine }: { entry: RunE
                 {job?.notices?.map((notice, index) => (
                     <p key={`${notice.code}-${index}`} className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-300">
                         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                        {tx(noticeCopy(notice))}
+                        {tx(noticeCopy(notice, locale))}
                     </p>
                 ))}
             </div>

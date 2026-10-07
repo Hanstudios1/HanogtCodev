@@ -8,10 +8,11 @@ import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge from "@/components/StaffBadge";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { GROUP_REACTIONS, tokenizeMessage, type GroupReactionKey } from "@/lib/groups";
-import { SOCIAL_LIMITS, formatFriendTag, reactionSummary, type DmMessage, type SocialPerson } from "@/lib/social/model";
+import { formatFriendTag, reactionSummary, type DmMessage, type SocialPerson } from "@/lib/social/model";
 import AttachmentView from "../chat/AttachmentView";
 import { ChatMarkdown } from "../chat/ChatMarkdown";
 import GifView from "../chat/GifView";
+import { useMessageMax } from "@/lib/social/message-limit";
 
 const C = {
     start: { TR: "Bu, {name} ile direkt mesaj geçmişinin başlangıcı.", EN: "This is the beginning of your direct message history with {name}." },
@@ -489,6 +490,7 @@ function Tool({ label, onClick, children, danger = false }: { label: string; onC
 }
 
 function EditBox({ message, onCancel, onSave }: { message: DmMessage; onCancel: () => void; onSave: (message: DmMessage, text: string) => Promise<void> }) {
+    const messageMax = useMessageMax();
     const { tx } = useI18n();
     const [value, setValue] = useState(message.text);
     const [busy, setBusy] = useState(false);
@@ -540,7 +542,7 @@ function EditBox({ message, onCancel, onSave }: { message: DmMessage; onCancel: 
                 ref={ref}
                 value={value}
                 rows={1}
-                maxLength={SOCIAL_LIMITS.messageMax}
+                maxLength={messageMax}
                 onChange={(event) => setValue(event.target.value)}
                 onKeyDown={onKeyDown}
                 aria-label={tx(C.editLabel)}

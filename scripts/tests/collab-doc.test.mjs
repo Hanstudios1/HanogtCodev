@@ -160,10 +160,18 @@ test("tab changes respect the session's limits", () => {
     assert.equal(applyTabOps(doc, [{ type: "add", id: "big", name: "big.py", lang: "python", code: "x".repeat(COLLAB_LIMITS.maxFileChars + 1) }], "local").rejected, "file_too_large");
     assert.equal(applyTabOps(doc, [{ type: "add", id: "bad/id", name: "x.py", lang: "python", code: "" }], "local").rejected, "invalid_file");
     assert.equal(applyTabOps(doc, [{ type: "rename", id: "a", name: "../x", lang: "python" }], "local").rejected, "invalid_file");
-    const many = Array.from({ length: COLLAB_LIMITS.maxFiles }, (_, index) => ({ type: "add", id: `f${index}`, name: `f${index}.py`, lang: "python", code: "" }));
+    // Sessions from before per-plan files (and Free) hold 20 files; the session's own limit (the owner's plan) is passed in.
+    const many = Array.from({ length: COLLAB_LIMITS.legacyFiles }, (_, index) => ({ type: "add", id: `f${index}`, name: `f${index}.py`, lang: "python", code: "" }));
     const result = applyTabOps(doc, many, "local");
     assert.equal(result.rejected, "too_many_files");
-    assert.equal(listDocFiles(doc).length, COLLAB_LIMITS.maxFiles);
+    assert.equal(listDocFiles(doc).length, COLLAB_LIMITS.legacyFiles);
+    const plus = createSessionDoc([tab("a", "a.py")]);
+    const forty = Array.from({ length: 45 }, (_, index) => ({ type: "add", id: `p${index}`, name: `p${index}.py`, lang: "python", code: "" }));
+    assert.equal(applyTabOps(plus, forty, "local", 40).rejected, "too_many_files");
+    assert.equal(listDocFiles(plus).length, 40);
+    const capped = createSessionDoc([tab("a", "a.py")]);
+    applyTabOps(capped, Array.from({ length: 120 }, (_, index) => ({ type: "add", id: `c${index}`, name: `c${index}.py`, lang: "python", code: "" })), "local", 999);
+    assert.equal(listDocFiles(capped).length, COLLAB_LIMITS.maxFiles, "never more than any plan allows");
     const total = createSessionDoc([tab("a", "a.py", "x".repeat(COLLAB_LIMITS.maxFileChars)), tab("b", "b.py", "x".repeat(COLLAB_LIMITS.maxFileChars - 10))]);
     assert.equal(applyTabOps(total, [{ type: "add", id: "c", name: "c.py", lang: "python", code: "x".repeat(11) }], "local").rejected, "content_too_large");
     // Renames and reordering.

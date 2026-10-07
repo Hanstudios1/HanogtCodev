@@ -57,6 +57,22 @@ test("retired appearance settings: sent by an open tab, dropped; stored values a
     assert.equal(stored.highContrast, true);
 });
 
+test("preferences nothing ever applied are retired: sent by an open tab, dropped; stored values aren't read back", () => {
+    const retired = ["emailNotifications", "newFeatureAlerts", "likeNotifications", "notifSound", "dndSchedule", "linkPreview", "stickerSuggestions", "bubbleColor", "photoVisibility", "hideFriendList"];
+    for (const key of retired) {
+        assert.ok(profile.RETIRED_ACCOUNT_KEYS.includes(key), key);
+        assert.equal(key in DEFAULT_ACCOUNT_FIELDS, false, key);
+        assert.equal(EDITABLE_ACCOUNT_KEYS.includes(key), false, key);
+    }
+    // Whatever an old tab still sends, valid or not, is ignored without failing the save.
+    assert.deepEqual(clean({ emailNotifications: false, notifSound: "loud", dndSchedule: "22:00-07:00", bubbleColor: "red", photoVisibility: "friends", typingIndicator: false }), { typingIndicator: false });
+    const stored = mergeStoredAccount({ likeNotifications: false, linkPreview: false, stickerSuggestions: false, newFeatureAlerts: false, msgNotifications: false }, null);
+    for (const key of retired) assert.equal(key in stored, false, key);
+    assert.equal(stored.msgNotifications, false);
+    // Hiding the friend list did nothing either (no page shows a person's friends to others).
+    assert.deepEqual(clean({ hideFriendList: true, readReceipts: false }), { readReceipts: false });
+});
+
 test("the status emoji is retired: an open tab may still send it, and it is dropped", () => {
     assert.deepEqual(clean({ statusEmoji: "🎮", customStatus: "Kod yazıyorum" }), { customStatus: "Kod yazıyorum" });
     assert.deepEqual(clean({ statusEmoji: 42 }), {});
@@ -86,7 +102,8 @@ test("profile URLs must be plain https", () => {
 });
 
 test("colours, tags, time zones and social links", () => {
-    assert.deepEqual(clean({ accentColor: "#abc", bubbleColor: "#3B82F6CC" }), { accentColor: "#abc", bubbleColor: "#3B82F6CC" });
+    assert.deepEqual(clean({ accentColor: "#abc" }), { accentColor: "#abc" });
+    assert.deepEqual(clean({ accentColor: "#3B82F6CC" }), { accentColor: "#3B82F6CC" });
     for (const bad of ["red", "#12", "#12345", "3B82F6", "#GGGGGG", ""]) {
         assert.deepEqual(fieldError({ accentColor: bad }), { field: "accentColor", code: "invalid" }, bad);
     }
@@ -136,7 +153,8 @@ test("stored documents are normalized leniently", () => {
     assert.equal(legacy.avatarUrl, "");
     assert.equal(legacy.msgFontSize, "medium");
     assert.deepEqual(legacy.favoriteLangs, ["Rust", "Go", "C", "Lua", "Zig"]);
-    assert.equal(legacy.dndSchedule, "22:00-07:00");
+    // Retired: a stored value isn't read back.
+    assert.equal("dndSchedule" in legacy, false);
     assert.equal(legacy.socialGithub, "");
     assert.deepEqual(Object.keys(legacy).sort(), [...EDITABLE_ACCOUNT_KEYS].sort());
     assert.equal("role" in legacy, false);
@@ -145,14 +163,14 @@ test("stored documents are normalized leniently", () => {
 });
 
 test("diff, split and nickname helpers", () => {
-    const base = normalizeStoredAccount({ username: "Ada", favoriteLangs: ["Rust"], dndSchedule: "22:00-07:00" });
+    const base = normalizeStoredAccount({ username: "Ada", favoriteLangs: ["Rust"], msgFontSize: "large" });
     assert.deepEqual(diffAccountFields(base, { ...base }), {});
     assert.deepEqual(diffAccountFields(base, { ...base, favoriteLangs: ["Rust"] }), {});
     assert.deepEqual(diffAccountFields(base, { ...base, favoriteLangs: ["Rust", "Go"], bio: "Hi", highContrast: true }), { bio: "Hi", favoriteLangs: ["Rust", "Go"], highContrast: true });
 
-    const { publicPatch, privatePatch } = splitAccountPatch({ bio: "Hi", highContrast: true, nicknameTag: "1234", dndSchedule: "23:00-08:00" });
+    const { publicPatch, privatePatch } = splitAccountPatch({ bio: "Hi", highContrast: true, nicknameTag: "1234", msgFontSize: "small" });
     assert.deepEqual(publicPatch, { bio: "Hi", nicknameTag: "1234" });
-    assert.deepEqual(privatePatch, { highContrast: true, dndSchedule: "23:00-08:00" });
+    assert.deepEqual(privatePatch, { highContrast: true, msgFontSize: "small" });
     assert.ok(Object.keys(publicPatch).every((key) => PUBLIC_PROFILE_KEYS.includes(key)));
 
     assert.ok(sameNickname("Ada", " ada "));

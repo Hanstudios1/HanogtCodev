@@ -101,6 +101,19 @@ export const PLAN_RUN_LIMITS: Record<PlanId, PlanRunLimits> = {
 /** Files one /api/execute request runs; a bigger run is split into several requests. */
 export const RUN_FILES_PER_REQUEST = 8;
 
+/**
+ * How big a run the server takes (src/app/api/execute/route.ts): characters
+ * of one file, of all the files of one request, of the program's input (stdin)
+ * and of the output each file sends back. Browser languages run on the
+ * person's own device and aren't limited here.
+ */
+export type PlanRunSizes = { fileChars: number; requestChars: number; stdinChars: number; outputChars: number };
+export const PLAN_RUN_SIZES: Record<PlanId, PlanRunSizes> = {
+    free: { fileChars: 50_000, requestChars: 150_000, stdinChars: 10_000, outputChars: 64_000 },
+    plus: { fileChars: 100_000, requestChars: 300_000, stdinChars: 50_000, outputChars: 128_000 },
+    pro: { fileChars: 200_000, requestChars: 600_000, stdinChars: 100_000, outputChars: 256_000 },
+};
+
 /** Hanogt Social groups a person can create and own; null means unlimited. */
 export const PLAN_GROUP_LIMITS: Record<PlanId, number | null> = { free: 3, plus: 10, pro: null };
 
@@ -134,19 +147,37 @@ export const PLAN_ATTACHMENT_LIMITS: Record<PlanId, PlanAttachmentLimits> = {
     pro: { fileBytes: 4 * 1024 * 1024, storageBytes: 1024 * 1024 * 1024 },
 };
 
+/**
+ * Characters of one Hanogt Social message (direct messages and groups), by
+ * the sender's plan; a file's caption stays 2,000 on every plan.
+ */
+export const PLAN_MESSAGE_CHARS: Record<PlanId, number> = { free: 4_000, plus: 6_000, pro: 8_000 };
+/** The longest message any plan sends: what readers keep and Markdown renders. */
+export const MESSAGE_CHARS_MAX = PLAN_MESSAGE_CHARS.pro;
+
 /** Messages a person can star in Hanogt Social (a private bookmark list). Stars above the limit stay; new ones wait. */
 export const PLAN_STAR_LIMITS: Record<PlanId, number> = { free: 200, plus: 500, pro: 1_000 };
 
 /**
- * Team editing ("Ekiple düzenle"): people in one session, the owner included,
- * and the invitations it may hold, by the session owner's plan. Voice in a
- * session stays a five-person mesh whatever the plan (src/lib/collab/mesh-call.ts).
+ * Team editing ("Ekiple düzenle"), by the session owner's plan: people in one
+ * session, the owner included, the invitations it may hold, how many hours it
+ * lasts and how many files it may hold (the 1,000,000-character total is the
+ * same on every plan). Voice in a session stays a five-person mesh whatever
+ * the plan (src/lib/collab/mesh-call.ts).
  */
-export const PLAN_COLLAB_LIMITS: Record<PlanId, { people: number; invites: number }> = {
-    free: { people: 2, invites: 4 },
-    plus: { people: 5, invites: 12 },
-    pro: { people: 30, invites: 60 },
+export type PlanCollabLimits = { people: number; invites: number; hours: number; files: number };
+export const PLAN_COLLAB_LIMITS: Record<PlanId, PlanCollabLimits> = {
+    free: { people: 2, invites: 4, hours: 12, files: 20 },
+    plus: { people: 5, invites: 12, hours: 24, files: 40 },
+    pro: { people: 30, invites: 60, hours: 48, files: 100 },
 };
+
+/**
+ * Games exported from Hanogt Engine (the playable HTML file and the web
+ * package) without the "Made with Hanogt Engine" badge and line: a choice on
+ * Plus and Pro; Free exports keep them. Exports are built in the browser.
+ */
+export const PLAN_UNBRANDED_EXPORT: Record<PlanId, boolean> = { free: false, plus: true, pro: true };
 
 /**
  * How many AI providers a person can connect to Hanogt AI with their own API
@@ -174,6 +205,20 @@ export const PLAN_AI_FEATURES: Record<PlanId, PlanAiFeatures> = {
     free: { maxTokens: 1_800, contextChars: 12_000, instructionsChars: 500, thinkingTokens: 1_000, api: null },
     plus: { maxTokens: 3_000, contextChars: 24_000, instructionsChars: 1_500, thinkingTokens: 2_000, api: { keys: 2 } },
     pro: { maxTokens: 4_000, contextChars: 40_000, instructionsChars: 3_000, thinkingTokens: 3_000, api: { keys: 5 } },
+};
+
+/**
+ * Hanogt AI in Hanogt Social groups (/ai or @Hanogt AI), by the asker's plan:
+ * the longest answer (tokens, also within PLAN_AI_FEATURES.maxTokens), how
+ * many characters of it are posted and how many of the channel's latest
+ * messages go with the question. The question counts in the asker's Hanogt AI
+ * window like any other message.
+ */
+export type PlanGroupAi = { answerTokens: number; answerChars: number; history: number };
+export const PLAN_GROUP_AI: Record<PlanId, PlanGroupAi> = {
+    free: { answerTokens: 1_200, answerChars: 4_000, history: 12 },
+    plus: { answerTokens: 2_000, answerChars: 8_000, history: 20 },
+    pro: { answerTokens: 3_000, answerChars: 12_000, history: 30 },
 };
 
 /** Extra Hanogt AI messages a window staff can grant on top of the plan (stored as aiBonusDaily, its name from when windows were a day). */
@@ -249,6 +294,11 @@ export function planRank(plan: PlanId) {
 /** The plan to suggest when a limit is reached: Plus after Free, Pro after Plus, none after Pro. */
 export function nextPlanUp(plan: PlanId): PaidPlanId | null {
     return plan === "free" ? "plus" : plan === "plus" ? "pro" : null;
+}
+
+/** The smallest plan above `plan` that `fits` accepts (a Free message of 7,000 characters needs Pro, not Plus); null when none does. */
+export function firstPlanUpWhere(plan: PlanId, fits: (candidate: PaidPlanId) => boolean): PaidPlanId | null {
+    return PAID_PLAN_IDS.slice(PAID_PLAN_IDS.indexOf(plan as PaidPlanId) + 1).find(fits) ?? null;
 }
 
 type PlanSources = Pick<UserSubscription, "plan" | "status" | "expiresAt"> & { paddle?: PaddleSubscriptionState | null };
@@ -416,7 +466,11 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "500 yıldızlı mesaj", EN: "500 starred messages" } },
             { text: { TR: "Mesajlarda 4 MB'a kadar dosya; toplam 250 MB", EN: "Files up to 4 MB in messages; 250 MB in all" } },
             { text: { TR: "Oyunların için 25 MB ses ve 3D model depolaması", EN: "25 MB of storage for your games' sounds and 3D models" } },
-            { text: { TR: "5 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 5 people" } },
+            { text: { TR: "5 kişiye kadar ekiple düzenleme; oturumlar 24 saat sürer ve 40 dosya tutar", EN: "Team editing with up to 5 people; sessions last 24 hours and hold 40 files" } },
+            { text: { TR: "Sunucuda daha büyük çalıştırmalar: dosya başına 100.000 karakter kod ve 128.000 karakter çıktı", EN: "Bigger server runs: 100,000 characters of code per file and 128,000 characters of output" } },
+            { text: { TR: "Hanogt Social'da 6.000 karaktere kadar mesaj", EN: "Hanogt Social messages of up to 6,000 characters" } },
+            { text: { TR: "Gruplarda Hanogt AI'dan daha uzun yanıtlar: 2.000 token, son 20 mesaj okunur", EN: "Longer Hanogt AI answers in groups: 2,000 tokens, reading the last 20 messages" } },
+            { text: { TR: "Oyunlarını Hanogt rozeti olmadan dışa aktarma (HTML ve web paketi)", EN: "Export your games without the Hanogt badge (HTML and web package)" } },
             { text: { TR: "Daha uzun yapay zekâ yanıtları; açık dosyanın 24.000 karakteri okunur", EN: "Longer AI answers; 24,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası); mesajlar Hanogt AI hakkından düşer", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more); messages use your Hanogt AI allowance" } },
             { text: { TR: "Geliştirici API'si: 2 anahtar; istekler mesaj hakkından düşer", EN: "Developer API: 2 keys; requests use your message allowance" } },
@@ -437,7 +491,10 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "1.000 yıldızlı mesaj", EN: "1,000 starred messages" } },
             { text: { TR: "Mesajlarda 4 MB'a kadar dosya; toplam 1 GB", EN: "Files up to 4 MB in messages; 1 GB in all" } },
             { text: { TR: "Oyunların için 100 MB ses ve 3D model depolaması", EN: "100 MB of storage for your games' sounds and 3D models" } },
-            { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
+            { text: { TR: "30 kişiye kadar ekiple düzenleme; oturumlar 48 saat sürer ve 100 dosya tutar", EN: "Team editing with up to 30 people; sessions last 48 hours and hold 100 files" } },
+            { text: { TR: "Sunucuda en büyük çalıştırmalar: dosya başına 200.000 karakter kod ve 256.000 karakter çıktı", EN: "The biggest server runs: 200,000 characters of code per file and 256,000 characters of output" } },
+            { text: { TR: "Hanogt Social'da 8.000 karaktere kadar mesaj", EN: "Hanogt Social messages of up to 8,000 characters" } },
+            { text: { TR: "Gruplarda Hanogt AI'dan en uzun yanıtlar: 3.000 token, son 30 mesaj okunur", EN: "The longest Hanogt AI answers in groups: 3,000 tokens, reading the last 30 messages" } },
             { text: { TR: "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur", EN: "The longest AI answers; 40,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı; mesajlar Hanogt AI hakkından düşer", EN: "Connect 5 AI providers with your own API keys; messages use your Hanogt AI allowance" } },
             { text: { TR: "Geliştirici API'si: 5 anahtar; istekler mesaj hakkından düşer", EN: "Developer API: 5 keys; requests use your message allowance" } },

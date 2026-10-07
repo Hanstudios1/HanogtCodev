@@ -20,7 +20,6 @@ export const PROFILE_TEXT_LIMITS = {
     bio: 600,
     customStatus: 120,
     social: 200,
-    dndSchedule: 40,
 } as const;
 
 /** Profile fields other people can see (mirrored to public_profiles). */
@@ -54,32 +53,22 @@ export interface PublicProfileFields {
 
 /** Private preferences (users/{email} only). */
 export interface PrivateSettingsFields {
-    emailNotifications: boolean;
-    newFeatureAlerts: boolean;
     showOnlineStatus: boolean;
     typingIndicator: boolean;
     readReceipts: boolean;
     msgFontSize: "small" | "medium" | "large";
     chatBackground: "default" | "dark" | "gradient" | "pattern";
     voiceMsgQuality: "low" | "normal" | "high";
-    linkPreview: boolean;
     gifAutoplay: boolean;
     enterToSend: boolean;
-    stickerSuggestions: boolean;
     whoCanAdd: "everyone" | "friends_of_friends" | "nobody";
-    hideFriendList: boolean;
     showLastSeen: boolean;
-    photoVisibility: "everyone" | "friends" | "nobody";
     bioVisibility: "everyone" | "friends" | "nobody";
     msgNotifications: boolean;
     /** @mentions in Hanogt Social groups (the bell). */
     mentionNotifications: boolean;
     callNotifications: boolean;
     friendReqNotifications: boolean;
-    likeNotifications: boolean;
-    notifSound: boolean;
-    dndSchedule: string;
-    bubbleColor: string;
     /** Applied on every page (src/lib/appearance.tsx). */
     reduceAnimations: boolean;
     highContrast: boolean;
@@ -155,31 +144,21 @@ export const DEFAULT_ACCOUNT_FIELDS: EditableAccountFields = {
     publicProfile: true,
     publicProjects: true,
     dndMode: false,
-    emailNotifications: true,
-    newFeatureAlerts: true,
     showOnlineStatus: true,
     typingIndicator: true,
     readReceipts: true,
     msgFontSize: "medium",
     chatBackground: "default",
     voiceMsgQuality: "normal",
-    linkPreview: true,
     gifAutoplay: true,
     enterToSend: true,
-    stickerSuggestions: true,
     whoCanAdd: "everyone",
-    hideFriendList: false,
     showLastSeen: true,
-    photoVisibility: "everyone",
     bioVisibility: "everyone",
     msgNotifications: true,
     mentionNotifications: true,
     callNotifications: true,
     friendReqNotifications: true,
-    likeNotifications: true,
-    notifSound: true,
-    dndSchedule: "",
-    bubbleColor: "#3B82F6",
     reduceAnimations: false,
     highContrast: false,
     statusPreference: "auto",
@@ -196,11 +175,20 @@ export const EDITABLE_ACCOUNT_KEYS = Object.keys(DEFAULT_ACCOUNT_FIELDS) as Read
 /**
  * Fields that are no longer part of the profile. A save that sends one is
  * still accepted (the value is ignored) and every save deletes stored values:
- * the status emoji (the status is text only now) and appearance settings that
+ * the status emoji (the status is text only now), appearance settings that
  * never did anything (compact mode, interface font size, time zone, emoji
- * style).
+ * style) and preferences nothing ever applied: e-mail notifications and
+ * feature announcements (the site sends no e-mail), like notifications (none
+ * are sent) and a notification sound (there is none), quiet hours, link
+ * previews, sticker suggestions, the chat bubble colour, photo visibility
+ * (the picture is part of the public profile) and hiding the friend list (no
+ * page shows a person's friends to others).
  */
-export const RETIRED_ACCOUNT_KEYS: readonly string[] = ["statusEmoji", "compactMode", "uiFontSize", "timezone", "emojiStyle"];
+export const RETIRED_ACCOUNT_KEYS: readonly string[] = [
+    "statusEmoji", "compactMode", "uiFontSize", "timezone", "emojiStyle",
+    "emailNotifications", "newFeatureAlerts", "likeNotifications", "notifSound", "dndSchedule",
+    "linkPreview", "stickerSuggestions", "bubbleColor", "photoVisibility", "hideFriendList",
+];
 
 // Own-key lookups only: `key in object` is also true for "toString",
 // "constructor" or "__proto__", which would slip past the unknown-field check.
@@ -220,7 +208,6 @@ const ENUMS: Partial<Record<keyof EditableAccountFields, readonly string[]>> = {
     chatBackground: ["default", "dark", "gradient", "pattern"],
     voiceMsgQuality: ["low", "normal", "high"],
     whoCanAdd: ["everyone", "friends_of_friends", "nobody"],
-    photoVisibility: ["everyone", "friends", "nobody"],
     bioVisibility: ["everyone", "friends", "nobody"],
     statusPreference: STATUS_PREFERENCES,
 };
@@ -238,7 +225,6 @@ const TEXT_LIMITS: Partial<Record<keyof EditableAccountFields, number>> = {
     socialTiktok: PROFILE_TEXT_LIMITS.social,
     socialInstagram: PROFILE_TEXT_LIMITS.social,
     socialFacebook: PROFILE_TEXT_LIMITS.social,
-    dndSchedule: PROFILE_TEXT_LIMITS.dndSchedule,
 };
 
 const SOCIAL_KEYS: ReadonlySet<string> = new Set([
@@ -340,7 +326,7 @@ export function sanitizeAccountPatch(input: unknown): { ok: true; patch: Account
         if (limit !== undefined && [...value].length > limit) return { ok: false, error: { field, code: "too_long" } };
         if (field === "avatarUrl" || field === "bannerUrl") {
             if (!isSafeProfileUrl(value)) return { ok: false, error: { field, code: "invalid" } };
-        } else if (field === "accentColor" || field === "bubbleColor") {
+        } else if (field === "accentColor") {
             if (!isHexColor(value)) return { ok: false, error: { field, code: "invalid" } };
         } else if (field === "nicknameTag") {
             if (!isNicknameTag(value)) return { ok: false, error: { field, code: "invalid" } };

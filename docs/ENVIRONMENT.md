@@ -648,6 +648,27 @@ Switching an announcement on also touches `site_config/announcement_slots`,
 so two admins can't pass the limit of 5 active announcements at once (the
 later save is refused as a conflict and can simply be retried).
 
+## Plan limits that need no variables
+
+The plan tables live in `src/lib/plans.ts`. Every limit is checked on the
+server; the Free plan's numbers are the ones every account had before the
+paid plans existed. Since 0.3.32 these grow with Plus and Pro too:
+
+| Table | Free | Plus | Pro | Checked in |
+| --- | --- | --- | --- | --- |
+| `PLAN_RUN_SIZES` (characters per file / per request / stdin / output) | 50,000 / 150,000 / 10,000 / 64,000 | 100,000 / 300,000 / 50,000 / 128,000 | 200,000 / 600,000 / 100,000 / 256,000 | `checkRunSize` (`src/lib/server/run-limits.ts`) in `/api/execute`; `runFiles` cuts the output; a run too big for every plan is refused without reading the plan (`largest: true`) |
+| `PLAN_COLLAB_LIMITS.hours` / `.files` | 12 h / 20 files | 24 h / 40 files | 48 h / 100 files | `createSession` (`src/lib/collab/server.ts`); the session stores `maxFiles` |
+| `PLAN_MESSAGE_CHARS` | 4,000 | 6,000 | 8,000 | `checkMessageLength` (`src/lib/server/message-limits.ts`) for DM and group sends and edits; only texts over 4,000 characters read the plan |
+| `PLAN_GROUP_AI` (answer tokens / posted characters / messages read) | 1,200 / 4,000 / 12 | 2,000 / 8,000 / 20 | 3,000 / 12,000 / 30 | `groupAiLimits` (`src/lib/server/group-ai-bot.ts`), by the asker's plan |
+| `PLAN_UNBRANDED_EXPORT` | no | yes | yes | the Engine's Export menu; exports are built in the browser |
+
+A purchase Paddle hasn't reported yet is looked up once before any of these
+refuses (`healBeforeRefusing`). A refusal (`too_large`, `message_too_long`,
+413) names the smallest plan that would allow the request as `upgrade`
+(`firstPlanUpWhere` in `src/lib/plans.ts`), or `null` when none does. After a
+downgrade nothing is deleted: longer messages already sent stay, and new ones
+follow the new plan.
+
 ## Code runner (optional)
 
 | Variable | Meaning |

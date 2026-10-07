@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.7";
-export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
+export const LEGAL_VERSION = "5.8";
+export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "7 Ekim 2026", EN: "7 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.7-2026-10-06";
+export const LEGAL_NOTICE_ID = "5.8-2026-10-07";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,14 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.8",
+        date: { TR: "7 Ekim 2026", EN: "7 October 2026" },
+        items: [
+            { TR: "Ücretli planlara yeni avantajlar (Ücretsiz plan değişmedi): Plus ve Pro'da sunucuda daha büyük kod çalıştırma (dosya başına 100.000 veya 200.000 karakter kod, daha uzun girdi ve çıktı), Hanogt Social'da daha uzun mesajlar (6.000 veya 8.000 karakter), gruplarda Hanogt AI'dan daha uzun yanıtlar (2.000 veya 3.000 token; soruyla birlikte kanalın son 20 veya 30 mesajı okunur), 24 veya 48 saat süren ve 40 veya 100 dosya tutan ekiple düzenleme oturumları ve Hanogt Engine oyunlarını “Hanogt Engine ile yapıldı” rozeti olmadan dışa aktarabilme. Daha düşük bir plana geçtiğinizde gönderilmiş mesajlar, dışa aktarılmış oyunlar ve başlamış oturumlar olduğu gibi kalır; yeni mesajlar, çalıştırmalar ve oturumlar yeni planın sınırlarıyla çalışır. Kullanım Şartları'ndaki plan avantajları listesi ile Gizlilik Politikası'ndaki oturum süreleri ve gruplarda yapay zekâya gönderilen mesaj sayısı buna göre güncellendi.", EN: "New benefits on paid plans (the Free plan is unchanged): on Plus and Pro, bigger code runs on the server (100,000 or 200,000 characters of code per file, longer input and output), longer messages in Hanogt Social (6,000 or 8,000 characters), longer Hanogt AI answers in groups (2,000 or 3,000 tokens, with the channel's last 20 or 30 messages read along with the question), team editing sessions that last 24 or 48 hours and hold 40 or 100 files, and exporting Hanogt Engine games without the “Made with Hanogt Engine” badge. When you move to a lower plan, messages already sent, games already exported and sessions already started stay as they are; new messages, runs and sessions follow the new plan's limits. The list of plan benefits in the Terms of Use, and the session lengths and the number of messages sent to the AI in groups in the Privacy Policy, were updated accordingly." },
+            { TR: "Hesap Ayarları: Hiçbir yerde uygulanmayan tercihler (e-posta bildirimleri ve yeni özellik duyuruları, beğeni bildirimleri, bildirim sesi, sessiz saatler, bağlantı önizlemeleri, çıkartma önerileri, sohbet baloncuğu rengi, fotoğraf görünürlüğü ve arkadaş listesini gizleme; arkadaş listeniz zaten kimseye gösterilmiyor) kaldırıldı. Bunlar artık toplanmaz; kayıtlı değerleri, ayarlarınızı bir sonraki kaydedişinizde silinir.", EN: "Account Settings: preferences that were never applied anywhere (e-mail notifications and new-feature announcements, like notifications, a notification sound, quiet hours, link previews, sticker suggestions, the chat bubble colour, photo visibility and hiding the friend list; your friend list isn't shown to anyone anyway) were removed. They are no longer collected, and their stored values are deleted the next time you save your settings." },
+        ],
+    },
     {
         version: "5.7",
         date: { TR: "6 Ekim 2026", EN: "6 October 2026" },

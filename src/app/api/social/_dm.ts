@@ -6,6 +6,8 @@ import { isDocId } from "@/lib/server/validate";
 import { ATTACHMENT_LIMITS, attachmentPreview, readMessageAttachment, type MessageAttachment } from "@/lib/social/attachments";
 import { readMessageGif } from "@/lib/social/gif";
 import { SOCIAL_LIMITS, cleanMessageText, dmChatId, dmMessageFromData, isSticker, messagePreview, previewText, type DmReply } from "@/lib/social/model";
+import { MESSAGE_CHARS_MAX } from "@/lib/plans";
+import { checkMessageLength } from "@/lib/server/message-limits";
 import { SocialApiError, assertRateLimit, emailList, type SocialUser } from "@/lib/social/server";
 
 /*
@@ -93,9 +95,11 @@ export async function sendDirect(user: SocialUser, partner: string, body: Record
         if (!gif) throw new SocialApiError(400, "invalid_request", "Geçersiz GIF.");
         text = gif.title;
     } else {
-        const full = cleanMessageText(body.text, SOCIAL_LIMITS.messageMax * 2);
+        const full = cleanMessageText(body.text, MESSAGE_CHARS_MAX * 2);
         if (!full) throw new SocialApiError(400, "empty_message", "Mesaj boş olamaz.");
-        if (full.length > SOCIAL_LIMITS.messageMax) throw new SocialApiError(413, "message_too_long", "Mesaj en fazla 4000 karakter olabilir.");
+        // The sender's plan sets the length: Free 4,000, Plus 6,000, Pro 8,000 characters.
+        const length = await checkMessageLength(user.email, full.length);
+        if (!length.allowed) throw new SocialApiError(413, "message_too_long", `Mesaj planınızda en fazla ${length.limit} karakter olabilir.`, {}, { limit: length.limit, plan: length.plan, upgrade: length.upgrade });
         text = full;
     }
     const chatId = dmChatId(user.email, partner);

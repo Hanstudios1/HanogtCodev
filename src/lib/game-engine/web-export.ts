@@ -61,11 +61,14 @@ function shortName(name: string) {
     return trimmed.length <= 12 ? trimmed : `${trimmed.slice(0, 11).trimEnd()}…`;
 }
 
-export function webManifest(project: Pick<GameProjectDocument, "name" | "description" | "settings">) {
+/** `badge: false` leaves out "Made with Hanogt Engine" (Plus and Pro, PLAN_UNBRANDED_EXPORT). */
+export type ExportBranding = { badge?: boolean };
+
+export function webManifest(project: Pick<GameProjectDocument, "name" | "description" | "settings">, branding: ExportBranding = {}) {
     return {
         name: project.name.trim() || "Hanogt Game",
         short_name: shortName(project.name),
-        description: project.description.trim().slice(0, 300) || `Made with ${ENGINE_VERSION_LABEL}`,
+        description: project.description.trim().slice(0, 300) || (branding.badge === false ? project.name.trim() || "Hanogt Game" : `Made with ${ENGINE_VERSION_LABEL}`),
         lang: packageLanguage(project),
         start_url: "./",
         scope: "./",
@@ -128,7 +131,8 @@ self.addEventListener("fetch", (event) => {
 `;
 }
 
-export function webIndexHtml(project: Pick<GameProjectDocument, "name" | "description" | "settings">, siteUrl: string): string {
+export function webIndexHtml(project: Pick<GameProjectDocument, "name" | "description" | "settings">, siteUrl: string, branding: ExportBranding = {}): string {
+    const badge = branding.badge !== false;
     const language = packageLanguage(project);
     const turkish = language === "tr" || language === "az";
     const title = escapeHtml(project.name.trim() || "Hanogt Game");
@@ -167,8 +171,8 @@ html,body{margin:0;height:100%;background:${BACKGROUND};color:#fff;font-family:s
 </head>
 <body>
 <div id="game"></div>
-<div id="start"><div class="card"><img src="icons/icon-192.png" alt=""><h1>${title}</h1><p>${text.made}</p><button type="button" id="play" disabled>${text.play}</button><button type="button" id="install">${text.install}</button><small id="note">${text.offline}</small></div></div>
-<a id="badge" href="${escapeHtml(siteUrl)}/arcade" target="_blank" rel="noopener">Made with ${ENGINE_VERSION_LABEL}</a>
+<div id="start"><div class="card"><img src="icons/icon-192.png" alt=""><h1>${title}</h1>${badge ? `<p>${text.made}</p>` : description ? `<p>${description}</p>` : ""}<button type="button" id="play" disabled>${text.play}</button><button type="button" id="install">${text.install}</button><small id="note">${text.offline}</small></div></div>
+${badge ? `<a id="badge" href="${escapeHtml(siteUrl)}/arcade" target="_blank" rel="noopener">Made with ${ENGINE_VERSION_LABEL}</a>\n` : ""}
 <script>
 (function () {
     var note = document.getElementById("note");
@@ -273,6 +277,8 @@ export type WebPackageInput = {
     /** PNG bytes of WEB_ICONS, by path. */
     icons: ReadonlyMap<string, ArrayBuffer | Uint8Array>;
     siteUrl: string;
+    /** false: no "Made with Hanogt Engine" badge (Plus and Pro). */
+    badge?: boolean;
 };
 
 const asBytes = (value: ArrayBuffer | Uint8Array) => (value instanceof Uint8Array ? value : new Uint8Array(value));
@@ -293,10 +299,10 @@ export async function webPackageFiles(input: WebPackageInput): Promise<Map<strin
     const game = JSON.stringify(packageGameJson(project));
     const version = (await sha256(`${game}\n${input.playerJs}`)).slice(0, 16);
     const files = new Map<string, string | Uint8Array>([
-        ["index.html", webIndexHtml(project, input.siteUrl)],
+        ["index.html", webIndexHtml(project, input.siteUrl, { badge: input.badge })],
         ["player.js", input.playerJs],
         ["game.json", game],
-        ["manifest.webmanifest", `${JSON.stringify(webManifest(project), null, 2)}\n`],
+        ["manifest.webmanifest", `${JSON.stringify(webManifest(project, { badge: input.badge }), null, 2)}\n`],
         ["sw.js", serviceWorkerSource(project.id, version, packageFiles(project))],
         ["README.txt", webReadme(project)],
     ]);

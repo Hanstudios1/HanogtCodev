@@ -265,8 +265,8 @@
     "tr": "Hanogt AI",
     "files": [
       "src/app/about/page.tsx",
-      "src/app/account-settings/page.tsx",
       "src/app/privacy-policy/page.tsx",
+      "src/components/AccountSettings/sections.ts",
       "src/components/Admin/AdminPanel.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
@@ -443,8 +443,8 @@
     "tr": "Oyun projesi",
     "files": [
       "src/app/about/page.tsx",
-      "src/app/account-settings/page.tsx",
       "src/app/dashboard/page.tsx",
+      "src/components/AccountSettings/copy.ts",
       "src/components/Admin/OverviewSection.tsx",
       "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/UsersSection.tsx",
@@ -481,1262 +481,13 @@
     "tr": "Grup",
     "files": [
       "src/app/about/page.tsx",
-      "src/app/account-settings/page.tsx",
+      "src/components/AccountSettings/copy.ts",
       "src/components/Admin/OverviewSection.tsx",
       "src/components/Admin/SocialSection.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/AgentCard.tsx",
       "src/components/Social/chat/ForwardDialog.tsx",
       "src/lib/nav.ts"
-    ]
-  },
-  "svtrdwx29w": {
-    "en": "Account Settings",
-    "tr": "Hesap Ayarları",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/privacy-policy/page.tsx",
-      "src/components/Guide/book-content.ts",
-      "src/components/Social/FriendsView.tsx",
-      "src/lib/ai/agent-tools.ts",
-      "src/lib/ai/knowledge.ts"
-    ]
-  },
-  "1mge26ozluc": {
-    "en": "Settings",
-    "tr": "Ayarlar",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Security/SecurityChecklist.tsx"
-    ]
-  },
-  "7lxn7bhoq8": {
-    "en": "User settings",
-    "tr": "Kullanıcı ayarları",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "biocx019tl": {
-    "en": "App settings",
-    "tr": "Uygulama ayarları",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "27pdwvbm05s": {
-    "en": "Account",
-    "tr": "Hesap",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Admin/UsersSection.tsx",
-      "src/lib/support.ts"
-    ]
-  },
-  "1ehbkpi8b1c": {
-    "en": "Loading your account…",
-    "tr": "Hesap bilgileriniz yükleniyor…",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "26arsj3tpll": {
-    "en": "Your profile couldn't be loaded",
-    "tr": "Profiliniz yüklenemedi",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "75a28xasw6": {
-    "en": "Try again",
-    "tr": "Tekrar dene",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/feedback/page.tsx",
-      "src/app/settings/page.tsx",
-      "src/components/Account/TwoFactorSettings.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/Arcade/ArcadeProgress.tsx",
-      "src/components/CloudStatusBanner.tsx",
-      "src/components/Editor/CollabFriendPicker.tsx",
-      "src/components/Editor/PublishDialog.tsx",
-      "src/components/Editor/WebPreview.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/SafetySettings.tsx",
-      "src/components/HanogtAI/AiSettingsPage.tsx",
-      "src/components/HanogtAI/ApiKeysPanel.tsx",
-      "src/components/HanogtAI/ConnectionsManager.tsx",
-      "src/components/HanogtAI/UsageMeter.tsx",
-      "src/components/News/MarketsStrip.tsx",
-      "src/components/NotificationCenter.tsx",
-      "src/components/Security/AccountSecurityCard.tsx",
-      "src/components/Security/RecentSignIns.tsx",
-      "src/components/Social/FriendsView.tsx",
-      "src/components/Social/chat/ExpressionPicker.tsx",
-      "src/components/Social/group/GroupView.tsx"
-    ]
-  },
-  "2egt9x5pgue": {
-    "en": "Sign in again",
-    "tr": "Yeniden giriş yap",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/login/verify/page.tsx"
-    ]
-  },
-  "22e1rppx788": {
-    "en": "Language, theme, security and account actions keep working.",
-    "tr": "Dil, tema, güvenlik ve hesap işlemleri kullanılmaya devam eder.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1qdbf0gci5d": {
-    "en": "This section opens once your profile has loaded.",
-    "tr": "Bu bölüm profiliniz yüklendiğinde açılır.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "gl0rzql4mq": {
-    "en": "You have unsaved changes",
-    "tr": "Kaydedilmemiş değişiklikleriniz var",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "cc4h2g9v8k": {
-    "en": "{count} fields changed",
-    "tr": "{count} alan değişti",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2228t2v0m0s": {
-    "en": "Save changes",
-    "tr": "Değişiklikleri kaydet",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/media/page.tsx",
-      "src/components/Groups/workspace/SettingsDialog.tsx"
-    ]
-  },
-  "2a0tsqwlxgo": {
-    "en": "Save (Ctrl/⌘+S)",
-    "tr": "Kaydet (Ctrl/⌘+S)",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx"
-    ]
-  },
-  "19gybtkafs4": {
-    "en": "Saving…",
-    "tr": "Kaydediliyor…",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Editor/StatusBar.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/EditorPane.tsx",
-      "src/components/HanogtAI/ConnectionsManager.tsx",
-      "src/components/Social/group/RulesView.tsx"
-    ]
-  },
-  "2554s8khkhe": {
-    "en": "Reset",
-    "tr": "Sıfırla",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx",
-      "src/components/Admin/UsersSection.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Security/SecurityChecklist.tsx"
-    ]
-  },
-  "ygmj2vhnsw": {
-    "en": "Undo the unsaved changes",
-    "tr": "Kaydedilmemiş değişiklikleri geri al",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx"
-    ]
-  },
-  "yd788j6n9g": {
-    "en": "Your changes were saved.",
-    "tr": "Değişiklikleriniz kaydedildi.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "22ucpz3m9la": {
-    "en": "The changes were discarded.",
-    "tr": "Değişiklikler geri alındı.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1rkwx1k6it9": {
-    "en": "There's nothing to save.",
-    "tr": "Kaydedilecek değişiklik yok.",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx"
-    ]
-  },
-  "1lddevaemr4": {
-    "en": "Copy nickname and tag",
-    "tr": "Takma adı ve etiketi kopyala",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1hk3d7x0rz9": {
-    "en": "{tag} was copied to the clipboard.",
-    "tr": "{tag} panoya kopyalandı.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "bexkf1cr59": {
-    "en": "Couldn't copy to the clipboard.",
-    "tr": "Panoya kopyalanamadı.",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx",
-      "src/components/Admin/CloudHealthSection.tsx",
-      "src/components/Admin/PaddleCard.tsx",
-      "src/components/Groups/api.ts",
-      "src/components/Social/FriendsView.tsx",
-      "src/components/Social/dm/DmView.tsx",
-      "src/lib/collab/copy.ts"
-    ]
-  },
-  "xorn6vzlf": {
-    "en": "New tag",
-    "tr": "Yeni etiket",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "tzh5m4uli0": {
-    "en": "Picks a new random 4-digit tag; once you save, friends find you with the new tag.",
-    "tr": "Rastgele yeni bir 4 haneli etiket seçer; kaydettiğinizde arkadaşlarınız sizi yeni etiketle bulur.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1ioeaultnfd": {
-    "en": "Tag",
-    "tr": "Etiket",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "2cc8r4cjgr": {
-    "en": "Member since",
-    "tr": "Üyelik",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "13r19xhs075": {
-    "en": "Account statistics",
-    "tr": "Hesap istatistikleri",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2vsqno7p6p": {
-    "en": "Projects",
-    "tr": "Proje",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/HanogtAI/AgentCard.tsx"
-    ]
-  },
-  "1fo1ckfw7ju": {
-    "en": "Friends",
-    "tr": "Arkadaş",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Groups/workspace/InviteDialog.tsx",
-      "src/components/Guide/book-content.ts",
-      "src/components/HanogtAI/AgentCard.tsx",
-      "src/components/Social/FriendsView.tsx",
-      "src/components/Social/HomeSidebar.tsx",
-      "src/components/Social/SocialShell.tsx",
-      "src/components/Social/chat/ForwardDialog.tsx",
-      "src/lib/ai/knowledge.ts",
-      "src/lib/nav.ts"
-    ]
-  },
-  "1rd50eafk0i": {
-    "en": "Posts",
-    "tr": "Paylaşım",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "5sg7div9w9": {
-    "en": "Enter an image address that starts with https:// and has no spaces.",
-    "tr": "https:// ile başlayan, boşluk içermeyen bir resim adresi girin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "ursgnyg44t": {
-    "en": "Accent colour {color}",
-    "tr": "Vurgu rengi {color}",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "fex1w2qu8w": {
-    "en": "Bubble colour {color}",
-    "tr": "Baloncuk rengi {color}",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1yi1eprb816": {
-    "en": "Theme",
-    "tr": "Tema",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/lib/ai/knowledge.ts"
-    ]
-  },
-  "18zlcgnouwm": {
-    "en": "Applies on this device right away.",
-    "tr": "Bu cihazda hemen uygulanır.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "255y30e68wq": {
-    "en": "Light",
-    "tr": "Açık",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx"
-    ]
-  },
-  "5visy0kfrp": {
-    "en": "Dark",
-    "tr": "Koyu",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "oupwk6przu": {
-    "en": "System",
-    "tr": "Sistem",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx",
-      "src/components/Admin/AdminPanel.tsx"
-    ]
-  },
-  "l3cfyvuhz6": {
-    "en": "Language and theme choices apply on this device right away; you don't need to save them.",
-    "tr": "Dil ve tema seçimleri bu cihazda hemen uygulanır; kaydetmeniz gerekmez.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1xcfx4wi2f6": {
-    "en": "E-mail and password",
-    "tr": "E-posta ve şifre",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "oy60vlmkq": {
-    "en": "The editor settings were reset on this device but couldn't be saved to your account.",
-    "tr": "Editör ayarları bu cihazda sıfırlandı ancak hesabınıza kaydedilemedi.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "pyu67earo5": {
-    "en": "{field}: {problem}",
-    "tr": "{field}: {problem}",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "ciupz1z8pm": {
-    "en": "Current password",
-    "tr": "Mevcut şifre",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1luctkoay3a": {
-    "en": "New password",
-    "tr": "Yeni şifre",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "tu2pgthvo8": {
-    "en": "New password (again)",
-    "tr": "Yeni şifre (tekrar)",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1deknw8bj6t": {
-    "en": "Preview",
-    "tr": "Önizleme",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/editor/page.tsx",
-      "src/components/Admin/AnnouncementsSection.tsx",
-      "src/components/Editor/WebPreview.tsx",
-      "src/components/GameEngine/EngineHub.tsx",
-      "src/components/Groups/CreateGroupWizard.tsx",
-      "src/components/HanogtAI/ArtifactPanel.tsx",
-      "src/components/Social/SocialSettings.tsx",
-      "src/components/Social/chat/AttachmentView.tsx",
-      "src/lib/runtimes/languages.ts"
-    ]
-  },
-  "123grfbsoxb": {
-    "en": "What others see on your profile card; it updates before you save.",
-    "tr": "Başkalarının profil kartınızda göreceği hâli; kaydetmeden önce de güncellenir.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2dg85qg0adm": {
-    "en": "Edit profile",
-    "tr": "Profili düzenle",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Social/UserPopout.tsx"
-    ]
-  },
-  "1g5mx71ihrr": {
-    "en": "Identity",
-    "tr": "Kimlik",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/disclosure/page.tsx"
-    ]
-  },
-  "l6m9btcc6c": {
-    "en": "Friends find you by nickname and tag.",
-    "tr": "Arkadaşlarınız sizi takma ad ve etiketle bulur.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "9tllkq8m4y": {
-    "en": "Session",
-    "tr": "Oturum",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/privacy-policy/page.tsx"
-    ]
-  },
-  "1p9a74crkcb": {
-    "en": "Picture and banner",
-    "tr": "Profil resmi ve kapak",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "10fex1mob14": {
-    "en": "About you",
-    "tr": "Hakkınızda",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1ohs78lhmt7": {
-    "en": "Your status",
-    "tr": "Durumunuz",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Social/UserPanel.tsx"
-    ]
-  },
-  "1a6r4520d3p": {
-    "en": "The mark at the bottom right of your picture; saved as soon as you pick it.",
-    "tr": "Profil resminizin sağ altındaki işaret: seçtiğiniz anda kaydedilir.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1h2nhf3imla": {
-    "en": "Shown right now: {status}",
-    "tr": "Şu an görünen: {status}",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "cbhaclku0w": {
-    "en": "Marks",
-    "tr": "İşaretler",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1jgy4b2tnru": {
-    "en": "Visibility",
-    "tr": "Görünürlük",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "i5m86pi5ur": {
-    "en": "These two settings are saved right away too.",
-    "tr": "Bu iki ayar da hemen kaydedilir.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1tx60eo1422": {
-    "en": "While off, everyone sees you as offline (like Invisible).",
-    "tr": "Kapalıyken herkes sizi çevrimdışı görür (Görünmez gibi).",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "281lq9h1ya8": {
-    "en": "While off, nobody sees when you were last online.",
-    "tr": "Kapalıyken çevrimdışıyken ne zaman görüldüğünüz gösterilmez.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "168lubypjb6": {
-    "en": "Setting saved.",
-    "tr": "Ayar kaydedildi.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1te9zfg2d8g": {
-    "en": "Couldn't save the setting. Try again.",
-    "tr": "Ayar kaydedilemedi. Tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "exhzdzoc6x": {
-    "en": "Profile and content visibility",
-    "tr": "Profil ve içerik görünürlüğü",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "90a22ims6u": {
-    "en": "Who can see what",
-    "tr": "Kimler neyi görebilir",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "bqp9acsik3": {
-    "en": "Two-step verification",
-    "tr": "İki adımlı doğrulama",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/login/page.tsx",
-      "src/components/Account/TwoFactorSettings.tsx",
-      "src/components/Guide/book-content.ts",
-      "src/components/Landing/ProductPreviews.tsx",
-      "src/components/Security/AccountSecurityCard.tsx"
-    ]
-  },
-  "1n7j2pocv27": {
-    "en": "Password",
-    "tr": "Şifre",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/login/verify/page.tsx",
-      "src/components/Landing/ProductPreviews.tsx",
-      "src/components/Security/AccountSecurityCard.tsx"
-    ]
-  },
-  "9x52vw2d1x": {
-    "en": "In-app notifications",
-    "tr": "Site içi bildirimler",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1t254np0y9n": {
-    "en": "Group mention notifications",
-    "tr": "Gruplarda bahsedilme bildirimleri",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1tnvstpn0s3": {
-    "en": "When someone @mentions you in a Hanogt Social group.",
-    "tr": "Hanogt Social gruplarında biri senden @ ile bahsettiğinde.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "4y3goyerw6": {
-    "en": "E-mail",
-    "tr": "E-posta",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Admin/OverviewSection.tsx",
-      "src/components/Admin/TicketsSection.tsx",
-      "src/components/Admin/UsersSection.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/ContactPage.tsx"
-    ]
-  },
-  "1y23o9zm943": {
-    "en": "Quiet hours",
-    "tr": "Sessiz saatler",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "14n786zcrvb": {
-    "en": "e.g. 22:00 - 08:00",
-    "tr": "Örn. 22:00 - 08:00",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2cojxkpd8l9": {
-    "en": "Chat",
-    "tr": "Sohbet",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Admin/AiUsageSection.tsx",
-      "src/components/Editor/CollabChat.tsx",
-      "src/components/HanogtAI/AiSettingsPage.tsx"
-    ]
-  },
-  "1ttsc6ef33j": {
-    "en": "Chat look",
-    "tr": "Sohbet görünümü",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "rj1ngyto0o": {
-    "en": "Language",
-    "tr": "Dil",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/GameEngine/EngineHub.tsx",
-      "src/components/Security/CodeAdvisor.tsx"
-    ]
-  },
-  "wn0cao3c9f": {
-    "en": "Accessibility",
-    "tr": "Erişilebilirlik",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "tun1fp2u70": {
-    "en": "Kept with your account; it applies on every device you sign in on.",
-    "tr": "Hesabına bağlıdır; giriş yaptığın her cihazda geçerli olur.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1pani13ocyx": {
-    "en": "Transitions, moving text and flowing colours stop. Your device's “reduce motion” setting is always respected too.",
-    "tr": "Geçişler, kayan yazılar ve renk akışları durur. Cihazının “hareketi azalt” ayarı da her zaman dikkate alınır.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "xd4umuf5zi": {
-    "en": "Secondary text and lines get stronger.",
-    "tr": "İkincil yazılar ve çizgiler daha belirgin olur.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "25tzrw57p6z": {
-    "en": "Code editor",
-    "tr": "Kod editörü",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx",
-      "src/components/Editor/CodeEditor.tsx",
-      "src/components/Editor/ShortcutsDialog.tsx",
-      "src/lib/faq.ts"
-    ]
-  },
-  "2xor2xx2e7": {
-    "en": "Font, theme, shortcuts and run settings are on the editor's own page.",
-    "tr": "Yazı tipi, tema, kısayollar ve çalıştırma ayarları editörün kendi sayfasında.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "8qhs1sjteg": {
-    "en": "Open editor settings",
-    "tr": "Editör ayarlarını aç",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "24an0rwrcju": {
-    "en": "Hanogt AI settings",
-    "tr": "Hanogt AI ayarları",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/ChangelogModal.tsx",
-      "src/components/HanogtAI/AiSettingsPage.tsx",
-      "src/components/HanogtAI/ChatSidebar.tsx",
-      "src/components/HanogtAI/HanogtAIChat.tsx",
-      "src/lib/ai/knowledge.ts"
-    ]
-  },
-  "6tu7xzs061": {
-    "en": "Choose how Hanogt AI answers you (instructions, tone, length, language), how new chats start, and manage your chat history.",
-    "tr": "Hanogt AI'ın seni nasıl yanıtlayacağını (talimatlar, üslup, uzunluk, dil), yeni sohbetlerin varsayılanlarını ve sohbet geçmişini yönet.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "25hv2cvwxah": {
-    "en": "Open Hanogt AI settings",
-    "tr": "Hanogt AI ayarlarını aç",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2c3pphr6x66": {
-    "en": "My usage",
-    "tr": "Kullanımım",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1en195gmcxx": {
-    "en": "Plan badge",
-    "tr": "Plan rozeti",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/privacy-policy/page.tsx",
-      "src/lib/features.ts"
-    ]
-  },
-  "15a3jhzmw7j": {
-    "en": "With a Plus or Pro subscription, a badge appears next to your name.",
-    "tr": "Plus ya da Pro aboneliğinle adının yanında bir rozet görünür.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1n76emd07ey": {
-    "en": "See the plans",
-    "tr": "Planları gör",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "28skyabr6sd": {
-    "en": "Download your data",
-    "tr": "Verilerinizi indirin",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "6e6q5a4adr": {
-    "en": "Danger zone",
-    "tr": "Tehlikeli bölge",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1owsclkzuxw": {
-    "en": "Sign out",
-    "tr": "Oturumu kapat",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "q6zp8lx14a": {
-    "en": "Back to settings",
-    "tr": "Ayarlara dön",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1755syldh5i": {
-    "en": "Once you set a password, every Google sign-in asks for it too, plus the code when two-step verification is on.",
-    "tr": "Şifre belirlediğinizde Google ile her girişte bu şifre, iki adımlı doğrulama açıksa kod da sorulur.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "280utzfwg89": {
-    "en": "The current password is wrong.",
-    "tr": "Mevcut şifre yanlış.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "17za943l44s": {
-    "en": "Your password was saved and your other devices were signed out.",
-    "tr": "Şifreniz kaydedildi; diğer cihazlardaki oturumlarınız kapatıldı.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "11ufgnti1hn": {
-    "en": "For your security, sign in again before setting a password (within the last 30 minutes).",
-    "tr": "Güvenliğiniz için şifre belirlemeden önce yeniden giriş yapmanız gerekiyor (son 30 dakika içinde).",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "3g0orglrh3": {
-    "en": "To delete your account, you need to have signed in within the last 30 minutes. Sign in again and try once more.",
-    "tr": "Hesabınızı silmek için son 30 dakika içinde giriş yapmış olmanız gerekiyor. Yeniden giriş yapıp tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "6rktgkvem2": {
-    "en": "Sessions",
-    "tr": "Oturumlar",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Security/AccountSecurityCard.tsx"
-    ]
-  },
-  "4mnk6canji": {
-    "en": "If your account is still signed in on another device or browser, sign them all out here; you stay signed in on this device. Changing your password signs the other sessions out too.",
-    "tr": "Hesabınız başka bir cihazda ya da tarayıcıda açık kaldıysa hepsini buradan kapatın; bu cihazdaki oturumunuz açık kalır. Şifrenizi değiştirdiğinizde de diğer oturumlar kapanır.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1jwubaruv5x": {
-    "en": "Sign out all other sessions",
-    "tr": "Diğer tüm oturumları kapat",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "ypynchgyif": {
-    "en": "All your other sessions were signed out; you're still signed in here.",
-    "tr": "Diğer tüm oturumlarınız kapatıldı; bu cihazda oturumunuz açık.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "kqxiam0zqr": {
-    "en": "Couldn't sign the sessions out right now. Try again in a moment.",
-    "tr": "Oturumlar şu anda kapatılamadı. Biraz sonra tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2e2bvdsgh9u": {
-    "en": "You tried too often. Wait a little and try again.",
-    "tr": "Çok sık denediniz. Biraz bekleyip tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2d7noe4lj8n": {
-    "en": "Your session has ended. Sign in in a new tab, then save again so your changes aren't lost.",
-    "tr": "Oturumunuz sona ermiş. Değişikliklerinizi kaybetmemek için yeni bir sekmede giriş yapıp tekrar kaydedin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2ep1ra2fc7l": {
-    "en": "The request failed a security check. Reload the page and try again.",
-    "tr": "İstek güvenlik denetiminden geçemedi. Sayfayı yenileyip tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Admin/copy.ts",
-      "src/lib/support.ts"
-    ]
-  },
-  "lm71ucbxhz": {
-    "en": "You saved too often. Wait a moment and try again.",
-    "tr": "Çok sık kaydettiniz. Biraz bekleyip tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2aewr0qbl15": {
-    "en": "The changes couldn't be sent. Reload the page and try again.",
-    "tr": "Değişiklikler gönderilemedi. Sayfayı yenileyip tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1nwldfaz1np": {
-    "en": "This nickname and tag are used by another account. Change your nickname or get another tag with “New tag”.",
-    "tr": "Bu takma ad ve etiket başka bir hesapta kullanılıyor. Takma adınızı değiştirin veya “Yeni etiket” ile başka bir etiket alın.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1hreepgenh5": {
-    "en": "The profile service is unavailable right now. Your changes are still on this page; save again in a moment.",
-    "tr": "Profil hizmeti şu anda kullanılamıyor. Değişiklikleriniz bu sayfada duruyor; biraz sonra tekrar kaydedin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1a3p344hx64": {
-    "en": "Couldn't reach the server. Check your internet connection and save again.",
-    "tr": "Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar kaydedin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1aiy83rfw8w": {
-    "en": "Couldn't save. Please try again.",
-    "tr": "Kaydedilemedi. Lütfen tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "kg4p5ag05": {
-    "en": "Your session couldn't be verified. Please sign in again.",
-    "tr": "Oturumunuz doğrulanamadı. Lütfen yeniden giriş yapın.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "bkv9gl1jnh": {
-    "en": "Too many requests in a short time. Wait a moment and try again.",
-    "tr": "Kısa sürede çok fazla istek yapıldı. Biraz bekleyip tekrar deneyin.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "hmav6t30m4": {
-    "en": "Couldn't reach the server. Check your internet connection.",
-    "tr": "Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/Editor/Console.tsx",
-      "src/lib/support.ts"
-    ]
-  },
-  "90xr1wic8o": {
-    "en": "Your profile details couldn't be fetched right now. This is usually a temporary server problem; your data is safe.",
-    "tr": "Profil bilgileriniz şu anda alınamadı. Bu genellikle geçici bir sunucu sorunudur; verileriniz güvende.",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1h5f89vy70": {
-    "en": "the value has the wrong format",
-    "tr": "değer biçimi hatalı",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "j43680di6p": {
-    "en": "too long",
-    "tr": "çok uzun",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1kkp7sybtza": {
-    "en": "invalid",
-    "tr": "geçersiz",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1hedxc8i533": {
-    "en": "can't be empty",
-    "tr": "boş bırakılamaz",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1rnavo3er0h": {
-    "en": "Username",
-    "tr": "Kullanıcı adı",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2fpnyv3zdpu": {
-    "en": "Nickname",
-    "tr": "Takma ad",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1ql26wk7111": {
-    "en": "Profile picture URL",
-    "tr": "Profil resmi adresi",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "23aj0uinhxu": {
-    "en": "Banner URL",
-    "tr": "Kapak görseli adresi",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "a5oty8g015": {
-    "en": "About",
-    "tr": "Hakkında",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/lib/ai/agent-tools.ts"
-    ]
-  },
-  "23ciyaa73ja": {
-    "en": "Custom status",
-    "tr": "Özel durum",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/StatusMenu.tsx"
-    ]
-  },
-  "1cc2yp2p9w1": {
-    "en": "Accent colour",
-    "tr": "Vurgu rengi",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "ie1itxi6ja": {
-    "en": "Bubble colour",
-    "tr": "Baloncuk rengi",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1j2funtrghg": {
-    "en": "Favourite languages",
-    "tr": "Favori diller",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "dggd19vwx9": {
-    "en": "GitHub",
-    "tr": "GitHub",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "5e5kwxtjq5": {
-    "en": "LinkedIn",
-    "tr": "LinkedIn",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "10fxr1aansb": {
-    "en": "Twitter / X",
-    "tr": "Twitter / X",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "o7yja4m6z4": {
-    "en": "Website",
-    "tr": "Web sitesi",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1d76wc6uoew": {
-    "en": "YouTube",
-    "tr": "YouTube",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "tgn0liz9ii": {
-    "en": "TikTok",
-    "tr": "TikTok",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "tfzhxx4xe": {
-    "en": "Instagram",
-    "tr": "Instagram",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "28bwopvuq14": {
-    "en": "Facebook",
-    "tr": "Facebook",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2dbwyrhl3w7": {
-    "en": "My Account",
-    "tr": "Hesabım",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1c2q73aby0w": {
-    "en": "Username, nickname, session",
-    "tr": "Kullanıcı adı, takma ad, oturum",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "nij1kqyxc0": {
-    "en": "Profile",
-    "tr": "Profil",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Social/dm/DmView.tsx"
-    ]
-  },
-  "2wuzmffeso": {
-    "en": "Picture, banner, about, links",
-    "tr": "Resim, kapak, hakkında, bağlantılar",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "w6ysoj0kj4": {
-    "en": "Status",
-    "tr": "Durum",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Admin/FeedbackSection.tsx",
-      "src/components/Admin/TicketsSection.tsx",
-      "src/components/Admin/UsersSection.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/HanogtAI/ApiDocs.tsx",
-      "src/components/StatusMenu.tsx"
-    ]
-  },
-  "imtec9b0ar": {
-    "en": "Online, Idle, Do Not Disturb, Invisible",
-    "tr": "Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "wpgkd2bxc3": {
-    "en": "Privacy & Security",
-    "tr": "Gizlilik ve Güvenlik",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1n3tuhsnx4k": {
-    "en": "Visibility, two-step verification, password, sessions",
-    "tr": "Görünürlük, iki adımlı doğrulama, şifre, oturumlar",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1wtl390y3yf": {
-    "en": "Notifications",
-    "tr": "Bildirimler",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Admin/UsersSection.tsx",
-      "src/components/Guide/book-content.ts",
-      "src/components/Social/GroupSidebar.tsx",
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
-  "9vpuo68qka": {
-    "en": "Message, call, request and e-mail notifications",
-    "tr": "Mesaj, arama, istek ve e-posta bildirimleri",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "28dd75zqcuv": {
-    "en": "Messaging",
-    "tr": "Mesajlaşma",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "onryg9mqdj": {
-    "en": "Typing indicator, read receipts, chat look",
-    "tr": "Yazıyor göstergesi, okundu bilgisi, sohbet görünümü",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2cwdszru8kc": {
-    "en": "Appearance",
-    "tr": "Görünüm",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx",
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
-  "17t4771boqx": {
-    "en": "Theme, language, accessibility",
-    "tr": "Tema, dil, erişilebilirlik",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "ix0dn3jsw": {
-    "en": "Editor",
-    "tr": "Editör",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Landing/AllInOne.tsx"
-    ]
-  },
-  "2b89w97b2by": {
-    "en": "Code editor settings",
-    "tr": "Kod editörü ayarları",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "2cn5nplfmku": {
-    "en": "Instructions, tone, defaults, usage",
-    "tr": "Talimatlar, üslup, varsayılanlar, kullanım",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
-  "1z3udzc4a88": {
-    "en": "Data",
-    "tr": "Veri",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/app/disclosure/page.tsx",
-      "src/app/privacy-policy/page.tsx"
-    ]
-  },
-  "1iexb6efx4r": {
-    "en": "Download data, delete account",
-    "tr": "Verileri indirme, hesabı silme",
-    "files": [
-      "src/app/account-settings/page.tsx"
     ]
   },
   "tihg0xlfe2": {
@@ -2351,6 +1102,23 @@
       "src/components/Admin/TicketsSection.tsx",
       "src/components/Admin/copy.ts",
       "src/components/News/AiRankings.tsx"
+    ]
+  },
+  "1z3udzc4a88": {
+    "en": "Data",
+    "tr": "Veriler",
+    "files": [
+      "src/app/disclosure/page.tsx",
+      "src/app/privacy-policy/page.tsx",
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "1g5mx71ihrr": {
+    "en": "Identity",
+    "tr": "Kimlik",
+    "files": [
+      "src/app/disclosure/page.tsx",
+      "src/components/AccountSettings/copy.ts"
     ]
   },
   "c84uodospk": {
@@ -3371,6 +2139,22 @@
     "tr": "Doğrula",
     "files": [
       "src/app/editor/page.tsx"
+    ]
+  },
+  "1deknw8bj6t": {
+    "en": "Preview",
+    "tr": "Önizle",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/AnnouncementsSection.tsx",
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/HanogtAI/ArtifactPanel.tsx",
+      "src/components/Social/SocialSettings.tsx",
+      "src/components/Social/chat/AttachmentView.tsx",
+      "src/lib/runtimes/languages.ts"
     ]
   },
   "nnurxw805m": {
@@ -4640,6 +3424,35 @@
       "src/app/feedback/page.tsx"
     ]
   },
+  "75a28xasw6": {
+    "en": "Try again",
+    "tr": "Tekrar dene",
+    "files": [
+      "src/app/feedback/page.tsx",
+      "src/app/settings/page.tsx",
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadeProgress.tsx",
+      "src/components/CloudStatusBanner.tsx",
+      "src/components/Editor/CollabFriendPicker.tsx",
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/SafetySettings.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/ApiKeysPanel.tsx",
+      "src/components/HanogtAI/ConnectionsManager.tsx",
+      "src/components/HanogtAI/UsageMeter.tsx",
+      "src/components/News/MarketsStrip.tsx",
+      "src/components/NotificationCenter.tsx",
+      "src/components/Security/AccountSecurityCard.tsx",
+      "src/components/Security/RecentSignIns.tsx",
+      "src/components/Social/FriendsView.tsx",
+      "src/components/Social/chat/ExpressionPicker.tsx",
+      "src/components/Social/group/GroupView.tsx"
+    ]
+  },
   "22n8xj96tkz": {
     "en": "No tickets yet",
     "tr": "Henüz talebiniz yok",
@@ -5733,6 +4546,17 @@
       "src/app/login/page.tsx"
     ]
   },
+  "bqp9acsik3": {
+    "en": "Two-step verification",
+    "tr": "İki adımlı doğrulama",
+    "files": [
+      "src/app/login/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Guide/book-content.ts",
+      "src/components/Landing/ProductPreviews.tsx",
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
   "2buctvn1p76": {
     "en": "Enter one of the recovery codes you saved during setup. Each code works only once.",
     "tr": "Hesabınızı kurarken kaydettiğiniz kurtarma kodlarından birini girin. Her kod yalnızca bir kez kullanılabilir.",
@@ -5839,6 +4663,16 @@
       "src/app/login/verify/page.tsx"
     ]
   },
+  "1n7j2pocv27": {
+    "en": "Password",
+    "tr": "Şifre",
+    "files": [
+      "src/app/login/verify/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Landing/ProductPreviews.tsx",
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
   "kthiux3p": {
     "en": "Show password",
     "tr": "Şifreyi göster",
@@ -5900,6 +4734,14 @@
     "tr": "Güvenliğin için yeniden giriş yapman gerekiyor.",
     "files": [
       "src/app/login/verify/page.tsx"
+    ]
+  },
+  "2egt9x5pgue": {
+    "en": "Sign in again",
+    "tr": "Yeniden giriş yap",
+    "files": [
+      "src/app/login/verify/page.tsx",
+      "src/components/AccountSettings/copy.ts"
     ]
   },
   "29a1nzhkzr6": {
@@ -6174,6 +5016,15 @@
     "tr": "Yayını düzenle",
     "files": [
       "src/app/media/page.tsx"
+    ]
+  },
+  "2228t2v0m0s": {
+    "en": "Save changes",
+    "tr": "Değişiklikleri kaydet",
+    "files": [
+      "src/app/media/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "1m6l446y02v": {
@@ -6930,6 +5781,18 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "svtrdwx29w": {
+    "en": "Account Settings",
+    "tr": "Hesap Ayarları",
+    "files": [
+      "src/app/privacy-policy/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Guide/book-content.ts",
+      "src/components/Social/FriendsView.tsx",
+      "src/lib/ai/agent-tools.ts",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
   "iiraxytap4": {
     "en": "Account security",
     "tr": "Hesap güvenliği",
@@ -7254,9 +6117,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "2a5otxx0b0m": {
-    "en": "Up to 5 people at a time can join the voice call in a session. The call is set up with WebRTC, as in one-to-one calls: audio travels directly between devices where possible, or encrypted through the TURN relay server if needed, and is not recorded. A session lasts at most 12 hours; when it ends, the chat, status and connection data are deleted, and the final state of the files is kept for another 24 hours so participants can save a copy, then deleted. Only the final state of the files the owner shared is saved to the owner's project. When you delete your account, the sessions you own are deleted immediately.",
-    "tr": "Oturumdaki sesli görüşmeye aynı anda en fazla 5 kişi katılabilir. Görüşme, birebir aramalardaki gibi WebRTC ile kurulur: ses mümkünse doğrudan cihazlar arasında, gerekirse TURN aktarma sunucusu üzerinden şifreli olarak taşınır ve kaydedilmez. Bir oturum en fazla 12 saat sürer; sona erdiğinde sohbet, durum ve bağlantı verileri silinir, dosyaların son hâli katılımcıların kopya alabilmesi için 24 saat daha saklanır, sonra silinir. Oturum sahibinin projesine yalnızca kendi paylaştığı dosyaların son hâli kaydedilir. Hesabınızı sildiğinizde sahibi olduğunuz oturumlar hemen silinir.",
+  "2ey3gt2md1w": {
+    "en": "Up to 5 people at a time can join the voice call in a session. The call is set up with WebRTC, as in one-to-one calls: audio travels directly between devices where possible, or encrypted through the TURN relay server if needed, and is not recorded. A session lasts at most 12 (Free), 24 (Plus) or 48 (Pro) hours depending on the plan of the person who started it; when it ends, the chat, status and connection data are deleted, and the final state of the files is kept for another 24 hours so participants can save a copy, then deleted. Only the final state of the files the owner shared is saved to the owner's project. When you delete your account, the sessions you own are deleted immediately.",
+    "tr": "Oturumdaki sesli görüşmeye aynı anda en fazla 5 kişi katılabilir. Görüşme, birebir aramalardaki gibi WebRTC ile kurulur: ses mümkünse doğrudan cihazlar arasında, gerekirse TURN aktarma sunucusu üzerinden şifreli olarak taşınır ve kaydedilmez. Bir oturum, başlatan kişinin planına göre en fazla 12 (Ücretsiz), 24 (Plus) veya 48 (Pro) saat sürer; sona erdiğinde sohbet, durum ve bağlantı verileri silinir, dosyaların son hâli katılımcıların kopya alabilmesi için 24 saat daha saklanır, sonra silinir. Oturum sahibinin projesine yalnızca kendi paylaştığı dosyaların son hâli kaydedilir. Hesabınızı sildiğinizde sahibi olduğunuz oturumlar hemen silinir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7738,9 +6601,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "mlw3622oa6": {
-    "en": "Hanogt AI can be used in groups too: when you ask with the /ai command or by mentioning @Hanogt AI in your message, the question (up to 2,000 characters) is passed through our server to Hanogt AI's language model together with the last 12 text messages of the channel you asked in (up to 400 characters each, with their authors' display names; see [Hanogt AI](/privacy-policy#hanogt-ai)). These messages may belong to other members of the group; e-mail addresses are not sent. The question counts against the asker's Hanogt AI message allowance on their plan; if the model can't answer, it is given back. The question and Hanogt AI's answer appear to all members in the group chat and are kept there like other messages. Group owners and admins can switch the Hanogt AI bot off in the group settings; while it is off, none of the group's messages are sent to Hanogt AI. Group messages are not used to train models.",
-    "tr": "Hanogt AI gruplarda da kullanılabilir: /ai komutuyla ya da mesajınızda @Hanogt AI diye sorduğunuzda soru (en fazla 2.000 karakter), sorduğunuz kanaldaki son 12 metin mesajıyla birlikte (her biri en fazla 400 karakter, yazarlarının görünen adlarıyla) sunucumuz üzerinden Hanogt AI'ın dil modeline iletilir (bkz. [Hanogt AI](/privacy-policy#hanogt-ai)). Bu mesajlar grubun diğer üyelerine ait olabilir; e-posta adresleri gönderilmez. Soru, soranın planındaki Hanogt AI mesaj hakkından düşer; model yanıt veremezse hak geri verilir. Soru ve Hanogt AI'ın yanıtı grubun sohbetinde, diğer mesajlar gibi tüm üyelere görünür ve orada saklanır. Grup sahibi ve yöneticileri Hanogt AI botunu grup ayarlarından kapatabilir; kapalıyken grubun hiçbir mesajı Hanogt AI'a gönderilmez. Grup mesajları model eğitmek için kullanılmaz.",
+  "23ieezreuip": {
+    "en": "Hanogt AI can be used in groups too: when you ask with the /ai command or by mentioning @Hanogt AI in your message, the question (up to 2,000 characters) is passed through our server to Hanogt AI's language model together with the latest text messages of the channel you asked in (12, 20 or 30 depending on the asker's plan, up to 400 characters each, with their authors' display names; see [Hanogt AI](/privacy-policy#hanogt-ai)). These messages may belong to other members of the group; e-mail addresses are not sent. The question counts against the asker's Hanogt AI message allowance on their plan; if the model can't answer, it is given back. The question and Hanogt AI's answer appear to all members in the group chat and are kept there like other messages. Group owners and admins can switch the Hanogt AI bot off in the group settings; while it is off, none of the group's messages are sent to Hanogt AI. Group messages are not used to train models.",
+    "tr": "Hanogt AI gruplarda da kullanılabilir: /ai komutuyla ya da mesajınızda @Hanogt AI diye sorduğunuzda soru (en fazla 2.000 karakter), sorduğunuz kanaldaki son metin mesajlarıyla birlikte (soran kişinin planına göre 12, 20 veya 30 mesaj; her biri en fazla 400 karakter, yazarlarının görünen adlarıyla) sunucumuz üzerinden Hanogt AI'ın dil modeline iletilir (bkz. [Hanogt AI](/privacy-policy#hanogt-ai)). Bu mesajlar grubun diğer üyelerine ait olabilir; e-posta adresleri gönderilmez. Soru, soranın planındaki Hanogt AI mesaj hakkından düşer; model yanıt veremezse hak geri verilir. Soru ve Hanogt AI'ın yanıtı grubun sohbetinde, diğer mesajlar gibi tüm üyelere görünür ve orada saklanır. Grup sahibi ve yöneticileri Hanogt AI botunu grup ayarlarından kapatabilir; kapalıyken grubun hiçbir mesajı Hanogt AI'a gönderilmez. Grup mesajları model eğitmek için kullanılmaz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8212,12 +7075,13 @@
     "en": "Hanogt AI answers in groups",
     "tr": "Gruplarda Hanogt AI yanıtları",
     "files": [
-      "src/app/privacy-policy/page.tsx"
+      "src/app/privacy-policy/page.tsx",
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
-  "nfme0ejica": {
-    "en": "The question and the channel's last 12 messages with their authors' display names",
-    "tr": "Soru ile kanalın son 12 mesajı ve yazarlarının görünen adları",
+  "24oqwgfpjmx": {
+    "en": "The question and the channel's last 12, 20 or 30 messages (depending on the asker's plan) with their authors' display names",
+    "tr": "Soru ile kanalın son 12, 20 veya 30 mesajı (soran kişinin planına göre) ve yazarlarının görünen adları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8818,6 +7682,14 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "9tllkq8m4y": {
+    "en": "Session",
+    "tr": "Oturum",
+    "files": [
+      "src/app/privacy-policy/page.tsx",
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
   "xk5fav93l8": {
     "en": "Up to 90 days; renewed as you use the site and ended when you sign out",
     "tr": "En fazla 90 gün; siteyi kullandıkça yenilenir, çıkış yaptığınızda sona erer",
@@ -9082,9 +7954,9 @@
       "src/components/Admin/UsersSection.tsx"
     ]
   },
-  "2fd915463gx": {
-    "en": "At most 12 hours; chat, status and connection data are deleted when the session ends, and the final state of the files 24 hours later",
-    "tr": "En fazla 12 saat; bitişte sohbet, durum ve bağlantı verileri silinir, dosyaların son hâli 24 saat sonra silinir",
+  "1ypjnie8rxn": {
+    "en": "At most 12, 24 or 48 hours depending on the plan; chat, status and connection data are deleted when the session ends, and the final state of the files 24 hours later",
+    "tr": "Plana göre en fazla 12, 24 veya 48 saat; bitişte sohbet, durum ve bağlantı verileri silinir, dosyaların son hâli 24 saat sonra silinir",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9192,6 +8064,15 @@
     "tr": "Anahtarı iptal edene veya hesabınızı silene kadar",
     "files": [
       "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1en195gmcxx": {
+    "en": "Plan badge",
+    "tr": "Plan rozeti",
+    "files": [
+      "src/app/privacy-policy/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/lib/features.ts"
     ]
   },
   "12jok59ec9r": {
@@ -10457,6 +9338,15 @@
       "src/components/Groups/workspace/InviteDialog.tsx"
     ]
   },
+  "2cwdszru8kc": {
+    "en": "Appearance",
+    "tr": "Görünüm",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/sections.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
   "25t29f6naxn": {
     "en": "Colour theme, guides and the helpers around the editor.",
     "tr": "Renk teması, kılavuzlar ve editör kenarındaki yardımcılar.",
@@ -10799,6 +9689,14 @@
     "tr": "Yazı kalınlığı",
     "files": [
       "src/app/settings/page.tsx"
+    ]
+  },
+  "255y30e68wq": {
+    "en": "Light",
+    "tr": "İnce",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts"
     ]
   },
   "1yqnq4foavx": {
@@ -11592,6 +10490,17 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "25tzrw57p6z": {
+    "en": "Code editor",
+    "tr": "Kod editörü",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Editor/CodeEditor.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/lib/faq.ts"
+    ]
+  },
   "d6m37pl1pg": {
     "en": "Make the code editor your own. Try changes in the preview and press Save when you like them; saved settings apply to every open editor.",
     "tr": "Kod editörünü kendinize göre ayarlayın. Değişiklikleri önizlemede deneyin, beğendiğinizde Kaydet'e basın; kayıtlı ayarlar açık olan tüm editörlere uygulanır.",
@@ -11619,6 +10528,7 @@
     "tr": "Ayarlarda ara…",
     "files": [
       "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts",
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
@@ -11634,6 +10544,7 @@
     "tr": "Aramayı temizle",
     "files": [
       "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts",
       "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/LegalPage.tsx",
       "src/components/News/NewsPage.tsx"
@@ -11754,6 +10665,15 @@
       "src/app/settings/page.tsx"
     ]
   },
+  "oupwk6przu": {
+    "en": "System",
+    "tr": "Sistem",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/AdminPanel.tsx"
+    ]
+  },
   "y3n4zuwaez": {
     "en": "Backup and reset",
     "tr": "Yedekleme ve sıfırlama",
@@ -11794,6 +10714,20 @@
     "tr": "Ayarlar JSON olarak panoya kopyalandı.",
     "files": [
       "src/app/settings/page.tsx"
+    ]
+  },
+  "bexkf1cr59": {
+    "en": "Couldn't copy to the clipboard.",
+    "tr": "Panoya kopyalanamadı.",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/CloudHealthSection.tsx",
+      "src/components/Admin/PaddleCard.tsx",
+      "src/components/Groups/api.ts",
+      "src/components/Social/FriendsView.tsx",
+      "src/components/Social/dm/DmView.tsx",
+      "src/lib/collab/copy.ts"
     ]
   },
   "21mbh8kk2gx": {
@@ -11838,6 +10772,17 @@
       "src/app/settings/page.tsx"
     ]
   },
+  "2554s8khkhe": {
+    "en": "Reset",
+    "tr": "Sıfırla",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Security/SecurityChecklist.tsx"
+    ]
+  },
   "21cqt66q1w6": {
     "en": "The default values were loaded. Press Save to apply them.",
     "tr": "Varsayılan değerler yüklendi. Uygulamak için Kaydet'e basın.",
@@ -11873,6 +10818,14 @@
       "src/app/settings/page.tsx"
     ]
   },
+  "2a0tsqwlxgo": {
+    "en": "Save (Ctrl/⌘+S)",
+    "tr": "Kaydet (Ctrl/⌘+S)",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
   "f16f8ceiio": {
     "en": "Discard",
     "tr": "Vazgeç",
@@ -11880,6 +10833,14 @@
       "src/app/settings/page.tsx",
       "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "ygmj2vhnsw": {
+    "en": "Undo the unsaved changes",
+    "tr": "Kaydedilmemiş değişiklikleri geri al",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts"
     ]
   },
   "lubvx2a2rg": {
@@ -11908,6 +10869,14 @@
     "tr": "Kaydedilmemiş değişiklikler geri alındı.",
     "files": [
       "src/app/settings/page.tsx"
+    ]
+  },
+  "1rkwx1k6it9": {
+    "en": "There's nothing to save.",
+    "tr": "Kaydedilecek değişiklik yok.",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/AccountSettings/copy.ts"
     ]
   },
   "6wb2p5ls5": {
@@ -13132,6 +12101,13 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "2czco63lcqz": {
+    "en": "bigger runs on the server: up to 50,000 (Free), 100,000 (Plus) or 200,000 (Pro) characters of code per file; 150,000, 300,000 or 600,000 characters per request; 10,000, 50,000 or 100,000 characters of program input; and 64,000, 128,000 or 256,000 characters of output per file;",
+    "tr": "sunucuda daha büyük çalıştırmalar: dosya başına en fazla 50.000 (Ücretsiz), 100.000 (Plus) veya 200.000 (Pro) karakter kod; istek başına sırasıyla 150.000, 300.000 veya 600.000 karakter; program girdisi için 10.000, 50.000 veya 100.000 karakter ve dosya başına 64.000, 128.000 veya 256.000 karakter çıktı;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
   "1h5swqr0hbq": {
     "en": "creating and owning more Hanogt Social groups: 3 on Free, 10 on Plus and no limit on the number on Pro;",
     "tr": "daha fazla Hanogt Social grubu açma ve yönetme: Ücretsiz planda 3, Plus'ta 10, Pro'da sayı sınırı olmadan;",
@@ -13142,6 +12118,20 @@
   "2c75r6gqxb8": {
     "en": "bigger groups that you own: per group up to 25 (Free), 100 (Plus) or 250 (Pro) members; 25, 50 or 100 pinned messages; 20, 50 or 100 custom commands for the Hanogt Security Bot; and 100, 300 or 1,000 banned words in AutoMod. These limits follow the plan of the group's current owner;",
     "tr": "sahibi olduğunuz grupların daha büyük olması: grup başına en fazla 25 (Ücretsiz), 100 (Plus) veya 250 (Pro) üye; 25, 50 veya 100 sabitlenmiş mesaj; Hanogt Security Bot için 20, 50 veya 100 özel komut ve AutoMod'da 100, 300 veya 1.000 yasaklı kelime. Bu sınırlar grubun o anki sahibinin planına göre uygulanır;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "24x26ce9hrv": {
+    "en": "longer messages in Hanogt Social: up to 4,000 (Free), 6,000 (Plus) or 8,000 (Pro) characters per message in direct messages and groups (file captions stay at most 2,000 characters on every plan);",
+    "tr": "Hanogt Social'da daha uzun mesajlar: doğrudan mesajlarda ve gruplarda mesaj başına en fazla 4.000 (Ücretsiz), 6.000 (Plus) veya 8.000 (Pro) karakter (dosya açıklamaları her planda en fazla 2.000 karakter);",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "9u01gf1l9a": {
+    "en": "longer Hanogt AI answers in groups: depending on the plan of the person asking, up to 1,200 (Free), 2,000 (Plus) or 3,000 (Pro) tokens per answer, with the channel's last 12, 20 or 30 messages read along with the question;",
+    "tr": "gruplarda Hanogt AI'dan daha uzun yanıtlar: soran kişinin planına göre yanıt başına en fazla 1.200 (Ücretsiz), 2.000 (Plus) veya 3.000 (Pro) token; soruyla birlikte kanalın son 12, 20 veya 30 mesajı okunur;",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -13167,9 +12157,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "v9umg5f7vw": {
-    "en": "team editing with more people: depending on the plan of the person who starts it, a session can have up to 2 (Free), 5 (Plus) or 30 (Pro) people, that person included; whatever the plan, up to 5 people at a time can join the session's voice call;",
-    "tr": "daha kalabalık ekiple düzenleme: bir oturuma, oturumu başlatan kişinin planına göre o kişi dahil en fazla 2 (Ücretsiz), 5 (Plus) veya 30 (Pro) kişi katılabilir; oturumdaki sesli görüşmeye plan ne olursa olsun aynı anda en fazla 5 kişi katılabilir;",
+  "w8rhff3z6g": {
+    "en": "team editing with more people for longer: depending on the plan of the person who starts it, a session can have up to 2 (Free), 5 (Plus) or 30 (Pro) people, that person included, lasts at most 12, 24 or 48 hours and holds 20, 40 or 100 files; whatever the plan, up to 5 people at a time can join the session's voice call;",
+    "tr": "daha kalabalık ve daha uzun ekiple düzenleme: bir oturuma, oturumu başlatan kişinin planına göre o kişi dahil en fazla 2 (Ücretsiz), 5 (Plus) veya 30 (Pro) kişi katılabilir; oturum en fazla 12, 24 veya 48 saat sürer ve 20, 40 veya 100 dosya tutar; oturumdaki sesli görüşmeye plan ne olursa olsun aynı anda en fazla 5 kişi katılabilir;",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -13184,6 +12174,13 @@
   "cyzmxi230e": {
     "en": "the [Hanogt AI API](/terms-of-use#ai-api): 2 keys on Plus and 5 on Pro; requests use your Hanogt AI messages;",
     "tr": "[Hanogt AI API](/terms-of-use#ai-api): Plus'ta 2, Pro'da 5 anahtar; istekler Hanogt AI mesaj hakkından düşer;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1jqqoh2a03p": {
+    "en": "on Plus and Pro, exporting Hanogt Engine games (the playable HTML file and the web package) without the “Made with Hanogt Engine” badge; exports are built in your browser;",
+    "tr": "Plus ve Pro'da Hanogt Engine oyunlarını (oynanabilir HTML dosyası ve web paketi) “Hanogt Engine ile yapıldı” rozeti olmadan dışa aktarabilme; dışa aktarma tarayıcınızda yapılır;",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -13216,9 +12213,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "1smcq6easq2": {
-    "en": "When you move to a lower plan or your subscription ends, your existing projects, groups, connections, keys and settings aren't deleted: if you have more projects or groups than the new plan allows, you can't create new ones; AI connections over the limit are switched off; only as many of your Hanogt AI API keys as the new plan allows, the oldest ones, keep working (none on Free); only the part of your personal instructions within the new plan's limit is used; the members, pinned messages, custom commands and banned words of groups you own and your starred messages aren't removed, but nothing new can be added until they are under the new plan's limit; the files you sent in messages aren't removed, but you can't send new files until the space you use is under the new plan's limit, and new files must fit the new plan's file size limit; and the plan badge and early access end.",
-    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz, gruplarınız, bağlantılarınız, anahtarlarınız ve ayarlarınız silinmez: yeni planın sınırından fazla projeniz veya grubunuz varsa yenisini oluşturamazsınız; sınırı aşan yapay zekâ bağlantılarınız kapatılır; Hanogt AI API anahtarlarınızdan yalnızca yeni planın izin verdiği sayıda, en eski olanlar çalışmaya devam eder (Ücretsiz planda hiçbiri çalışmaz); kişisel talimatlarınızın yalnızca yeni planın sınırına kadar olan kısmı kullanılır; sahibi olduğunuz gruplardaki üyeler, sabitlenmiş mesajlar, özel komutlar ve yasaklı kelimeler ile yıldızlı mesajlarınız silinmez, ancak yeni planın sınırının altına inene kadar yenisi eklenemez; mesajlarda gönderdiğiniz dosyalar silinmez, ancak kullandığınız alan yeni planın sınırının altına inene kadar yeni dosya gönderemezsiniz ve yeni dosyalar yeni planın dosya boyutu sınırına uymalıdır; plan rozeti ve erken erişim sona erer.",
+  "9zeb1zhomq": {
+    "en": "When you move to a lower plan or your subscription ends, your existing projects, groups, connections, keys and settings aren't deleted: if you have more projects or groups than the new plan allows, you can't create new ones; AI connections over the limit are switched off; only as many of your Hanogt AI API keys as the new plan allows, the oldest ones, keep working (none on Free); only the part of your personal instructions within the new plan's limit is used; the members, pinned messages, custom commands and banned words of groups you own and your starred messages aren't removed, but nothing new can be added until they are under the new plan's limit; the files you sent in messages aren't removed, but you can't send new files until the space you use is under the new plan's limit, and new files must fit the new plan's file size limit; long messages you already sent aren't removed, but new messages and edits must fit the new plan's length; runs on the server, Hanogt AI answers in groups and newly started team editing sessions follow the new plan's limits; exported games show the Hanogt badge again (files you exported before don't change); and the plan badge and early access end.",
+    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz, gruplarınız, bağlantılarınız, anahtarlarınız ve ayarlarınız silinmez: yeni planın sınırından fazla projeniz veya grubunuz varsa yenisini oluşturamazsınız; sınırı aşan yapay zekâ bağlantılarınız kapatılır; Hanogt AI API anahtarlarınızdan yalnızca yeni planın izin verdiği sayıda, en eski olanlar çalışmaya devam eder (Ücretsiz planda hiçbiri çalışmaz); kişisel talimatlarınızın yalnızca yeni planın sınırına kadar olan kısmı kullanılır; sahibi olduğunuz gruplardaki üyeler, sabitlenmiş mesajlar, özel komutlar ve yasaklı kelimeler ile yıldızlı mesajlarınız silinmez, ancak yeni planın sınırının altına inene kadar yenisi eklenemez; mesajlarda gönderdiğiniz dosyalar silinmez, ancak kullandığınız alan yeni planın sınırının altına inene kadar yeni dosya gönderemezsiniz ve yeni dosyalar yeni planın dosya boyutu sınırına uymalıdır; daha önce gönderdiğiniz uzun mesajlar silinmez ama yenileri ve düzenlemeleri yeni planın uzunluk sınırına uymalıdır; sunucudaki çalıştırmalar, gruplardaki Hanogt AI yanıtları ve yeni başlatılan ekiple düzenleme oturumları yeni planın sınırlarıyla çalışır; dışa aktarılan oyunlarda Hanogt rozeti yeniden gösterilir (daha önce dışa aktardığınız dosyalar değişmez); plan rozeti ve erken erişim sona erer.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -14079,6 +13076,1418 @@
     "tr": "Oluştur",
     "files": [
       "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1yavouk16n9": {
+    "en": "Manage your profile, privacy and security, notifications and app preferences in one place.",
+    "tr": "Profilinizi, gizlilik ve güvenlik ayarlarınızı, bildirimlerinizi ve uygulama tercihlerinizi tek yerden yönetin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1mge26ozluc": {
+    "en": "Settings",
+    "tr": "Ayarlar",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Security/SecurityChecklist.tsx"
+    ]
+  },
+  "7lxn7bhoq8": {
+    "en": "User settings",
+    "tr": "Kullanıcı ayarları",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "biocx019tl": {
+    "en": "App settings",
+    "tr": "Uygulama ayarları",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "27pdwvbm05s": {
+    "en": "Account",
+    "tr": "Hesap",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/UsersSection.tsx",
+      "src/lib/support.ts"
+    ]
+  },
+  "q6zp8lx14a": {
+    "en": "Back to settings",
+    "tr": "Ayarlara dön",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2e28byn5jj5": {
+    "en": "Matching settings",
+    "tr": "Eşleşen ayarlar",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "63pbl7zzbd": {
+    "en": "{count} settings found",
+    "tr": "{count} ayar bulundu",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "13znfzvtbti": {
+    "en": "No setting matches “{query}”.",
+    "tr": "“{query}” ile eşleşen bir ayar yok.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "cleezyqb6t": {
+    "en": "Saved instantly",
+    "tr": "Anında kaydedilir",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2buinhn23be": {
+    "en": "Applies instantly on this device",
+    "tr": "Bu cihazda anında uygulanır",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1ehbkpi8b1c": {
+    "en": "Loading your account…",
+    "tr": "Hesap bilgileriniz yükleniyor…",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "26arsj3tpll": {
+    "en": "Your profile couldn't be loaded",
+    "tr": "Profiliniz yüklenemedi",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "22e1rppx788": {
+    "en": "Language, theme, security and account actions keep working.",
+    "tr": "Dil, tema, güvenlik ve hesap işlemleri kullanılmaya devam eder.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "cbvo4w4p26": {
+    "en": "Save status",
+    "tr": "Kayıt durumu",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "gl0rzql4mq": {
+    "en": "You have unsaved changes",
+    "tr": "Kaydedilmemiş değişiklikler",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "cc4h2g9v8k": {
+    "en": "{count} fields changed",
+    "tr": "{count} alan değişti",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "19gybtkafs4": {
+    "en": "Saving…",
+    "tr": "Kaydediliyor…",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Editor/StatusBar.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/EditorPane.tsx",
+      "src/components/HanogtAI/ConnectionsManager.tsx",
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "yd788j6n9g": {
+    "en": "Your changes were saved.",
+    "tr": "Değişiklikleriniz kaydedildi.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "22ucpz3m9la": {
+    "en": "The changes were discarded.",
+    "tr": "Değişiklikler geri alındı.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "pyu67earo5": {
+    "en": "{field}: {problem}",
+    "tr": "{field}: {problem}",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "168lubypjb6": {
+    "en": "Setting saved.",
+    "tr": "Ayar kaydedildi.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1te9zfg2d8g": {
+    "en": "Couldn't save the setting. Try again.",
+    "tr": "Ayar kaydedilemedi. Tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "15iqlmbqi9w": {
+    "en": "Account overview",
+    "tr": "Hesap özeti",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2dg85qg0adm": {
+    "en": "Edit profile",
+    "tr": "Profili düzenle",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/UserPopout.tsx"
+    ]
+  },
+  "2cc8r4cjgr": {
+    "en": "Member since",
+    "tr": "Üyelik",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "fnqiucq85n": {
+    "en": "Last sign-in",
+    "tr": "Son giriş",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1ecdlb1cdnb": {
+    "en": "Security",
+    "tr": "Güvenlik",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Guide/book-content.ts",
+      "src/components/HanogtAI/chat-copy.ts",
+      "src/lib/nav.ts"
+    ]
+  },
+  "1vczhb7caku": {
+    "en": "Two-step verification is on",
+    "tr": "İki adımlı doğrulama açık",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "28kl9l6gwy8": {
+    "en": "Two-step verification is off",
+    "tr": "İki adımlı doğrulama kapalı",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "t6sx0h7i2e": {
+    "en": "Password set",
+    "tr": "Şifre ayarlı",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1stvh5xgmyn": {
+    "en": "Google sign-in only",
+    "tr": "Yalnızca Google ile giriş",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1j6p4qmi358": {
+    "en": "Loading the security status",
+    "tr": "Güvenlik durumu yükleniyor",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "14f4c28q3wr": {
+    "en": "Manage security",
+    "tr": "Güvenliği yönet",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "13r19xhs075": {
+    "en": "Account statistics",
+    "tr": "Hesap istatistikleri",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2vsqno7p6p": {
+    "en": "Projects",
+    "tr": "Proje",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/HanogtAI/AgentCard.tsx"
+    ]
+  },
+  "1fo1ckfw7ju": {
+    "en": "Friends",
+    "tr": "Arkadaş",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/components/Guide/book-content.ts",
+      "src/components/HanogtAI/AgentCard.tsx",
+      "src/components/Social/FriendsView.tsx",
+      "src/components/Social/HomeSidebar.tsx",
+      "src/components/Social/SocialShell.tsx",
+      "src/components/Social/chat/ForwardDialog.tsx",
+      "src/lib/ai/knowledge.ts",
+      "src/lib/nav.ts"
+    ]
+  },
+  "1rd50eafk0i": {
+    "en": "Posts",
+    "tr": "Paylaşım",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "l6m9btcc6c": {
+    "en": "Friends find you by nickname and tag.",
+    "tr": "Arkadaşlarınız sizi takma ad ve etiketle bulur.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1kl504uzb8k": {
+    "en": "The name shown on your profile and in messages.",
+    "tr": "Profilinizde ve mesajlarda görünen adınız.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "hchq1ebmie": {
+    "en": "Your sign-in address; it can't be changed here.",
+    "tr": "Giriş adresiniz; buradan değiştirilemez.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1lddevaemr4": {
+    "en": "Copy nickname and tag",
+    "tr": "Takma adı ve etiketi kopyala",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1hk3d7x0rz9": {
+    "en": "{tag} was copied to the clipboard.",
+    "tr": "{tag} panoya kopyalandı.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "xorn6vzlf": {
+    "en": "New tag",
+    "tr": "Yeni etiket",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "tzh5m4uli0": {
+    "en": "Picks a new random 4-digit tag; once you save, friends find you with the new tag.",
+    "tr": "Rastgele yeni bir 4 haneli etiket seçer; kaydettiğinizde arkadaşlarınız sizi yeni etiketle bulur.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1ioeaultnfd": {
+    "en": "Tag",
+    "tr": "Etiket",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1xcfx4wi2f6": {
+    "en": "E-mail and password",
+    "tr": "E-posta ve şifre",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "zg3rjbleoc": {
+    "en": "Sign out on this device",
+    "tr": "Bu cihazda çıkış yap",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1p9a74crkcb": {
+    "en": "Picture and banner",
+    "tr": "Profil resmi ve kapak",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1i8um0jto9m": {
+    "en": "Shown on your profile card and next to your messages.",
+    "tr": "Profil kartınızda ve mesajlarınızın yanında görünür.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "19dvuuoitu": {
+    "en": "Shown across the top of your profile card.",
+    "tr": "Profil kartınızın üst kısmında görünür.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "168pgzlw5i7": {
+    "en": "Without a banner, your card's top strip and your language tags use this colour.",
+    "tr": "Kapak görseli yoksa kartınızın üst şeridi ve favori dil etiketleriniz bu renkte görünür.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "5sg7div9w9": {
+    "en": "Enter an image address that starts with https:// and has no spaces.",
+    "tr": "https:// ile başlayan, boşluk içermeyen bir resim adresi girin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "ursgnyg44t": {
+    "en": "Accent colour {color}",
+    "tr": "Vurgu rengi {color}",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "10fex1mob14": {
+    "en": "About you",
+    "tr": "Hakkınızda",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2g6qohitk4m": {
+    "en": "Shown on your profile card.",
+    "tr": "Profil kartınızda görünür.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "123grfbsoxb": {
+    "en": "What others see on your profile card; it updates before you save.",
+    "tr": "Başkalarının profil kartınızda göreceği hâli; kaydetmeden önce de güncellenir.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "15a3jhzmw7j": {
+    "en": "With a Plus or Pro subscription, a badge appears next to your name.",
+    "tr": "Plus ya da Pro aboneliğinizle adınızın yanında bir rozet görünür.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1n76emd07ey": {
+    "en": "See the plans",
+    "tr": "Planları gör",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1ohs78lhmt7": {
+    "en": "Your status",
+    "tr": "Durumunuz",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/UserPanel.tsx"
+    ]
+  },
+  "1a6r4520d3p": {
+    "en": "The mark at the bottom right of your picture; saved as soon as you pick it.",
+    "tr": "Profil resminizin sağ altındaki işaret: seçtiğiniz anda kaydedilir.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1h2nhf3imla": {
+    "en": "Shown right now: {status}",
+    "tr": "Şu an görünen: {status}",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1jgy4b2tnru": {
+    "en": "Visibility",
+    "tr": "Görünürlük",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "26ekb9x5sfv": {
+    "en": "Choose when others see you online.",
+    "tr": "Başkalarının sizi ne zaman çevrimiçi göreceğini belirleyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1tx60eo1422": {
+    "en": "While off, everyone sees you as offline (like Invisible).",
+    "tr": "Kapalıyken herkes sizi çevrimdışı görür (Görünmez gibi).",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "281lq9h1ya8": {
+    "en": "While off, nobody sees when you were last online.",
+    "tr": "Kapalıyken çevrimdışıyken ne zaman görüldüğünüz gösterilmez.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1755syldh5i": {
+    "en": "Once you set a password, every Google sign-in asks for it too, plus the code when two-step verification is on.",
+    "tr": "Şifre belirlediğinizde Google ile her girişte bu şifre, iki adımlı doğrulama açıksa kod da sorulur.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "ciupz1z8pm": {
+    "en": "Current password",
+    "tr": "Mevcut şifre",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1luctkoay3a": {
+    "en": "New password",
+    "tr": "Yeni şifre",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "tu2pgthvo8": {
+    "en": "New password (again)",
+    "tr": "Yeni şifre (tekrar)",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1fl1kpcadgu": {
+    "en": "At least 10 characters.",
+    "tr": "En az 10 karakter.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "280utzfwg89": {
+    "en": "The current password is wrong.",
+    "tr": "Mevcut şifre yanlış.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "17za943l44s": {
+    "en": "Your password was saved and your other devices were signed out.",
+    "tr": "Şifreniz kaydedildi; diğer cihazlardaki oturumlarınız kapatıldı.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "11ufgnti1hn": {
+    "en": "For your security, sign in again before setting a password (within the last 30 minutes).",
+    "tr": "Güvenliğiniz için şifre belirlemeden önce yeniden giriş yapmanız gerekiyor (son 30 dakika içinde).",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "3g0orglrh3": {
+    "en": "To delete your account, you need to have signed in within the last 30 minutes. Sign in again and try once more.",
+    "tr": "Hesabınızı silmek için son 30 dakika içinde giriş yapmış olmanız gerekiyor. Yeniden giriş yapıp tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "6rktgkvem2": {
+    "en": "Sessions",
+    "tr": "Oturumlar",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "4mnk6canji": {
+    "en": "If your account is still signed in on another device or browser, sign them all out here; you stay signed in on this device. Changing your password signs the other sessions out too.",
+    "tr": "Hesabınız başka bir cihazda ya da tarayıcıda açık kaldıysa hepsini buradan kapatın; bu cihazdaki oturumunuz açık kalır. Şifrenizi değiştirdiğinizde de diğer oturumlar kapanır.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1jwubaruv5x": {
+    "en": "Sign out all other sessions",
+    "tr": "Diğer tüm oturumları kapat",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "ypynchgyif": {
+    "en": "All your other sessions were signed out; you're still signed in here.",
+    "tr": "Diğer tüm oturumlarınız kapatıldı; bu cihazda oturumunuz açık.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "kqxiam0zqr": {
+    "en": "Couldn't sign the sessions out right now. Try again in a moment.",
+    "tr": "Oturumlar şu anda kapatılamadı. Biraz sonra tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2e2bvdsgh9u": {
+    "en": "You tried too often. Wait a little and try again.",
+    "tr": "Çok sık denediniz. Biraz bekleyip tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "exhzdzoc6x": {
+    "en": "Profile and content visibility",
+    "tr": "Profil ve içerik görünürlüğü",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1meul77uhfz": {
+    "en": "When off, only your friends, people you've messaged and members of your groups can see your profile card.",
+    "tr": "Kapalıyken profil kartınızı yalnızca arkadaşlarınız, mesajlaştığınız kişiler ve ortak gruplarınızın üyeleri görebilir.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1xqfalanoc7": {
+    "en": "Applies to your profile card in Hanogt Social.",
+    "tr": "Hanogt Social'daki profil kartınızda geçerlidir.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2bsupjcq5n6": {
+    "en": "Friend requests",
+    "tr": "Arkadaşlık istekleri",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "9x52vw2d1x": {
+    "en": "In-app notifications",
+    "tr": "Site içi bildirimler",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1xnuqidjoq5": {
+    "en": "Notifications shown under the bell.",
+    "tr": "Zil simgesinde görünen bildirimler.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2376mta0vwi": {
+    "en": "When someone sends you a message.",
+    "tr": "Biri size mesaj gönderdiğinde.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1t254np0y9n": {
+    "en": "Group mention notifications",
+    "tr": "Gruplarda bahsedilme bildirimleri",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1tnvstpn0s3": {
+    "en": "When someone @mentions you in a Hanogt Social group.",
+    "tr": "Hanogt Social gruplarında biri sizden @ ile bahsettiğinde.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1p10zkh5ohv": {
+    "en": "Voice calls you couldn't answer.",
+    "tr": "Yanıtlayamadığınız sesli aramalar.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "xsd3rfo1v2": {
+    "en": "When someone sends you a friend request.",
+    "tr": "Biri size arkadaşlık isteği gönderdiğinde.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "8dokjrnidn": {
+    "en": "You can also pick each group's notification level (all messages, mentions only, nothing) from the group's menu.",
+    "tr": "Her grubun bildirim düzeyini (tüm mesajlar, yalnızca bahsetmeler, hiçbiri) grubun menüsünden ayrıca seçebilirsiniz.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "2cojxkpd8l9": {
+    "en": "Chat",
+    "tr": "Sohbet",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Editor/CollabChat.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1ttsc6ef33j": {
+    "en": "Chat look",
+    "tr": "Sohbet görünümü",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1q5m5o9q4k9": {
+    "en": "When off, nobody sees you typing and you don't see others typing.",
+    "tr": "Kapalıyken yazdığınız görünmez ve başkalarının yazdığını da görmezsiniz.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1aioecszt5m": {
+    "en": "When off, the other person in a direct message doesn't see that you read their message, and you don't see it either.",
+    "tr": "Kapalıyken direkt mesajlarda karşı taraf mesajını gördüğünüzü bilmez; siz de onunkini göremezsiniz.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "2fb71mr05z0": {
+    "en": "When off, GIFs play when you hover or tap them. Your system's reduce motion setting stops them too.",
+    "tr": "Kapalıyken GIF'ler üzerine gelince ya da dokununca oynar. Sistemin hareketi azalt ayarı da GIF'leri durdurur.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "arp6oju603": {
+    "en": "When off, Enter adds a new line and Ctrl+Enter (⌘+Enter on Mac) sends.",
+    "tr": "Kapalıyken Enter yeni satır ekler; göndermek için Ctrl+Enter (Mac'te ⌘+Enter) kullanılır.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1yi1eprb816": {
+    "en": "Theme",
+    "tr": "Tema",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "5visy0kfrp": {
+    "en": "Dark",
+    "tr": "Koyu",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "rj1ngyto0o": {
+    "en": "Language",
+    "tr": "Dil",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/GameEngine/EngineHub.tsx",
+      "src/components/Security/CodeAdvisor.tsx"
+    ]
+  },
+  "wn0cao3c9f": {
+    "en": "Accessibility",
+    "tr": "Erişilebilirlik",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "tun1fp2u70": {
+    "en": "Kept with your account; it applies on every device you sign in on.",
+    "tr": "Hesabınıza bağlıdır; giriş yaptığınız her cihazda geçerli olur.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1pani13ocyx": {
+    "en": "Transitions, moving text and flowing colours stop. Your device's “reduce motion” setting is always respected too.",
+    "tr": "Geçişler, kayan yazılar ve renk akışları durur. Cihazınızın “hareketi azalt” ayarı da her zaman dikkate alınır.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "xd4umuf5zi": {
+    "en": "Secondary text and lines get stronger.",
+    "tr": "İkincil yazılar ve çizgiler daha belirgin olur.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2xor2xx2e7": {
+    "en": "Font, theme, shortcuts and run settings are on the editor's own page.",
+    "tr": "Yazı tipi, tema, kısayollar ve çalıştırma ayarları editörün kendi sayfasında.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "8qhs1sjteg": {
+    "en": "Open editor settings",
+    "tr": "Editör ayarlarını aç",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "oy60vlmkq": {
+    "en": "The editor settings were reset on this device but couldn't be saved to your account.",
+    "tr": "Editör ayarları bu cihazda sıfırlandı ancak hesabınıza kaydedilemedi.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1p4x55ekl04": {
+    "en": "Reset the editor settings?",
+    "tr": "Editör ayarları sıfırlansın mı?",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "z7xu00f2us": {
+    "en": "Your font, theme, shortcuts and other editor preferences go back to their defaults. The copy synced with your account is reset too; this can't be undone.",
+    "tr": "Yazı tipi, tema, kısayollar ve diğer editör tercihleriniz varsayılana döner. Hesabınızla eşitlenen kopya da sıfırlanır; bu işlem geri alınamaz.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "24an0rwrcju": {
+    "en": "Hanogt AI settings",
+    "tr": "Hanogt AI ayarları",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/ChangelogModal.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "6tu7xzs061": {
+    "en": "Choose how Hanogt AI answers you (instructions, tone, length, language), how new chats start, and manage your chat history.",
+    "tr": "Hanogt AI'ın sizi nasıl yanıtlayacağını (talimatlar, üslup, uzunluk, dil), yeni sohbetlerin varsayılanlarını ve sohbet geçmişinizi yönetin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "25hv2cvwxah": {
+    "en": "Open Hanogt AI settings",
+    "tr": "Hanogt AI ayarlarını aç",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2c3pphr6x66": {
+    "en": "My usage",
+    "tr": "Kullanımım",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "28skyabr6sd": {
+    "en": "Download your data",
+    "tr": "Verilerinizi indirin",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "6e6q5a4adr": {
+    "en": "Danger zone",
+    "tr": "Tehlikeli bölge",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2d7noe4lj8n": {
+    "en": "Your session has ended. Sign in in a new tab, then save again so your changes aren't lost.",
+    "tr": "Oturumunuz sona ermiş. Değişikliklerinizi kaybetmemek için yeni bir sekmede giriş yapıp tekrar kaydedin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2ep1ra2fc7l": {
+    "en": "The request failed a security check. Reload the page and try again.",
+    "tr": "İstek güvenlik denetiminden geçemedi. Sayfayı yenileyip tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/copy.ts",
+      "src/lib/support.ts"
+    ]
+  },
+  "lm71ucbxhz": {
+    "en": "You saved too often. Wait a moment and try again.",
+    "tr": "Çok sık kaydettiniz. Biraz bekleyip tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2aewr0qbl15": {
+    "en": "The changes couldn't be sent. Reload the page and try again.",
+    "tr": "Değişiklikler gönderilemedi. Sayfayı yenileyip tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1nwldfaz1np": {
+    "en": "This nickname and tag are used by another account. Change your nickname or get another tag with “New tag”.",
+    "tr": "Bu takma ad ve etiket başka bir hesapta kullanılıyor. Takma adınızı değiştirin veya “Yeni etiket” ile başka bir etiket alın.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1hreepgenh5": {
+    "en": "The profile service is unavailable right now. Your changes are still on this page; save again in a moment.",
+    "tr": "Profil hizmeti şu anda kullanılamıyor. Değişiklikleriniz bu sayfada duruyor; biraz sonra tekrar kaydedin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1a3p344hx64": {
+    "en": "Couldn't reach the server. Check your internet connection and save again.",
+    "tr": "Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar kaydedin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1aiy83rfw8w": {
+    "en": "Couldn't save. Please try again.",
+    "tr": "Kaydedilemedi. Lütfen tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "kg4p5ag05": {
+    "en": "Your session couldn't be verified. Please sign in again.",
+    "tr": "Oturumunuz doğrulanamadı. Lütfen yeniden giriş yapın.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "bkv9gl1jnh": {
+    "en": "Too many requests in a short time. Wait a moment and try again.",
+    "tr": "Kısa sürede çok fazla istek yapıldı. Biraz bekleyip tekrar deneyin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "hmav6t30m4": {
+    "en": "Couldn't reach the server. Check your internet connection.",
+    "tr": "Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Admin/copy.ts",
+      "src/components/Editor/Console.tsx",
+      "src/lib/support.ts"
+    ]
+  },
+  "90xr1wic8o": {
+    "en": "Your profile details couldn't be fetched right now. This is usually a temporary server problem; your data is safe.",
+    "tr": "Profil bilgileriniz şu anda alınamadı. Bu genellikle geçici bir sunucu sorunudur; verileriniz güvende.",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1h5f89vy70": {
+    "en": "the value has the wrong format",
+    "tr": "değer biçimi hatalı",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "j43680di6p": {
+    "en": "too long",
+    "tr": "çok uzun",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1kkp7sybtza": {
+    "en": "invalid",
+    "tr": "geçersiz",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1hedxc8i533": {
+    "en": "can't be empty",
+    "tr": "boş bırakılamaz",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1rnavo3er0h": {
+    "en": "Username",
+    "tr": "Kullanıcı adı",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "2fpnyv3zdpu": {
+    "en": "Nickname",
+    "tr": "Takma ad",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1ql26wk7111": {
+    "en": "Profile picture URL",
+    "tr": "Profil resmi adresi",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "23aj0uinhxu": {
+    "en": "Banner URL",
+    "tr": "Kapak görseli adresi",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "a5oty8g015": {
+    "en": "About",
+    "tr": "Hakkında",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/lib/ai/agent-tools.ts"
+    ]
+  },
+  "23ciyaa73ja": {
+    "en": "Custom status",
+    "tr": "Özel durum",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/StatusMenu.tsx"
+    ]
+  },
+  "1cc2yp2p9w1": {
+    "en": "Accent colour",
+    "tr": "Vurgu rengi",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1j2funtrghg": {
+    "en": "Favourite languages",
+    "tr": "Favori diller",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "dggd19vwx9": {
+    "en": "GitHub",
+    "tr": "GitHub",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "5e5kwxtjq5": {
+    "en": "LinkedIn",
+    "tr": "LinkedIn",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "10fxr1aansb": {
+    "en": "Twitter / X",
+    "tr": "Twitter / X",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "o7yja4m6z4": {
+    "en": "Website",
+    "tr": "Web sitesi",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "1d76wc6uoew": {
+    "en": "YouTube",
+    "tr": "YouTube",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "tgn0liz9ii": {
+    "en": "TikTok",
+    "tr": "TikTok",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "tfzhxx4xe": {
+    "en": "Instagram",
+    "tr": "Instagram",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "28bwopvuq14": {
+    "en": "Facebook",
+    "tr": "Facebook",
+    "files": [
+      "src/components/AccountSettings/copy.ts"
+    ]
+  },
+  "19xma164ux7": {
+    "en": "link",
+    "tr": "bağlantı",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "10puilxab1o": {
+    "en": "display name",
+    "tr": "görünen ad, isim",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "vbk1vk21yr": {
+    "en": "log out",
+    "tr": "oturumu kapat",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "2243kt2pi71": {
+    "en": "profile photo, avatar",
+    "tr": "profil fotoğrafı, avatar",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "ugoe3qi2su": {
+    "en": "cover image",
+    "tr": "kapak görseli",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "22a5b583jc": {
+    "en": "colour color",
+    "tr": "renk",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1zouo5yg4tb": {
+    "en": "Plus Pro badge",
+    "tr": "Plus Pro rozet",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "f69c9nb65z": {
+    "en": "programming languages",
+    "tr": "programlama dilleri",
+    "files": [
+      "src/components/AccountSettings/search.ts",
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "zjjb7stbya": {
+    "en": "social media",
+    "tr": "sosyal medya",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "x8cokaqcc0": {
+    "en": "online, idle, do not disturb, invisible",
+    "tr": "çevrimiçi, boşta, rahatsız etmeyin, görünmez",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "2fc5kj43e7d": {
+    "en": "security status",
+    "tr": "güvenlik durumu",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "4spjxxmk8": {
+    "en": "password, change password",
+    "tr": "parola, şifre değiştir",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1mwl13k4zl9": {
+    "en": "2FA, authenticator, recovery codes",
+    "tr": "2FA, doğrulama uygulaması, kurtarma kodları",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "3p1zdhvjpi": {
+    "en": "recent sign-ins, devices",
+    "tr": "son girişler, cihazlar",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1o7u8cpsj5a": {
+    "en": "mention, @everyone",
+    "tr": "bahsetme, @herkes",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "wq63i616g": {
+    "en": "missed call",
+    "tr": "cevapsız arama",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "q7gcz9j3ow": {
+    "en": "seen",
+    "tr": "görüldü",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "732w8hh0jx": {
+    "en": "voice message",
+    "tr": "sesli mesaj",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1gzsbtf2cqc": {
+    "en": "dark mode",
+    "tr": "karanlık mod",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1uv27dhzhiq": {
+    "en": "interface language",
+    "tr": "arayüz dili",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1u9xlba6hs7": {
+    "en": "motion",
+    "tr": "hareket",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1zepbo6bpjd": {
+    "en": "font, shortcuts",
+    "tr": "yazı tipi, kısayollar",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1vwb41f7jfz": {
+    "en": "instructions, tone, answers",
+    "tr": "talimatlar, üslup, yanıt",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1i1bvgo10u9": {
+    "en": "allowance",
+    "tr": "kullanım hakkı",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "qjaud8j1q9": {
+    "en": "backup, JSON, export",
+    "tr": "yedek, JSON, dışa aktar",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "1hci41ibfdh": {
+    "en": "close account",
+    "tr": "hesabı kapat",
+    "files": [
+      "src/components/AccountSettings/search.ts"
+    ]
+  },
+  "2dbwyrhl3w7": {
+    "en": "My Account",
+    "tr": "Hesabım",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "1c2q73aby0w": {
+    "en": "Username, nickname, session",
+    "tr": "Kullanıcı adı, takma ad, oturum",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "nij1kqyxc0": {
+    "en": "Profile",
+    "tr": "Profil",
+    "files": [
+      "src/components/AccountSettings/sections.ts",
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "2wuzmffeso": {
+    "en": "Picture, banner, about, links",
+    "tr": "Resim, kapak, hakkında, bağlantılar",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "w6ysoj0kj4": {
+    "en": "Status",
+    "tr": "Durum",
+    "files": [
+      "src/components/AccountSettings/sections.ts",
+      "src/components/Admin/FeedbackSection.tsx",
+      "src/components/Admin/TicketsSection.tsx",
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/HanogtAI/ApiDocs.tsx",
+      "src/components/StatusMenu.tsx"
+    ]
+  },
+  "imtec9b0ar": {
+    "en": "Online, Idle, Do Not Disturb, Invisible",
+    "tr": "Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "wpgkd2bxc3": {
+    "en": "Privacy & Security",
+    "tr": "Gizlilik ve Güvenlik",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "1n3tuhsnx4k": {
+    "en": "Visibility, two-step verification, password, sessions",
+    "tr": "Görünürlük, iki adımlı doğrulama, şifre, oturumlar",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "1wtl390y3yf": {
+    "en": "Notifications",
+    "tr": "Bildirimler",
+    "files": [
+      "src/components/AccountSettings/sections.ts",
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/Guide/book-content.ts",
+      "src/components/Social/GroupSidebar.tsx",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "eoiy18plaj": {
+    "en": "Message, mention, call and request notifications",
+    "tr": "Mesaj, bahsetme, arama ve istek bildirimleri",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "28dd75zqcuv": {
+    "en": "Messaging",
+    "tr": "Mesajlaşma",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "onryg9mqdj": {
+    "en": "Typing indicator, read receipts, chat look",
+    "tr": "Yazıyor göstergesi, okundu bilgisi, sohbet görünümü",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "17t4771boqx": {
+    "en": "Theme, language, accessibility",
+    "tr": "Tema, dil, erişilebilirlik",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "ix0dn3jsw": {
+    "en": "Editor",
+    "tr": "Editör",
+    "files": [
+      "src/components/AccountSettings/sections.ts",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2b89w97b2by": {
+    "en": "Code editor settings",
+    "tr": "Kod editörü ayarları",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "2cn5nplfmku": {
+    "en": "Instructions, tone, defaults, usage",
+    "tr": "Talimatlar, üslup, varsayılanlar, kullanım",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
+    ]
+  },
+  "1iexb6efx4r": {
+    "en": "Download data, delete account",
+    "tr": "Verileri indirme, hesabı silme",
+    "files": [
+      "src/components/AccountSettings/sections.ts"
     ]
   },
   "19sr3wbk9yi": {
@@ -18720,6 +19129,17 @@
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
+  "4y3goyerw6": {
+    "en": "E-mail",
+    "tr": "E-posta",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/TicketsSection.tsx",
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/ContactPage.tsx"
+    ]
+  },
   "5aaxj2gyik": {
     "en": "Recent security events",
     "tr": "Son güvenlik olayları",
@@ -23200,13 +23620,6 @@
       "src/components/Admin/UsersSection.tsx"
     ]
   },
-  "2bsupjcq5n6": {
-    "en": "Friend requests",
-    "tr": "Arkadaşlık istekleri",
-    "files": [
-      "src/components/Admin/UsersSection.tsx"
-    ]
-  },
   "14lmq9w3c55": {
     "en": "Group invitations",
     "tr": "Grup davetleri",
@@ -24210,6 +24623,69 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "286soz819cg": {
+    "en": "New paid-plan benefits, new Account Settings",
+    "tr": "Ücretli planlara yeni avantajlar, yeni Hesap Ayarları",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2cygoetn063": {
+    "en": "Plus and Pro bring bigger code runs, longer messages and AI answers, longer team sessions and badge-free game exports; the Free plan is unchanged. Account Settings were redesigned.",
+    "tr": "Plus ve Pro daha büyük kod çalıştırmaları, daha uzun mesajlar ve yapay zekâ yanıtları, daha uzun ekip oturumları ve rozetsiz oyun dışa aktarma getiriyor; Ücretsiz plan değişmedi. Hesap Ayarları baştan tasarlandı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1pox4pfwh10": {
+    "en": "Bigger runs on the server: 100,000 characters of code per file on Plus and 200,000 on Pro, with longer input and output.",
+    "tr": "Sunucuda daha büyük çalıştırmalar: dosya başına Plus'ta 100.000, Pro'da 200.000 karakter kod; daha uzun girdi ve çıktı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "19n3nsqizpe": {
+    "en": "Messages of up to 6,000 characters on Plus and 8,000 on Pro in Hanogt Social, and longer Hanogt AI answers in groups.",
+    "tr": "Hanogt Social'da Plus ile 6.000, Pro ile 8.000 karakterlik mesajlar; gruplarda Hanogt AI'dan daha uzun yanıtlar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "18wkp8184tc": {
+    "en": "Team editing sessions last 24 hours with 40 files on Plus and 48 hours with 100 files on Pro.",
+    "tr": "Ekiple düzenleme oturumları Plus'ta 24 saat ve 40 dosya, Pro'da 48 saat ve 100 dosya.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "17wcpx87mf2": {
+    "en": "Export games without the “Made with Hanogt Engine” badge on Plus and Pro.",
+    "tr": "Plus ve Pro'da oyunları “Hanogt Engine ile yapıldı” rozeti olmadan dışa aktarma.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1zke5pe36r4": {
+    "en": "New Account Settings: a side menu with search, an account overview, sections with one layout and a single save bar; a category list on phones.",
+    "tr": "Yeni Hesap Ayarları: aramalı yan menü, hesap özeti, aynı düzende bölümler, tek kaydetme çubuğu; telefonda kategori listesi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1drz2daej44": {
+    "en": "Preferences that did nothing were removed; their stored values are deleted on the next save.",
+    "tr": "Hiçbir şey yapmayan tercihler kaldırıldı; kayıtlı değerleri bir sonraki kayıtta silinir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "c90wy6e6av": {
+    "en": "Privacy Policy and Terms of Use 5.8.",
+    "tr": "Gizlilik Politikası ve Kullanım Şartları 5.8.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "32669jbngg": {
@@ -27130,9 +27606,9 @@
       "src/components/Editor/CollabStartDialog.tsx"
     ]
   },
-  "2ehr6y1rjo9": {
-    "en": "With your {plan} plan, a session holds up to {people} people, you included.",
-    "tr": "{plan} planınla oturumda sen dahil en fazla {people} kişi olabilir.",
+  "9vuevgh5gs": {
+    "en": "With your {plan} plan, a session holds up to {people} people, you included, and {files} files, and lasts {hours} hours.",
+    "tr": "{plan} planınla oturumda sen dahil en fazla {people} kişi ve {files} dosya olabilir; oturum {hours} saat sürer.",
     "files": [
       "src/components/Editor/CollabStartDialog.tsx"
     ]
@@ -27339,6 +27815,27 @@
       "src/components/Editor/Console.tsx"
     ]
   },
+  "wyhmni1tmt": {
+    "en": "The code is over your plan's limits: {file} characters per file, {total} in total and {stdin} characters of input.",
+    "tr": "Kod planının sınırını aşıyor: dosya başına {file}, toplamda {total} karakter ve {stdin} karakter girdi.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "2b3dk6twess": {
+    "en": "The code is over the largest plan's limits too: {file} characters per file, {total} in total and {stdin} characters of input. Split it into several files.",
+    "tr": "Kod, en büyük planın sınırını da aşıyor: dosya başına {file}, toplamda {total} karakter ve {stdin} karakter girdi. Kodu birkaç dosyaya bölün.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "25iotmknv6m": {
+    "en": "{file} characters per file with {plan}",
+    "tr": "{plan} ile dosya başına {file} karakter",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
   "1yhvi4i25oj": {
     "en": "Output",
     "tr": "Çıktı",
@@ -27447,9 +27944,9 @@
       "src/components/Editor/Console.tsx"
     ]
   },
-  "2gn6dmxf9jx": {
-    "en": "{count} lines · {chars}/10,000 characters",
-    "tr": "{count} satır · {chars}/10.000 karakter",
+  "8ql6dphhwr": {
+    "en": "{count} lines · {chars}/{max} characters",
+    "tr": "{count} satır · {chars}/{max} karakter",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
@@ -27538,9 +28035,9 @@
       "src/components/Editor/Console.tsx"
     ]
   },
-  "1zvz6k1cijc": {
-    "en": "The code is too large: the limits are 50,000 characters per file, 150,000 in total and 10,000 characters of input.",
-    "tr": "Kod çok büyük: dosya başına 50.000, toplamda 150.000 karakter ve 10.000 karakter girdi sınırı var.",
+  "r7hdv01dk1": {
+    "en": "The code is over your plan's run size limit.",
+    "tr": "Kod, planının çalıştırma boyutu sınırını aşıyor.",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
@@ -27608,9 +28105,9 @@
       "src/components/Editor/Console.tsx"
     ]
   },
-  "3n0ek5qsjn": {
-    "en": "The output was limited to 64,000 characters; the rest is not shown.",
-    "tr": "Çıktı 64.000 karakterle sınırlandı; fazlası gösterilmiyor.",
+  "tpdt9woc3b": {
+    "en": "The output was limited to {limit} characters; the rest is not shown.",
+    "tr": "Çıktı {limit} karakterle sınırlandı; fazlası gösterilmiyor.",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
@@ -29389,6 +29886,27 @@
     "files": [
       "src/components/GameEngine/editor/text.ts",
       "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "24c0i1oxv81": {
+    "en": "Hanogt badge: shown in exports",
+    "tr": "Hanogt rozeti: dışa aktarmada görünür",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2ccmvmhlz9a": {
+    "en": "Hanogt badge: hidden in exports",
+    "tr": "Hanogt rozeti: dışa aktarmada gizli",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "8y19pf0v0c": {
+    "en": "Exports without the badge come with Plus and Pro",
+    "tr": "Rozetsiz dışa aktarma Plus ve Pro'da",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "20jrjizztly": {
@@ -33942,6 +34460,14 @@
       "src/lib/social/api.ts"
     ]
   },
+  "193w8ayxw8q": {
+    "en": "A message can be at most {limit} characters.",
+    "tr": "Bir mesaj en fazla {limit} karakter olabilir.",
+    "files": [
+      "src/components/Groups/api.ts",
+      "src/lib/social/api.ts"
+    ]
+  },
   "nr7yn1rdqp": {
     "en": "Invalid link or id.",
     "tr": "Geçersiz bağlantı veya kimlik.",
@@ -34423,6 +34949,13 @@
   "1eblbaq06xh": {
     "en": "The group has reached its member limit.",
     "tr": "Grup üye sınırına ulaştı.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "231r1d2os6h": {
+    "en": "The message is longer than your plan allows.",
+    "tr": "Mesaj, planının izin verdiğinden uzun.",
     "files": [
       "src/components/Groups/api.ts"
     ]
@@ -37104,15 +37637,6 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1ecdlb1cdnb": {
-    "en": "Security",
-    "tr": "Güvenlik",
-    "files": [
-      "src/components/Guide/book-content.ts",
-      "src/components/HanogtAI/chat-copy.ts",
-      "src/lib/nav.ts"
-    ]
-  },
   "14bm5oa2d9s": {
     "en": "Enchanted Shield",
     "tr": "Büyülü Kalkan",
@@ -37464,9 +37988,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "mm01jnasw1": {
-    "en": "Name the session and pick the files to share (up to {files} files).",
-    "tr": "Oturuma ad ver ve paylaşılacak dosyaları seç (en fazla {files} dosya).",
+  "a59y3cb8a1": {
+    "en": "Name the session and pick the files to share. How many files a session holds and how long it lasts depend on your plan: Free {freeFiles} files and {freeHours} hours, Plus {plusFiles} files and {plusHours} hours, Pro {proFiles} files and {proHours} hours.",
+    "tr": "Oturuma ad ver ve paylaşılacak dosyaları seç. Oturumun kaç dosya tutacağı ve ne kadar süreceği planına bağlı: Ücretsiz {freeFiles} dosya ve {freeHours} saat, Plus {plusFiles} dosya ve {plusHours} saat, Pro {proFiles} dosya ve {proHours} saat.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -40205,13 +40729,6 @@
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
-  "13znfzvtbti": {
-    "en": "No setting matches “{query}”.",
-    "tr": "“{query}” ile eşleşen bir ayar yok.",
-    "files": [
-      "src/components/HanogtAI/AiSettingsPage.tsx"
-    ]
-  },
   "1fnq3a9x59q": {
     "en": "The section is back to its defaults; remember to save.",
     "tr": "Bölüm varsayılanlara döndü; kaydetmeyi unutma.",
@@ -42830,13 +43347,6 @@
   "2erkuzrjb5u": {
     "en": "products",
     "tr": "ürün",
-    "files": [
-      "src/components/Landing/AllInOne.tsx"
-    ]
-  },
-  "f69c9nb65z": {
-    "en": "programming languages",
-    "tr": "programlama dili",
     "files": [
       "src/components/Landing/AllInOne.tsx"
     ]
@@ -45855,9 +46365,9 @@
       "src/components/Plans/plans-copy.ts"
     ]
   },
-  "901m0kri11": {
-    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit and longer answers, more projects and groups, more files run at once, bigger groups, more starred messages, larger team sessions, connections with your own API keys, the developer API, the profile badge, support priority and, on Pro, early access.",
-    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı ve daha uzun yanıtlar, daha fazla proje ve grup, tek seferde daha çok dosya çalıştırma, daha büyük gruplar, daha çok yıldızlı mesaj, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar, geliştirici API'si, profil rozeti, destekte öncelik ve Pro'da erken erişim.",
+  "1kkdsxpel60": {
+    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit and longer answers, more projects and groups, more files run at once and bigger server runs, bigger groups, longer messages and longer Hanogt AI answers in groups, more starred messages, larger and longer team sessions, game exports without the badge, connections with your own API keys, the developer API, the profile badge, support priority and, on Pro, early access.",
+    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı ve daha uzun yanıtlar, daha fazla proje ve grup, tek seferde daha çok dosya ve sunucuda daha büyük çalıştırmalar, daha büyük gruplar, daha uzun mesajlar ve gruplarda daha uzun Hanogt AI yanıtları, daha çok yıldızlı mesaj, daha kalabalık ve daha uzun ekip oturumları, rozetsiz oyun dışa aktarma, kendi API anahtarınla bağlantılar, geliştirici API'si, profil rozeti, destekte öncelik ve Pro'da erken erişim.",
     "files": [
       "src/components/Plans/plans-copy.ts"
     ]
@@ -46151,6 +46661,55 @@
   "loap6wfx6z": {
     "en": "Team editing",
     "tr": "Ekiple düzenleme",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "5e5og0cyn0": {
+    "en": "Team editing session",
+    "tr": "Ekiple düzenleme oturumu",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "2csv95ig37g": {
+    "en": "{hours} hours · {files} files",
+    "tr": "{hours} saat · {files} dosya",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1iyhvtwz2m9": {
+    "en": "Server run size (per file)",
+    "tr": "Sunucuda çalıştırma boyutu (dosya başına)",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1mairlcv5sf": {
+    "en": "Server output (per file)",
+    "tr": "Sunucudaki çıktı (dosya başına)",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "13f7iriaqcs": {
+    "en": "Export games without the Hanogt badge",
+    "tr": "Oyunları Hanogt rozeti olmadan dışa aktarma",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "yr91km8bx6": {
+    "en": "Message length",
+    "tr": "Mesaj uzunluğu",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1d5ij1n5xg8": {
+    "en": "{tokens} tokens · last {count} messages",
+    "tr": "{tokens} token · son {count} mesaj",
     "files": [
       "src/components/Plans/PricingSections.tsx"
     ]
@@ -46915,14 +47474,14 @@
   },
   "r3s6kn7mb2": {
     "en": "The last {count} sign-ins to your account. If you see one you don't recognise, change your password and sign the other sessions out.",
-    "tr": "Hesabına son {count} giriş. Tanımadığın bir giriş görürsen şifreni değiştir ve diğer oturumları kapat.",
+    "tr": "Hesabınıza yapılan son {count} giriş. Tanımadığınız bir giriş görürseniz şifrenizi değiştirin ve diğer oturumları kapatın.",
     "files": [
       "src/components/Security/RecentSignIns.tsx"
     ]
   },
   "xohn2gglii": {
     "en": "No sign-ins recorded yet; they're listed here from your next sign-in.",
-    "tr": "Henüz kayıtlı bir giriş yok; bir sonraki girişinden itibaren burada listelenir.",
+    "tr": "Henüz kayıtlı bir giriş yok; bir sonraki girişinizden itibaren burada listelenir.",
     "files": [
       "src/components/Security/RecentSignIns.tsx"
     ]
@@ -46957,7 +47516,7 @@
   },
   "1eiy990zkqh": {
     "en": "Your IP address isn't stored; only the country and the kind of browser are.",
-    "tr": "IP adresin saklanmaz; yalnızca ülke ve tarayıcı türü tutulur.",
+    "tr": "IP adresiniz saklanmaz; yalnızca ülke ve tarayıcı türü tutulur.",
     "files": [
       "src/components/Security/RecentSignIns.tsx"
     ]
@@ -49437,13 +49996,6 @@
       "src/components/Social/SocialSettings.tsx"
     ]
   },
-  "arp6oju603": {
-    "en": "When off, Enter adds a new line and Ctrl+Enter (⌘+Enter on Mac) sends.",
-    "tr": "Kapalıyken Enter yeni satır ekler; göndermek için Ctrl+Enter (Mac'te ⌘+Enter) kullanılır.",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
   "1k4yq177xlt": {
     "en": "Typing indicator",
     "tr": "Yazıyor göstergesi",
@@ -49451,23 +50003,9 @@
       "src/components/Social/SocialSettings.tsx"
     ]
   },
-  "1q5m5o9q4k9": {
-    "en": "When off, nobody sees you typing and you don't see others typing.",
-    "tr": "Kapalıyken yazdığın görünmez ve başkalarının yazdığını da görmezsin.",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
   "3qujim5kip": {
     "en": "Read receipts",
     "tr": "Okundu bilgisi",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
-  "1aioecszt5m": {
-    "en": "When off, the other person in a direct message doesn't see that you read their message, and you don't see it either.",
-    "tr": "Kapalıyken direkt mesajlarda karşı taraf mesajını gördüğünü bilmez; sen de onunkini göremezsin.",
     "files": [
       "src/components/Social/SocialSettings.tsx"
     ]
@@ -49528,13 +50066,6 @@
       "src/components/Social/SocialSettings.tsx"
     ]
   },
-  "2fb71mr05z0": {
-    "en": "When off, GIFs play when you hover or tap them. Your system's reduce motion setting stops them too.",
-    "tr": "Kapalıyken GIF'ler üzerine gelince ya da dokununca oynar. Sistemin hareketi azalt ayarı da GIF'leri durdurur.",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
   "1olfqepur87": {
     "en": "Hi! This is a **sample** message. `code` looks like this.",
     "tr": "Merhaba! Bu bir **örnek** mesaj. `kod` da böyle görünür.",
@@ -49577,13 +50108,6 @@
       "src/components/Social/SocialSettings.tsx"
     ]
   },
-  "2376mta0vwi": {
-    "en": "When someone sends you a message.",
-    "tr": "Biri sana mesaj gönderdiğinde.",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
   "uk32ae0k1r": {
     "en": "Group mentions",
     "tr": "Gruplarda bahsedilme",
@@ -49601,20 +50125,6 @@
   "iiee6u3dll": {
     "en": "Missed calls",
     "tr": "Cevapsız aramalar",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
-  "1p10zkh5ohv": {
-    "en": "Voice calls you couldn't answer.",
-    "tr": "Yanıtlayamadığın sesli aramalar.",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
-  "8dokjrnidn": {
-    "en": "You can also pick each group's notification level (all messages, mentions only, nothing) from the group's menu.",
-    "tr": "Her grubun bildirim düzeyini (tüm mesajlar, yalnızca bahsetmeler, hiçbiri) grubun menüsünden ayrıca seçebilirsin.",
     "files": [
       "src/components/Social/SocialSettings.tsx"
     ]
@@ -49679,13 +50189,6 @@
   "uwj9yk2ogf": {
     "en": "Nobody",
     "tr": "Hiç kimse",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
-  "eq1hw2gywz": {
-    "en": "Hide my friends list",
-    "tr": "Arkadaş listemi gizle",
     "files": [
       "src/components/Social/SocialSettings.tsx"
     ]
@@ -52745,9 +53248,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "nn950hitew": {
-    "en": "Every group has two bots:\n• **Hanogt Security Bot** (can't be removed): lists the rules of the group's Rules section, numbered, with `/rules`, shows the welcome message and announces moderation. Commands: `/help`, `/rules`, `/warnings` and `/report @person reason` for everyone; `/warn`, `/mute @person 10m reason` (28 days at most), `/unmute`, `/kick`, `/purge 20` and `/slowmode 10s` for moderators; `/ban` for owners and admins. Command replies are visible only to you. Warnings and reports are kept for 180 days.\n• **Hanogt AI**: ask with `/ai question` or `@Hanogt AI`; it reads the channel's last 12 messages, answers in the group and uses your Hanogt AI message allowance. It can be switched off in Group settings → Bots.\n**AutoMod** (Group settings → Safety): rules for profanity, slang, the group's own banned words, spam, too many mentions, links, capital letters and personal data (e-mail, phone, Turkish ID, card, IBAN). A message that breaks a rule is never sent; if the group chooses, a warning is given and a set number of warnings mutes automatically. The owner is always exempt, and admins are by default. Owners and admins can also define **custom commands** and a **welcome message**.",
-    "tr": "Her grupta iki bot var:\n• **Hanogt Security Bot** (kaldırılamaz): grubun Kurallar bölümündeki kuralları `/kurallar` ile numaralı olarak listeler, karşılama mesajını gösterir ve moderasyonu duyurur. Komutlar: herkes için `/yardim`, `/kurallar`, `/uyarilar`, `/rapor @kişi sebep`; moderatörler için `/uyar`, `/sustur @kişi 10dk sebep` (en çok 28 gün), `/sesiac`, `/at`, `/temizle 20`, `/yavasmod 10s`; sahip ve yöneticiler için `/yasakla`. Komut yanıtları yalnızca sana görünür. Uyarılar ve raporlar 180 gün saklanır.\n• **Hanogt AI**: `/ai soru` ya da `@Hanogt AI` ile sor; kanalın son 12 mesajını okuyup grupta yanıtlar ve senin Hanogt AI mesaj hakkından düşer. Grup ayarları → Botlar'dan kapatılabilir.\n**AutoMod** (Grup ayarları → Güvenlik): küfür, argo, gruba özel yasaklı kelimeler, spam, çok fazla bahsetme, bağlantılar, büyük harf ve kişisel veri (e-posta, telefon, T.C. kimlik, kart, IBAN) kuralları. Kurala takılan mesaj hiç gönderilmez; grup seçerse uyarı verilir ve belli sayıda uyarıda otomatik susturulur. Sahip her zaman, yöneticiler varsayılan olarak muaftır. Sahip ve yöneticiler ayrıca **özel komutlar** ve bir **karşılama mesajı** tanımlayabilir.",
+  "y8manswu6i": {
+    "en": "Every group has two bots:\n• **Hanogt Security Bot** (can't be removed): lists the rules of the group's Rules section, numbered, with `/rules`, shows the welcome message and announces moderation. Commands: `/help`, `/rules`, `/warnings` and `/report @person reason` for everyone; `/warn`, `/mute @person 10m reason` (28 days at most), `/unmute`, `/kick`, `/purge 20` and `/slowmode 10s` for moderators; `/ban` for owners and admins. Command replies are visible only to you. Warnings and reports are kept for 180 days.\n• **Hanogt AI**: ask with `/ai question` or `@Hanogt AI`; it reads the channel's latest messages (12, 20 or 30 depending on your plan), answers in the group and uses your Hanogt AI message allowance. It can be switched off in Group settings → Bots.\n**AutoMod** (Group settings → Safety): rules for profanity, slang, the group's own banned words, spam, too many mentions, links, capital letters and personal data (e-mail, phone, Turkish ID, card, IBAN). A message that breaks a rule is never sent; if the group chooses, a warning is given and a set number of warnings mutes automatically. The owner is always exempt, and admins are by default. Owners and admins can also define **custom commands** and a **welcome message**.",
+    "tr": "Her grupta iki bot var:\n• **Hanogt Security Bot** (kaldırılamaz): grubun Kurallar bölümündeki kuralları `/kurallar` ile numaralı olarak listeler, karşılama mesajını gösterir ve moderasyonu duyurur. Komutlar: herkes için `/yardim`, `/kurallar`, `/uyarilar`, `/rapor @kişi sebep`; moderatörler için `/uyar`, `/sustur @kişi 10dk sebep` (en çok 28 gün), `/sesiac`, `/at`, `/temizle 20`, `/yavasmod 10s`; sahip ve yöneticiler için `/yasakla`. Komut yanıtları yalnızca sana görünür. Uyarılar ve raporlar 180 gün saklanır.\n• **Hanogt AI**: `/ai soru` ya da `@Hanogt AI` ile sor; kanalın son mesajlarını (planına göre 12, 20 ya da 30) okuyup grupta yanıtlar ve senin Hanogt AI mesaj hakkından düşer. Grup ayarları → Botlar'dan kapatılabilir.\n**AutoMod** (Grup ayarları → Güvenlik): küfür, argo, gruba özel yasaklı kelimeler, spam, çok fazla bahsetme, bağlantılar, büyük harf ve kişisel veri (e-posta, telefon, T.C. kimlik, kart, IBAN) kuralları. Kurala takılan mesaj hiç gönderilmez; grup seçerse uyarı verilir ve belli sayıda uyarıda otomatik susturulur. Sahip her zaman, yöneticiler varsayılan olarak muaftır. Sahip ve yöneticiler ayrıca **özel komutlar** ve bir **karşılama mesajı** tanımlayabilir.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -52846,6 +53349,20 @@
   "1ib8ydveg48": {
     "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, your own API key connections, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Group size (by the group owner's plan):** {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro; {pinsPlus} pinned messages on Plus and {pinsPro} on Pro, {commandsPlus} / {commandsPro} custom bot commands and {wordsPlus} / {wordsPro} AutoMod banned words. Nothing is removed when the plan goes down; nothing new can be added.\n• **Running code:** {runFree} files at once on Free, {runPlus} on Plus and {runPro} on Pro; for compiled languages {runMinutePlus} files a minute on Plus and {runMinutePro} on Pro.\n• **Starred messages:** {starsFree} on Free, {starsPlus} on Plus and {starsPro} on Pro.\n• **Files in messages:** up to {attachFree} per file on Free, {attachPlus} on Plus and {attachPro} on Pro, and {attachSpaceFree}, {attachSpacePlus} and {attachSpacePro} in all for the files you send. Deleting messages with files gives the space back.\n• **Game file storage:** for sounds and 3D models (GLB) uploaded to Hanogt Engine games, {audioFree} MB on Free, {audioPlus} MB on Plus and {audioPro} MB on Pro (up to 300 KB per file; the same file counts once).\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys on Plus and {connectionsPro} on Pro; messages through them have no separate limit and use your Hanogt AI messages (given back when the provider doesn't answer).\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
     "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Grup büyüklüğü (grubun sahibinin planına göre):** Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye; Plus'ta {pinsPlus}, Pro'da {pinsPro} sabitlenmiş mesaj, {commandsPlus} / {commandsPro} özel bot komutu ve {wordsPlus} / {wordsPro} AutoMod yasaklı kelimesi. Plan düşerse hiçbir şey silinmez, yalnızca yenisi eklenemez.\n• **Kod çalıştırma:** tek seferde Ücretsiz'de {runFree}, Plus'ta {runPlus}, Pro'da {runPro} dosya; derlenen dillerde dakikada Plus'ta {runMinutePlus}, Pro'da {runMinutePro} dosya.\n• **Yıldızlı mesajlar:** Ücretsiz'de {starsFree}, Plus'ta {starsPlus}, Pro'da {starsPro}.\n• **Mesajlarda dosyalar:** dosya başına Ücretsiz'de {attachFree}, Plus'ta {attachPlus}, Pro'da {attachPro}; gönderdiğin dosyalar için toplam {attachSpaceFree}, {attachSpacePlus} ve {attachSpacePro}. Dosyalı mesajları silince alan geri döner.\n• **Oyun dosyası depolaması:** Hanogt Engine oyunlarına yüklenen sesler ve 3D modeller (GLB) için Ücretsiz planda {audioFree} MB, Plus'ta {audioPlus} MB, Pro'da {audioPro} MB (dosya başına en fazla 300 KB; aynı dosya bir kez sayılır).\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin; bu bağlantılarla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer (sağlayıcı yanıt vermezse geri eklenir).\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "zbwi94mlok": {
+    "en": "Extra benefits of Plus and Pro",
+    "tr": "Plus ve Pro'nun ek avantajları",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "12k66ow04r3": {
+    "en": "Nothing on the Free plan was reduced; Plus and Pro also bring:\n• **Longer Social messages:** {msgFree} (Free), {msgPlus} (Plus) or {msgPro} (Pro) characters per message in direct messages and groups.\n• **Longer Hanogt AI answers in groups:** {botFree}, {botPlus} or {botPro} tokens by the asker's plan, reading the channel's last {histFree}, {histPlus} or {histPro} messages.\n• **Bigger server runs:** {runFree}, {runPlus} or {runPro} characters of code per file; {outFree}, {outPlus} or {outPro} characters of output.\n• **Longer team editing:** sessions last {hoursFree}, {hoursPlus} or {hoursPro} hours and hold {filesFree}, {filesPlus} or {filesPro} files.\n• **Exports without the badge:** on Plus and Pro, Hanogt Engine games can be exported without the “Made with Hanogt Engine” badge (the badge option in the Export menu).",
+    "tr": "Ücretsiz plandaki hiçbir şey azalmadı; Plus ve Pro şu avantajları da getirir:\n• **Daha uzun Social mesajları:** doğrudan mesajlarda ve gruplarda mesaj başına {msgFree} (Ücretsiz), {msgPlus} (Plus) veya {msgPro} (Pro) karakter.\n• **Gruplarda daha uzun Hanogt AI yanıtları:** soranın planına göre {botFree}, {botPlus} veya {botPro} token; kanalın son {histFree}, {histPlus} veya {histPro} mesajı okunur.\n• **Sunucuda daha büyük çalıştırmalar:** dosya başına {runFree}, {runPlus} veya {runPro} karakter kod; {outFree}, {outPlus} veya {outPro} karakter çıktı.\n• **Daha uzun ekiple düzenleme:** oturumlar {hoursFree}, {hoursPlus} veya {hoursPro} saat sürer, {filesFree}, {filesPlus} veya {filesPro} dosya tutar.\n• **Rozetsiz dışa aktarma:** Plus ve Pro'da Hanogt Engine oyunları “Hanogt Engine ile yapıldı” rozeti olmadan dışa aktarılabilir (Dışa aktar menüsündeki rozet seçeneği).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -54196,9 +54713,9 @@
       "src/lib/collab/copy.ts"
     ]
   },
-  "205ly736qfk": {
-    "en": "A session can have at most 20 files.",
-    "tr": "Bir oturumda en fazla 20 dosya olabilir.",
+  "fl3d7g3la0": {
+    "en": "The session reached its file limit for the plan (Free 20, Plus 40, Pro 100 files).",
+    "tr": "Oturum, planına göre dosya sınırına ulaştı (Ücretsiz 20, Plus 40, Pro 100 dosya).",
     "files": [
       "src/lib/collab/copy.ts"
     ]
@@ -54604,9 +55121,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "1edbsbe8hyp": {
-    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} Hanogt AI messages every {aiPlusDays} days on Plus or {aiPro} every {aiProDays} days on Pro instead of {aiFree} every {aiFreeDays} days on Free (the chat and the developer API share them); {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; files of up to {filePlus} and {filesPlus} in all (Plus) or {filePro} and {filesPro} (Pro) in Hanogt Social messages instead of {fileFree} and {filesFree}; longer Hanogt AI answers and more of the file open in the editor read; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; {apiKeysPlus} (Plus) or {apiKeysPro} (Pro) API keys to call Hanogt AI from your own app; a Plus or Pro badge on your profile, which you can hide; priority on support tickets (Pro before Plus); and, on Pro, early access to new features. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
-    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile Ücretsiz plandaki {aiFreeDays} günde {aiFree} mesaj yerine Plus'ta {aiPlusDays} günde {aiPlus}, Pro'da {aiProDays} günde {aiPro} mesaj (sohbet ve geliştirici API'si aynı haktan düşer); Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; Hanogt Social mesajlarında Ücretsiz'deki dosya başına {fileFree} ve toplam {filesFree} yerine Plus'ta {filePlus} ve {filesPlus}, Pro'da {filePro} ve {filesPro}; daha uzun Hanogt AI yanıtları ve editörde açık dosyanın daha fazlasının okunması; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama; Hanogt AI'ı kendi uygulamanızdan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} API anahtarı; profilinizde gizlenebilir bir Plus veya Pro rozeti; destek taleplerinde öncelik (Pro talepleri Plus'tan önce) ve Pro'da yeni özelliklere erken erişim. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
+  "2bu8gi5zbde": {
+    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} Hanogt AI messages every {aiPlusDays} days on Plus or {aiPro} every {aiProDays} days on Pro instead of {aiFree} every {aiFreeDays} days on Free (the chat and the developer API share them); {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; files of up to {filePlus} and {filesPlus} in all (Plus) or {filePro} and {filesPro} (Pro) in Hanogt Social messages instead of {fileFree} and {filesFree}; longer Hanogt AI answers and more of the file open in the editor read; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; {apiKeysPlus} (Plus) or {apiKeysPro} (Pro) API keys to call Hanogt AI from your own app; Hanogt Social messages of {messagePlus} (Plus) or {messagePro} (Pro) characters instead of {messageFree}; longer Hanogt AI answers in groups; team editing sessions of {collabHoursPlus} (Plus) or {collabHoursPro} (Pro) hours; server runs of {runPlus} (Plus) or {runPro} (Pro) characters per file; exporting games without the Hanogt badge; a Plus or Pro badge on your profile, which you can hide; priority on support tickets (Pro before Plus); and, on Pro, early access to new features. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
+    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile Ücretsiz plandaki {aiFreeDays} günde {aiFree} mesaj yerine Plus'ta {aiPlusDays} günde {aiPlus}, Pro'da {aiProDays} günde {aiPro} mesaj (sohbet ve geliştirici API'si aynı haktan düşer); Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; Hanogt Social mesajlarında Ücretsiz'deki dosya başına {fileFree} ve toplam {filesFree} yerine Plus'ta {filePlus} ve {filesPlus}, Pro'da {filePro} ve {filesPro}; daha uzun Hanogt AI yanıtları ve editörde açık dosyanın daha fazlasının okunması; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama; Hanogt AI'ı kendi uygulamanızdan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} API anahtarı; Hanogt Social'da {messageFree} yerine {messagePlus} (Plus) veya {messagePro} (Pro) karakterlik mesajlar; gruplarda Hanogt AI'dan daha uzun yanıtlar; {collabHoursPlus} (Plus) veya {collabHoursPro} (Pro) saat süren ekiple düzenleme oturumları; sunucuda dosya başına {runPlus} (Plus) veya {runPro} (Pro) karakterlik çalıştırmalar; oyunları Hanogt rozeti olmadan dışa aktarma; profilinizde gizlenebilir bir Plus veya Pro rozeti; destek taleplerinde öncelik (Pro talepleri Plus'tan önce) ve Pro'da yeni özelliklere erken erişim. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -55829,9 +56346,9 @@
       "src/lib/language-detect.ts"
     ]
   },
-  "zdnic8e1pj": {
-    "en": "6 October 2026",
-    "tr": "6 Ekim 2026",
+  "1keiijf528a": {
+    "en": "7 October 2026",
+    "tr": "7 Ekim 2026",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -55881,6 +56398,27 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "kske18rr3x": {
+    "en": "New benefits on paid plans (the Free plan is unchanged): on Plus and Pro, bigger code runs on the server (100,000 or 200,000 characters of code per file, longer input and output), longer messages in Hanogt Social (6,000 or 8,000 characters), longer Hanogt AI answers in groups (2,000 or 3,000 tokens, with the channel's last 20 or 30 messages read along with the question), team editing sessions that last 24 or 48 hours and hold 40 or 100 files, and exporting Hanogt Engine games without the “Made with Hanogt Engine” badge. When you move to a lower plan, messages already sent, games already exported and sessions already started stay as they are; new messages, runs and sessions follow the new plan's limits. The list of plan benefits in the Terms of Use, and the session lengths and the number of messages sent to the AI in groups in the Privacy Policy, were updated accordingly.",
+    "tr": "Ücretli planlara yeni avantajlar (Ücretsiz plan değişmedi): Plus ve Pro'da sunucuda daha büyük kod çalıştırma (dosya başına 100.000 veya 200.000 karakter kod, daha uzun girdi ve çıktı), Hanogt Social'da daha uzun mesajlar (6.000 veya 8.000 karakter), gruplarda Hanogt AI'dan daha uzun yanıtlar (2.000 veya 3.000 token; soruyla birlikte kanalın son 20 veya 30 mesajı okunur), 24 veya 48 saat süren ve 40 veya 100 dosya tutan ekiple düzenleme oturumları ve Hanogt Engine oyunlarını “Hanogt Engine ile yapıldı” rozeti olmadan dışa aktarabilme. Daha düşük bir plana geçtiğinizde gönderilmiş mesajlar, dışa aktarılmış oyunlar ve başlamış oturumlar olduğu gibi kalır; yeni mesajlar, çalıştırmalar ve oturumlar yeni planın sınırlarıyla çalışır. Kullanım Şartları'ndaki plan avantajları listesi ile Gizlilik Politikası'ndaki oturum süreleri ve gruplarda yapay zekâya gönderilen mesaj sayısı buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1f5bkh5q3e9": {
+    "en": "Account Settings: preferences that were never applied anywhere (e-mail notifications and new-feature announcements, like notifications, a notification sound, quiet hours, link previews, sticker suggestions, the chat bubble colour, photo visibility and hiding the friend list; your friend list isn't shown to anyone anyway) were removed. They are no longer collected, and their stored values are deleted the next time you save your settings.",
+    "tr": "Hesap Ayarları: Hiçbir yerde uygulanmayan tercihler (e-posta bildirimleri ve yeni özellik duyuruları, beğeni bildirimleri, bildirim sesi, sessiz saatler, bağlantı önizlemeleri, çıkartma önerileri, sohbet baloncuğu rengi, fotoğraf görünürlüğü ve arkadaş listesini gizleme; arkadaş listeniz zaten kimseye gösterilmiyor) kaldırıldı. Bunlar artık toplanmaz; kayıtlı değerleri, ayarlarınızı bir sonraki kaydedişinizde silinir.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "zdnic8e1pj": {
+    "en": "6 October 2026",
+    "tr": "6 Ekim 2026",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -56712,9 +57250,37 @@
       "src/lib/plans.ts"
     ]
   },
-  "27ike0d2ut9": {
-    "en": "Team editing with up to 5 people",
-    "tr": "5 kişiye kadar ekiple düzenleme",
+  "5kztwyeflq": {
+    "en": "Team editing with up to 5 people; sessions last 24 hours and hold 40 files",
+    "tr": "5 kişiye kadar ekiple düzenleme; oturumlar 24 saat sürer ve 40 dosya tutar",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "hbg88kycst": {
+    "en": "Bigger server runs: 100,000 characters of code per file and 128,000 characters of output",
+    "tr": "Sunucuda daha büyük çalıştırmalar: dosya başına 100.000 karakter kod ve 128.000 karakter çıktı",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "dncl49jyry": {
+    "en": "Hanogt Social messages of up to 6,000 characters",
+    "tr": "Hanogt Social'da 6.000 karaktere kadar mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "j4vatygrj1": {
+    "en": "Longer Hanogt AI answers in groups: 2,000 tokens, reading the last 20 messages",
+    "tr": "Gruplarda Hanogt AI'dan daha uzun yanıtlar: 2.000 token, son 20 mesaj okunur",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1dpde9axqb0": {
+    "en": "Export your games without the Hanogt badge (HTML and web package)",
+    "tr": "Oyunlarını Hanogt rozeti olmadan dışa aktarma (HTML ve web paketi)",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -56824,9 +57390,30 @@
       "src/lib/plans.ts"
     ]
   },
-  "khluy6lncy": {
-    "en": "Team editing with up to 30 people",
-    "tr": "30 kişiye kadar ekiple düzenleme",
+  "1v2s6bog22f": {
+    "en": "Team editing with up to 30 people; sessions last 48 hours and hold 100 files",
+    "tr": "30 kişiye kadar ekiple düzenleme; oturumlar 48 saat sürer ve 100 dosya tutar",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "25bvyhp4sas": {
+    "en": "The biggest server runs: 200,000 characters of code per file and 256,000 characters of output",
+    "tr": "Sunucuda en büyük çalıştırmalar: dosya başına 200.000 karakter kod ve 256.000 karakter çıktı",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "294nyje6cg3": {
+    "en": "Hanogt Social messages of up to 8,000 characters",
+    "tr": "Hanogt Social'da 8.000 karaktere kadar mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1jdl5sj4i5c": {
+    "en": "The longest Hanogt AI answers in groups: 3,000 tokens, reading the last 30 messages",
+    "tr": "Gruplarda Hanogt AI'dan en uzun yanıtlar: 3.000 token, son 30 mesaj okunur",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -60335,13 +60922,6 @@
       "src/lib/social/api.ts"
     ]
   },
-  "20g219he1be": {
-    "en": "A message can be at most 4000 characters.",
-    "tr": "Mesaj en fazla 4000 karakter olabilir.",
-    "files": [
-      "src/lib/social/api.ts"
-    ]
-  },
   "ycrqn4cs7m": {
     "en": "Invalid format. Example: Player#1234",
     "tr": "Biçim geçersiz. Örnek: Oyuncu#1234",
@@ -60429,6 +61009,13 @@
   "1dxeiliqxsn": {
     "en": "Your plan keeps up to {limit} starred messages. Unstar one to make room, or upgrade your plan (Pricing).",
     "tr": "Planınla en fazla {limit} mesaj yıldızlayabilirsin. Yer açmak için bir yıldızı kaldır ya da planını yükselt (Fiyatlandırma).",
+    "files": [
+      "src/lib/social/api.ts"
+    ]
+  },
+  "1vv0rdebl1u": {
+    "en": "On your plan a message can be at most {limit} characters. With {plan} you can write up to {more}.",
+    "tr": "Planında bir mesaj en fazla {limit} karakter olabilir. {plan} ile {more} karaktere kadar yazabilirsin.",
     "files": [
       "src/lib/social/api.ts"
     ]

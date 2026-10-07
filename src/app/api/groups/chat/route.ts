@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     try {
         assertSameOrigin(request);
         const user = await requireGroupUser();
-        const body = await readJsonBody(request, 24_576);
+        const body = await readJsonBody(request, 49_152);
         const action = typeof body.action === "string" ? body.action : "";
         const groupId = readId(body.groupId, "Grup kimliği");
         if (action === "typing") {

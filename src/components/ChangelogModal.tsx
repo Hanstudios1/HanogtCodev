@@ -24,6 +24,22 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.32",
+        version: "v0.3.32",
+        date: "2026-10-07",
+        title: { TR: "Ücretli planlara yeni avantajlar, yeni Hesap Ayarları", EN: "New paid-plan benefits, new Account Settings" },
+        desc: { TR: "Plus ve Pro daha büyük kod çalıştırmaları, daha uzun mesajlar ve yapay zekâ yanıtları, daha uzun ekip oturumları ve rozetsiz oyun dışa aktarma getiriyor; Ücretsiz plan değişmedi. Hesap Ayarları baştan tasarlandı.", EN: "Plus and Pro bring bigger code runs, longer messages and AI answers, longer team sessions and badge-free game exports; the Free plan is unchanged. Account Settings were redesigned." },
+        items: [
+            { TR: "Sunucuda daha büyük çalıştırmalar: dosya başına Plus'ta 100.000, Pro'da 200.000 karakter kod; daha uzun girdi ve çıktı.", EN: "Bigger runs on the server: 100,000 characters of code per file on Plus and 200,000 on Pro, with longer input and output." },
+            { TR: "Hanogt Social'da Plus ile 6.000, Pro ile 8.000 karakterlik mesajlar; gruplarda Hanogt AI'dan daha uzun yanıtlar.", EN: "Messages of up to 6,000 characters on Plus and 8,000 on Pro in Hanogt Social, and longer Hanogt AI answers in groups." },
+            { TR: "Ekiple düzenleme oturumları Plus'ta 24 saat ve 40 dosya, Pro'da 48 saat ve 100 dosya.", EN: "Team editing sessions last 24 hours with 40 files on Plus and 48 hours with 100 files on Pro." },
+            { TR: "Plus ve Pro'da oyunları “Hanogt Engine ile yapıldı” rozeti olmadan dışa aktarma.", EN: "Export games without the “Made with Hanogt Engine” badge on Plus and Pro." },
+            { TR: "Yeni Hesap Ayarları: aramalı yan menü, hesap özeti, aynı düzende bölümler, tek kaydetme çubuğu; telefonda kategori listesi.", EN: "New Account Settings: a side menu with search, an account overview, sections with one layout and a single save bar; a category list on phones." },
+            { TR: "Hiçbir şey yapmayan tercihler kaldırıldı; kayıtlı değerleri bir sonraki kayıtta silinir.", EN: "Preferences that did nothing were removed; their stored values are deleted on the next save." },
+            { TR: "Gizlilik Politikası ve Kullanım Şartları 5.8.", EN: "Privacy Policy and Terms of Use 5.8." },
+        ],
+    },
+    {
         id: "v0.3.31",
         version: "v0.3.31",
         date: "2026-10-06",

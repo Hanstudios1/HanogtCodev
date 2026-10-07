@@ -817,7 +817,8 @@ export type GroupErrorCode =
     | "message_not_found" | "pin_limit" | "invalid_reaction" | "conflict" | "server_error"
     | "muted" | "slowmode" | "automod_blocked" | "cannot_moderate" | "invalid_command"
     | "commands_limit" | "words_limit"
-    | "invalid_rules" | "rules_limit" | "rules_not_accepted" | "rules_changed";
+    | "invalid_rules" | "rules_limit" | "rules_not_accepted" | "rules_changed"
+    | "message_too_long";
 
 export type GroupLanguage = "tr" | "en";
 

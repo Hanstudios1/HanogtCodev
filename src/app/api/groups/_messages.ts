@@ -21,11 +21,12 @@ import {
     type GroupBot,
     type GroupRole,
 } from "@/lib/groups";
-import { GROUP_FEATURES_MAX } from "@/lib/plans";
+import { GROUP_FEATURES_MAX, MESSAGE_CHARS_MAX } from "@/lib/plans";
+import { checkMessageLength } from "@/lib/server/message-limits";
 import { enforceHanogtAi, refundHanogtAi, type QuotaPass } from "@/lib/server/ai-usage";
 import { repeatKey, scanMessage, SPAM_LIMITS } from "@/lib/server/automod";
 import { autoDocumentId, commitServerMutations, createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
-import { askGroupModel, groupHistoryText, GROUP_AI_HISTORY } from "@/lib/server/group-ai-bot";
+import { askGroupModel, groupAiLimits, groupHistoryText } from "@/lib/server/group-ai-bot";
 import { activeMute, minutesLeft, moderationSubject, mutePath } from "@/lib/server/group-moderation";
 import { removeFromVoice } from "@/lib/server/group-voice";
 import { providerConfig } from "@/lib/server/hanogt-ai";
@@ -300,18 +301,18 @@ async function guard(ctx: Ctx, name: string, text: string, mentions: number, cha
 /* Hanogt AI                                                                  */
 /* -------------------------------------------------------------------------- */
 
-/** The channel's latest messages before the question, oldest first. */
-async function channelHistory(groupId: string, channel: string, beforeId: string) {
+/** The channel's latest `count` messages before the question (the asker's plan), oldest first. */
+async function channelHistory(groupId: string, channel: string, beforeId: string, count: number) {
     const records = await runServerQuery<StoredMessage>({
         collectionId: "messages",
         parentPath: `groups/${groupId}`,
         orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
-        limit: 40,
+        limit: Math.max(40, count * 3),
     }).catch(() => []);
     return records
         .filter((record) => record._id !== beforeId && record.type !== "system" && typeof record.text === "string" && record.text)
         .filter((record) => !channel || (record.text as string).toLocaleLowerCase("tr").includes(`#${channel}`))
-        .slice(0, GROUP_AI_HISTORY)
+        .slice(0, count)
         .reverse()
         .map((record) => ({ author: typeof record.author === "string" ? record.author : "?", text: record.text as string }));
 }
@@ -338,7 +339,7 @@ async function startAiAnswer(ctx: Ctx, question: string, asked: { id: string; te
 async function answerInBackground(ctx: Ctx, pass: QuotaPass, question: string, askedId: string, channel: string, placeholderId: string) {
     const path = messagePath(ctx.groupId, placeholderId);
     try {
-        const history = groupHistoryText(await channelHistory(ctx.groupId, channel, askedId));
+        const history = groupHistoryText(await channelHistory(ctx.groupId, channel, askedId, groupAiLimits(pass.plan).history));
         const answer = await askGroupModel({ question, history, language: ctx.language, plan: pass.plan });
         if (answer.ok) {
             await patchServerDocument(path, { text: answer.text, botState: "done" }, { updateFields: ["text", "botState"], exists: true });
@@ -352,6 +353,12 @@ async function answerInBackground(ctx: Ctx, pass: QuotaPass, question: string, a
     await refundHanogtAi(pass, (work) => late.push(work));
     await patchServerDocument(path, { botState: "failed", botEvent: "ai_failed", vars: {}, text: BOT_EVENT_COPY.ai_failed.TR }, { updateFields: ["botState", "botEvent", "vars", "text"], exists: true }).catch(() => undefined);
     await Promise.all(late);
+}
+
+/** A message longer than the sender's plan allows (Free 4,000, Plus 6,000, Pro 8,000 characters) is refused. */
+async function assertMessageLength(email: string, length: number) {
+    const check = await checkMessageLength(email, length, { onLate: keepRunning });
+    if (!check.allowed) throw new GroupApiError(413, "message_too_long", `Mesaj planınızda en fazla ${check.limit} karakter olabilir.`, { limit: check.limit, plan: check.plan, upgrade: check.upgrade });
 }
 
 /** Work the reply doesn't wait for (the function stays alive for it after responding). */
@@ -587,10 +594,10 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
     // A file's text is its caption (it may be empty or just the #channel).
     const text = file
         ? cleanMultiLine(body.text, ATTACHMENT_LIMITS.captionMax * 2)
-        : gif ? [cleanSingleLine(body.text, 100).slice(0, 100), gif.title].filter(Boolean).join(" ") : cleanMultiLine(body.text, GROUP_LIMITS.messageMax * 2);
+        : gif ? [cleanSingleLine(body.text, 100).slice(0, 100), gif.title].filter(Boolean).join(" ") : cleanMultiLine(body.text, MESSAGE_CHARS_MAX * 2);
     if (!gif && !file && !text) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
     if (file && text.length > ATTACHMENT_LIMITS.captionMax) throw new GroupApiError(413, "payload_too_large", "Açıklama en fazla 2000 karakter olabilir.");
-    if (text.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
+    await assertMessageLength(user.email, text.length);
 
     const name = (await ownDisplayName(user)).slice(0, 80);
     const channel = channelOf(text, strings(group.topics));
@@ -674,9 +681,9 @@ function groupLanguageOf(group: GroupDocument): "TR" | "EN" {
 
 /** Authors edit their own text messages; muted people (and members who haven't accepted the rules) can't, and AutoMod checks the new text. */
 export async function editGroupMessage(user: GroupUser, groupId: string, messageId: string, value: unknown) {
-    const text = cleanMultiLine(value, GROUP_LIMITS.messageMax * 2);
+    const text = cleanMultiLine(value, MESSAGE_CHARS_MAX * 2);
     if (!text) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
-    if (text.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
+    await assertMessageLength(user.email, text.length);
     const { group, role } = await requireGroupMember(groupId, user.email);
     const now = Date.now();
     const mute = await activeMute(groupId, user.email, now);
