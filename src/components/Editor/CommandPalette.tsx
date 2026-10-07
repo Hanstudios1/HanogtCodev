@@ -1,7 +1,7 @@
 "use client";
 
 import { CornerDownLeft, Search } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import Modal from "@/components/Editor/Modal";
 import { matchScore } from "@/components/Editor/search";
 import { useI18n } from "@/lib/i18n";
@@ -132,6 +132,45 @@ export default function CommandPalette({ open, onClose, commands, chordArmedAt =
         pendingChord.current = { key, typed: event.key, timer: window.setTimeout(() => runChord(key), CHORD_CONTINUATION_MS) };
         return true;
     };
+    /**
+     * The search box gets focus on the next frame, so a key pressed right
+     * after Ctrl/⌘+K (the Z of Ctrl/⌘+K Z, or the first letter of a search)
+     * would otherwise land in the code editor. Until the box has focus, such
+     * keys are kept out of the page and handled here.
+     */
+    const earlyKey = useRef<(key: string) => void>(() => {});
+    useLayoutEffect(() => {
+        earlyKey.current = (key: string) => {
+            const pending = cancelChord();
+            if (pending) {
+                setQuery(`${pending.typed}${key}`);
+                setActiveIndex(0);
+                return;
+            }
+            const lower = key.toLowerCase();
+            const armed = chordArmedAt > 0 && performance.now() - chordArmedAt < CHORD_WINDOW_MS;
+            if (armed && !query && chords?.[lower]) {
+                pendingChord.current = { key: lower, typed: key, timer: window.setTimeout(() => runChord(lower), CHORD_CONTINUATION_MS) };
+                return;
+            }
+            setQuery((current) => `${current}${key}`);
+            setActiveIndex(0);
+        };
+    });
+    useLayoutEffect(() => {
+        if (!open) return;
+        const onKeyDown = (event: KeyboardEvent) => {
+            const input = inputRef.current;
+            if (!input || document.activeElement === input || event.isComposing) return;
+            if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return;
+            event.preventDefault();
+            event.stopPropagation();
+            input.focus();
+            earlyKey.current(event.key);
+        };
+        window.addEventListener("keydown", onKeyDown, true);
+        return () => window.removeEventListener("keydown", onKeyDown, true);
+    }, [open]);
     const move = (delta: number) => {
         if (!results.length) return;
         const next = (active + delta + results.length) % results.length;
