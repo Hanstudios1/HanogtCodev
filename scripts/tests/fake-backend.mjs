@@ -109,6 +109,7 @@ export function createBackend(seed, options = {}) {
     /** Storage objects: path → { contentType, data (Buffer), metadata }; seeded from options.storage. */
     const objects = new Map(Object.entries(options.storage || {}).map(([path, object]) => [path, { contentType: object.contentType, data: Buffer.from(object.data), metadata: object.metadata || {} }]));
     const storageUploads = [];
+    let autoIds = 0;
 
     const documentJson = (path) => ({ name: NAME_PREFIX + path, fields: encodeFields(docs.get(path).data), updateTime: docs.get(path).updateTime });
     const pathOf = (name) => name.slice(NAME_PREFIX.length);
@@ -363,6 +364,14 @@ export function createBackend(seed, options = {}) {
             return json(200, { documents: children.map(documentJson) });
         }
         if (method === "GET") return docs.has(path) ? json(200, documentJson(path)) : failure(404, "NOT_FOUND");
+        if (method === "POST" && isCollection) {
+            // createDocument (createServerDocument): an automatic id unless ?documentId= names one.
+            const id = url.searchParams.get("documentId") || `auto${String(++autoIds).padStart(6, "0")}`;
+            const created = `${path}/${id}`;
+            if (docs.has(created)) return failure(409, "ALREADY_EXISTS");
+            applyUpdate(created, body?.fields, null);
+            return json(200, documentJson(created));
+        }
         if (method === "DELETE") {
             docs.delete(path);
             return json(200, {});

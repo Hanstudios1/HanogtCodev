@@ -105,6 +105,22 @@ function storeSelection(owner: string, id: string | null) {
     emit();
 }
 
+/** Forgets the model chosen on this device for `email`, so the account's default model applies here again. */
+export function clearConnectionChoice(email: string | null) {
+    const owner = agentUserKey(email);
+    if (!owner) return;
+    const selection = parseSelection(readSelection());
+    if (!(owner in selection)) return;
+    delete selection[owner];
+    const raw = JSON.stringify(selection);
+    try {
+        window.localStorage.setItem(SELECTED_KEY, raw);
+    } catch {
+        memorySelection = raw;
+    }
+    emit();
+}
+
 // ------------------------------------------------------------------ requests
 export type ConnectionsRequestResult = { ok: true; data: Record<string, unknown> } | { ok: false; code: string; retryAfterSeconds?: number };
 

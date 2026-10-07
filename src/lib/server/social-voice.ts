@@ -12,6 +12,7 @@ import {
     serverStorageBucket,
 } from "./firebase-rest";
 import { activeMute } from "./group-moderation";
+import { RULES_NOT_ACCEPTED_MESSAGE, rulesBlock, type RulesGateGroup } from "./group-rules";
 import { isDocId, isOwnedStoragePath, normalizeEmail } from "./validate";
 
 /*
@@ -37,7 +38,7 @@ export const VOICE_LIMITS = {
 
 export type VoiceErrorCode =
     | "invalid_request" | "invalid_email" | "invalid_id" | "self_action" | "not_found" | "not_friend" | "blocked"
-    | "voice_too_large" | "voice_format" | "voice_unavailable" | "voice_failed" | "muted";
+    | "voice_too_large" | "voice_format" | "voice_unavailable" | "voice_failed" | "muted" | "rules_not_accepted";
 
 /** Expected failures: the message is Turkish (primary language), the interface translates the code. */
 export class VoiceApiError extends Error {
@@ -58,7 +59,7 @@ export type VoiceTarget = { kind: "dm"; partner: string } | { kind: "group"; gro
 type StoredUser = { friends?: unknown; blockedUsers?: unknown; banned?: unknown; suspended?: unknown };
 type StoredChat = { participants?: unknown };
 type StoredMessage = { fromEmail?: unknown; type?: unknown; voicePath?: unknown; deleted?: unknown };
-type StoredGroup = { members?: unknown };
+type StoredGroup = RulesGateGroup & { members?: unknown };
 type StoredProfile = { username?: unknown; avatarUrl?: unknown };
 type StoredClip = { path?: unknown; contentType?: unknown; size?: unknown; parts?: unknown; data?: unknown };
 type Mutations = Parameters<typeof commitServerMutations>[0];
@@ -366,9 +367,10 @@ export async function sendVoiceMessage(
     }
 
     const groupId = target.groupId;
-    await requireGroupMember(groupId, user.email);
-    // A muted member can't talk either (Hanogt Security Bot's /sustur).
+    const group = await requireGroupMember(groupId, user.email);
+    // A muted member can't talk either (Hanogt Security Bot's /sustur), nor one who still has to accept the group's rules.
     if (await activeMute(groupId, user.email, now)) throw new VoiceApiError(403, "muted", "Bu grupta susturuldunuz.");
+    if (rulesBlock(groupId, group, user.email)) throw new VoiceApiError(409, "rules_not_accepted", RULES_NOT_ACCEPTED_MESSAGE);
     const profile = await getServerDocument<StoredProfile>(`public_profiles/${user.email}`).catch(() => null);
     const username = typeof profile?.username === "string" ? profile.username.trim() : "";
     const author = (username || user.sessionName?.trim() || user.email.split("@")[0]).slice(0, 80);

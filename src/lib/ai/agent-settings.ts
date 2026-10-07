@@ -50,6 +50,16 @@ export function setAgentMode(mode: AgentMode) {
     emit();
 }
 
+/** Forgets this device's choice, so the account's default agent mode applies here again. */
+export function clearAgentModeChoice() {
+    try {
+        window.localStorage.removeItem(MODE_KEY);
+    } catch {
+        // Storage blocked: nothing was stored.
+    }
+    emit();
+}
+
 /** This device's choice, else `fallback` (the account's default from the Hanogt AI settings), else "ask". */
 export function useAgentMode(fallback: AgentMode = DEFAULT_AGENT_MODE): AgentMode {
     return useSyncExternalStore(subscribe, readStoredMode, () => null) ?? fallback;

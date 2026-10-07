@@ -77,7 +77,11 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     name_too_short: { TR: "Grup adı en az 2 karakter olmalı.", EN: "The group name needs at least 2 characters." },
     name_too_long: { TR: "Grup adı en fazla 60 karakter olabilir.", EN: "The group name can be at most 60 characters." },
     description_too_long: { TR: "Açıklama en fazla 500 karakter olabilir.", EN: "The description can be at most 500 characters." },
-    rules_too_long: { TR: "Kurallar en fazla 4000 karakter olabilir.", EN: "The rules can be at most 4000 characters." },
+    rules_too_long: { TR: "Bir kuralın başlığı en fazla 120, açıklaması en fazla 600 karakter olabilir.", EN: "A rule's title can be at most 120 characters and its description at most 600." },
+    invalid_rules: { TR: "Her kuralın bir başlığı olmalı.", EN: "Every rule needs a title." },
+    rules_limit: { TR: "En fazla {limit} kural eklenebilir.", EN: "You can add at most {limit} rules." },
+    rules_not_accepted: { TR: "Grupta yazmadan, tepki vermeden veya sesli kanala katılmadan önce grubun kurallarını kabul etmelisin.", EN: "Accept the group's rules before you write, react or join the voice channel." },
+    rules_changed: { TR: "Kurallar az önce güncellendi. Güncel kuralları okuyup yeniden kabul et.", EN: "The rules were just updated. Read the current rules and accept them again." },
     invalid_template: { TR: "Geçersiz şablon.", EN: "Invalid template." },
     invalid_color: { TR: "Geçersiz renk.", EN: "Invalid color." },
     invalid_emoji: { TR: "Geçersiz simge.", EN: "Invalid icon." },
@@ -175,7 +179,10 @@ export const groupsApi = {
     createLink: (body: Record<string, unknown>) => request<{ success: true; link: GroupInviteLinkInfo }>("/api/groups/invites", { body: { ...body, action: "create-link" } }),
     revokeLink: (groupId: string, token: string) => request<Success>("/api/groups/invites", { body: { action: "revoke-link", groupId, token } }),
     joinPreview: (token: string) => request<{ preview: GroupJoinPreview }>(`/api/groups/join?token=${encodeURIComponent(token)}`),
-    join: (token: string) => request<{ success: true; groupId: string; alreadyMember: boolean }>("/api/groups/join", { body: { token } }),
+    /** `acceptRules`: "I've read and accept the rules" was ticked for the rules of `rulesVersion`. */
+    join: (token: string, rules?: { acceptRules: boolean; rulesVersion: number }) => request<{ success: true; groupId: string; alreadyMember: boolean }>("/api/groups/join", { body: { token, ...(rules?.acceptRules ? { acceptRules: true, rulesVersion: rules.rulesVersion } : {}) } }),
+    /** "I've read and accept the rules" inside the group (`version`: the rules shown). */
+    acceptRules: (groupId: string, version: number) => request<{ success: true; version: number }>("/api/groups", { body: { action: "accept-rules", groupId, version } }),
 };
 
 /** Limit messages for an answer without its number (an older server). */
@@ -186,6 +193,7 @@ const LIMIT_WITHOUT_NUMBER: Partial<Record<GroupClientErrorCode, Copy>> = {
     pin_limit: { TR: "Sabitlenebilecek mesaj sınırına ulaşıldı; önce bir mesajın sabitlemesini kaldırın.", EN: "The pin limit is reached; unpin a message first." },
     commands_limit: { TR: "Bu grubun özel komut sınırına ulaşıldı.", EN: "This group's custom command limit is reached." },
     words_limit: { TR: "Bu grubun yasaklı kelime sınırına ulaşıldı.", EN: "This group's banned word limit is reached." },
+    rules_limit: { TR: "Bu grubun kural sınırına ulaşıldı.", EN: "This group's rule limit is reached." },
 };
 
 /** Turns any thrown value into localized text (API codes and client codes alike). */

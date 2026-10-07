@@ -2,7 +2,7 @@
 
 import { doc, getDoc } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ChevronUp, Hash, MessageSquare, Pin, PinOff, Timer, X } from "lucide-react";
+import { ArrowDown, ChevronUp, Hash, MessageSquare, Pin, PinOff, ScrollText, Timer, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BOT_LABEL, BotAvatar, EphemeralCard } from "@/components/Social/chat/bots";
 import Composer, { type ComposerSuggestion } from "@/components/Social/chat/Composer";
@@ -77,6 +77,8 @@ const C = {
     missing: { TR: "Bu mesaj silinmiş.", EN: "This message was deleted." },
     unavailable: { TR: "Bu mesaj şu anda yüklenemiyor.", EN: "This message can't be loaded right now." },
     slowmode: { TR: "Yavaş mod açık: iki mesaj arasında {duration}.", EN: "Slow mode is on: {duration} between two messages." },
+    rulesGate: { TR: "Mesaj göndermeden önce grubun kurallarını kabul etmelisin.", EN: "You need to accept the group's rules before you can send messages." },
+    seeRules: { TR: "Kuralları gör", EN: "See the rules" },
 } satisfies Record<string, Copy>;
 
 const FLASH_CLASSES = ["ring-2", "ring-indigo-500/60", "bg-indigo-500/10"];
@@ -141,6 +143,8 @@ type ChatPanelProps = {
     onServerChange?: () => void;
     /** Clicking an avatar or a name opens the person's profile card. */
     onOpenUser?: (email: string, trigger: HTMLElement) => void;
+    /** Opens the group's Rules section (from the message box while the rules wait for acceptance, and from /kurallar). */
+    onOpenRules?: () => void;
 };
 
 /**
@@ -149,9 +153,9 @@ type ChatPanelProps = {
  * bots, and the message box. Every message goes through the server, so it
  * shows at once as "sending" and the bots' answers arrive with it.
  */
-export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, topic, onTopicChange, search, channelName, onServerChange, onOpenUser }: ChatPanelProps) {
+export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, topic, onTopicChange, search, channelName, onServerChange, onOpenUser, onOpenRules }: ChatPanelProps) {
     const { tx, locale, language } = useI18n();
-    const { groupId, group, me, role, members, usernames, now, notify, confirm, errorText, live } = useWorkspace();
+    const { groupId, group, me, role, members, usernames, now, notify, confirm, errorText, live, mustAcceptRules } = useWorkspace();
     const social = useSocial();
     const { prefs } = social;
     const plan = useMyPlan(me.email);
@@ -393,7 +397,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             if (!live) onServerChange?.();
         } catch (error) {
             const code = error instanceof SocialRequestError ? error.code : "";
-            notify(errorText(code === "voice_too_large" || code === "voice_format" || code === "rate_limited" || code === "network" || code === "not_found" || code === "unauthorized" || code === "muted" ? code : "voice_failed"), "error");
+            notify(errorText(code === "voice_too_large" || code === "voice_format" || code === "rate_limited" || code === "network" || code === "not_found" || code === "unauthorized" || code === "muted" || code === "rules_not_accepted" ? code : "voice_failed"), "error");
         }
     }, [errorText, groupId, live, notify, onServerChange, topic, tx]);
 
@@ -633,6 +637,18 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             : tx(C.typingMany);
     const status = typingLine && <><span className="me-1 inline-flex gap-0.5 align-middle" aria-hidden>{[0, 150, 300].map((delay) => <span key={delay} className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: `${delay}ms` }} />)}</span>{typingLine}</>;
 
+    // Until the group's rules are accepted (when it asks for it), the message box says so and leads to them.
+    const rulesGate: ReactNode = mustAcceptRules ? (
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between" role="status">
+            <p className="flex items-start gap-2"><ScrollText className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden />{tx(C.rulesGate)}</p>
+            {onOpenRules && (
+                <button type="button" onClick={onOpenRules} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-950">
+                    <ScrollText className="h-3.5 w-3.5" aria-hidden />{tx(C.seeRules)}
+                </button>
+            )}
+        </div>
+    ) : null;
+
     const slowSeconds = group.slowmode[channel] ?? 0;
     const footer = slowSeconds > 0 && !moderator ? <span className="inline-flex items-center gap-1"><Timer className="h-3 w-3" aria-hidden />{tx(C.slowmode, { duration: formatDuration(slowSeconds * 1000, lang) })}</span> : null;
 
@@ -724,8 +740,9 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                             reply={entry.reply}
                             rank={role}
                             customCommands={group.customCommands}
-                            rules={group.rules}
+                            rules={group.rulesList}
                             renderRules={renderRules}
+                            onOpenRules={onOpenRules}
                             onDismiss={() => setEphemerals((current) => current.filter((item) => item.id !== entry.id))}
                         />
                     ))}
@@ -743,6 +760,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                 placeholder={tx(C.placeholderChannel, { channel: shownChannel })}
                 label={tx(C.composerLabel, { channel: shownChannel })}
                 maxLength={GROUP_LIMITS.messageMax}
+                disabled={rulesGate ?? undefined}
                 status={status}
                 footer={footer}
                 reply={replyTo ? { author: authorName(replyTo), excerpt: excerptOf(replyTo, 80) } : null}

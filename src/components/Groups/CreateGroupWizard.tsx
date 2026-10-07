@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, FileText, FolderGit2, Hash, Lock, Pin, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, FileText, FolderGit2, Hash, Lock, Pin, Plus, ScrollText, Sparkles } from "lucide-react";
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import { db } from "@/lib/firebase";
@@ -15,6 +15,7 @@ import {
     getGroupTemplate,
     isGroupId,
     seedLanguageFor,
+    templateRules,
     toMillis,
     type GroupColor,
     type GroupTemplateId,
@@ -31,7 +32,7 @@ const C = {
     stepDetails: { TR: "Ayrıntılar", EN: "Details" },
     stepReview: { TR: "Önizleme", EN: "Review" },
     stepOf: { TR: "Adım {current}/{total}", EN: "Step {current} of {total}" },
-    templateHint: { TR: "Şablon; başlangıç dosyalarını, kuralları, konuları ve sabitlenmiş karşılama mesajını hazırlar. Hepsini sonradan değiştirebilirsin.", EN: "A template prepares the starter files, rules, topics and a pinned welcome message. You can change all of it later." },
+    templateHint: { TR: "Şablon; başlangıç dosyalarını, grubun Kurallar bölümünü, konuları ve sabitlenmiş karşılama mesajını hazırlar. Hepsini sonradan değiştirebilirsin.", EN: "A template prepares the starter files, the group's Rules section, topics and a pinned welcome message. You can change all of it later." },
     moreFiles: { TR: "+{count} dosya", EN: "+{count} files" },
     name: { TR: "Grup adı", EN: "Group name" },
     namePlaceholder: { TR: "Örn. Algoritma Kulübü", EN: "e.g. Algorithm Club" },
@@ -44,7 +45,7 @@ const C = {
     visibilityText: { TR: "Grup herkese açık listelenmez. Yalnızca davet ettiğin arkadaşların veya davet bağlantısı paylaştığın kişiler katılabilir; dosyalar ve sohbet yalnızca üyelere görünür.", EN: "The group isn't listed publicly. Only friends you invite or people you share an invite link with can join; files and chat are visible to members only." },
     project: { TR: "Projemden dosya aktar", EN: "Import files from my project" },
     noProject: { TR: "Aktarma — şablon dosyalarını kullan", EN: "Don't import — use the template files" },
-    projectHint: { TR: "Seçersen projenin dosyaları aktarılır; şablon yalnızca README, kurallar ve görev listesi gibi belgeleri ekler.", EN: "If you pick one, its files are imported and the template only adds documents such as the README, rules and task list." },
+    projectHint: { TR: "Seçersen projenin dosyaları aktarılır; şablon yalnızca README ve görev listesi gibi belgeleri ekler. Kurallar yine grubun Kurallar bölümünde olur.", EN: "If you pick one, its files are imported and the template only adds documents such as the README and task list. The rules still go into the group's Rules section." },
     loadingProjects: { TR: "Projeler yükleniyor…", EN: "Loading projects…" },
     preview: { TR: "Önizleme", EN: "Preview" },
     previewName: { TR: "Grup adın", EN: "Your group name" },
@@ -52,6 +53,10 @@ const C = {
     files: { TR: "Başlangıç dosyaları", EN: "Starter files" },
     projectFiles: { TR: "\"{name}\" projesinin dosyaları", EN: "Files from \"{name}\"" },
     topics: { TR: "Sohbet konuları", EN: "Chat topics" },
+    rules: { TR: "Kurallar bölümü", EN: "Rules section" },
+    rulesScreening: { TR: "Üyeler sohbet etmeden önce bu kuralları kabul eder.", EN: "Members accept these rules before they chat." },
+    noRules: { TR: "Boş grup kuralsız başlar; kuralları istediğin zaman ekleyebilirsin.", EN: "A blank group starts without rules; you can add them any time." },
+    rulesLater: { TR: "Kuralları Grup ayarları → Kurallar ve konular bölümünden değiştirebilirsin.", EN: "You can change the rules in Group settings → Rules & topics." },
     welcome: { TR: "Sabitlenmiş karşılama mesajı", EN: "Pinned welcome message" },
     contentLanguage: { TR: "Başlangıç içeriği Türkçe hazırlanır.", EN: "Starter content is written in English." },
     back: { TR: "Geri", EN: "Back" },
@@ -107,6 +112,8 @@ export default function CreateGroupWizard({ open, onClose, onCreated, email }: {
     }, [email, open, projects]);
 
     const steps: Copy[] = [C.stepTemplate, C.stepDetails, C.stepReview];
+    // The Rules section the group starts with, in the language its content is written in.
+    const starterRules = useMemo(() => templateRules(templateId, lang), [lang, templateId]);
     const fileNames = useMemo(() => {
         const names = [...template.files[lang]];
         if (!selectedProject) return names;
@@ -280,6 +287,20 @@ export default function CreateGroupWizard({ open, onClose, onCreated, email }: {
                                     <ul className="mt-2 flex flex-wrap gap-1.5">
                                         {template.topics[lang].map((topic) => <li key={topic} className="rounded-full bg-fuchsia-500/10 px-2.5 py-1 text-xs font-semibold text-fuchsia-700 dark:text-fuchsia-300">#{topic}</li>)}
                                     </ul>
+                                </section>
+                                <section className="rounded-2xl border border-zinc-200 p-4 dark:border-white/10">
+                                    <h3 className="flex items-center gap-2 text-sm font-bold"><ScrollText className="h-4 w-4 text-emerald-500" aria-hidden />{tx(C.rules)}</h3>
+                                    {starterRules.rules.length ? (
+                                        <>
+                                            <ol className="mt-2 space-y-1">
+                                                {starterRules.rules.map((rule, index) => (
+                                                    <li key={rule.title} className="flex gap-2 text-sm text-zinc-700 dark:text-zinc-200"><span className="w-5 shrink-0 text-end font-bold tabular-nums text-zinc-400" aria-hidden>{index + 1}.</span><span className="min-w-0 break-words">{rule.title}</span></li>
+                                                ))}
+                                            </ol>
+                                            {starterRules.screening && <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.rulesScreening)}</p>}
+                                        </>
+                                    ) : <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.noRules)}</p>}
+                                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.rulesLater)}</p>
                                 </section>
                                 <section className="rounded-2xl border border-zinc-200 p-4 dark:border-white/10">
                                     <h3 className="flex items-center gap-2 text-sm font-bold"><Pin className="h-4 w-4 text-amber-500" aria-hidden />{tx(C.welcome)}</h3>

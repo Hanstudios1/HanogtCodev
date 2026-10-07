@@ -20,7 +20,7 @@ export type SocialErrorCode =
     | "message_not_found" | "empty_message" | "message_too_long" | "invalid_tag" | "user_not_found"
     | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error"
     | "network" | "send_failed" | "voice_failed" | "voice_too_large" | "voice_unavailable" | "voice_format" | "voice_storage" | "mic_denied"
-    | "mic_missing" | "mic_busy" | "not_configured" | "unavailable" | "muted" | "stars_limit";
+    | "mic_missing" | "mic_busy" | "not_configured" | "unavailable" | "muted" | "stars_limit" | "rules_not_accepted";
 
 export class SocialRequestError extends Error {
     readonly code: SocialErrorCode;
@@ -65,6 +65,7 @@ export const SOCIAL_ERROR_COPY: Record<SocialErrorCode, Copy> = {
     voice_failed: { TR: "Sesli mesaj gönderilemedi.", EN: "The voice message couldn't be sent." },
     not_configured: { TR: "GIF araması henüz açılmadı.", EN: "GIF search isn't switched on yet." },
     muted: { TR: "Bu grupta susturuldun; şimdilik mesaj gönderemezsin.", EN: "You're muted in this group; you can't send messages for now." },
+    rules_not_accepted: { TR: "Bu grupta mesaj göndermeden önce grubun kurallarını kabul etmelisin.", EN: "Accept the group's rules before you send messages in this group." },
     unavailable: { TR: "GIF'ler şu anda yüklenemiyor. Biraz sonra tekrar dene.", EN: "GIFs can't be loaded right now. Try again in a moment." },
     voice_too_large: { TR: "Sesli mesaj 3 MB sınırını aşıyor.", EN: "The voice message exceeds the 3 MB limit." },
     voice_unavailable: { TR: "Sesli mesaj açılamadı veya silinmiş.", EN: "The voice message couldn't be opened or was deleted." },

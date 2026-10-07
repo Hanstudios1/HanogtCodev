@@ -25,6 +25,7 @@ import { useI18n } from "@/lib/i18n";
 import { CHAT_COPY, CONNECTION_FAILURES, MAX_ATTACHMENT_BYTES, MAX_INPUT, NOTICES } from "./chat-copy";
 import { useAiConnections } from "./connections-store";
 import { useAiSettings } from "./ai-settings-store";
+import { notifyAnswerDone } from "./notify";
 import { useAiUsage } from "./usage-store";
 
 export interface ChatLaunch {
@@ -164,6 +165,9 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     const followUps = useRef(new Set<string>());
     // Values the async agent loop reads after awaits.
     const showThinking = accountDefaults?.showThinking ?? true;
+    // "Keep chats" off: new chats are private and never stored in this browser.
+    const privateChats = accountDefaults?.saveHistory === false;
+    const notifyOnDone = accountDefaults?.notifyOnDone === true;
     const latest = useRef({ agentMode, granted, showThinking });
     useEffect(() => {
         latest.current = { agentMode, granted, showThinking };
@@ -290,7 +294,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             return;
         }
         let conversation: AiConversation | null = active;
-        if (!conversation) conversation = create(draftMode, titleFrom(text));
+        if (!conversation) conversation = create(draftMode, titleFrom(text), { ephemeral: privateChats });
         const conversationId = conversation.id;
         const context = buildContext();
         const sentAttachment = attachment;
@@ -371,6 +375,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 }
                 finish(conversationId, assistantId, { content: result.text, engine: "llm", sources: result.sources, notice: result.failure === "aborted" ? tx(NOTICES.aborted) : undefined, agent, thinking, ...(result.cut && result.failure !== "aborted" ? { cut: result.cut } : {}), ...answeredBy(result) });
                 autoRun(conversationId, assistantId, agent);
+                if (notifyOnDone && result.failure !== "aborted") notifyAnswerDone(tx(CHAT_COPY.answerReady), result.text);
             } else if (result.failure === "aborted") {
                 if (result.text) finish(conversationId, assistantId, { content: result.text, engine: "llm", notice: tx(NOTICES.aborted), thinking, ...answeredBy(result) });
                 else update(conversationId, (current) => ({ ...current, messages: current.messages.filter((message) => message.id !== assistantId) }));
@@ -384,7 +389,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [active, answeredBy, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, contextChars, create, draftMode, finish, language, locale, refreshUsage, selectedConnection, signedIn, streamHandlers, thoughtSeconds, tx, update]);
+    }, [active, answeredBy, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, contextChars, create, draftMode, finish, language, locale, notifyOnDone, privateChats, refreshUsage, selectedConnection, signedIn, streamHandlers, thoughtSeconds, tx, update]);
 
     /** Sends the tool results back to the model once every card of its message is settled. */
     const continueAfterTools = useCallback(async (conversation: AiConversation, source: AiMessage) => {
@@ -541,7 +546,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         if (launch?.nonce === undefined || launch.nonce === lastLaunch.current) return;
         lastLaunch.current = launch.nonce;
         if (launch.mode && active && launch.mode !== active.mode) {
-            if (active.messages.length) create(launch.mode);
+            if (active.messages.length) create(launch.mode, "", { ephemeral: privateChats });
             else update(active.id, (conversation) => ({ ...conversation, mode: launch.mode! }));
         }
         const prompt = launch.prompt;
@@ -594,10 +599,10 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
 
     const switchMode = useCallback((next: AiMode) => {
         if (busy || next === mode) return;
-        if (active && active.messages.length) create(next);
+        if (active && active.messages.length) create(next, "", { ephemeral: privateChats });
         else if (active) update(active.id, (conversation) => ({ ...conversation, mode: next }));
         else setDraftMode(next);
-    }, [active, busy, create, mode, update]);
+    }, [active, busy, create, mode, privateChats, update]);
 
     const regenerate = useCallback(() => {
         if (!active || busy) return;

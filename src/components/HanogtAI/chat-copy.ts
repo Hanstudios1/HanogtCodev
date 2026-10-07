@@ -81,6 +81,8 @@ export const NOTICES: Record<AiFailure, Copy> = {
 export const CONNECTION_FAILURES: ReadonlySet<AiFailure> = new Set<AiFailure>(["connection_invalid", "connection_unavailable", "connection_quota", "connection_model"]);
 
 export const CHAT_COPY = {
+    answerReady: { TR: "Hanogt AI yanıtladı", EN: "Hanogt AI answered" },
+    privateChat: { TR: "Gizli sohbet: bu sohbet kaydedilmez", EN: "Private chat: this chat isn't saved" },
     somethingWrong: { TR: "Bir şeyler ters gitti. Lütfen tekrar dene.", EN: "Something went wrong. Please try again." },
     retryIn: { TR: "{seconds} sn sonra tekrar dene.", EN: "Try again in {seconds} s." },
     usageLimitAt: { TR: "{days} günlük {limit} mesajlık Hanogt AI hakkının hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} Hanogt AI messages of this {days}-day period. Renews: {time}. Until then Hanogt AI Core answers." },

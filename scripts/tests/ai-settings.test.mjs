@@ -105,3 +105,40 @@ test("the agent can open the settings page", () => {
     assert.equal(tools.normalizeAgentRoute("/ai/settings"), "/ai/settings");
     assert.equal(tools.normalizeAgentRoute("/ai/settings/../admin"), null);
 });
+
+test("creativity, private chats and the ready notification: defaults, saves and the answer temperature", () => {
+    assert.deepEqual([DEFAULT_AI_SETTINGS.creativity, DEFAULT_AI_SETTINGS.saveHistory, DEFAULT_AI_SETTINGS.notifyOnDone], ["balanced", true, false]);
+    const read = normalizeAiSettings({ creativity: "creative", saveHistory: false, notifyOnDone: true }, "free");
+    assert.deepEqual([read.creativity, read.saveHistory, read.notifyOnDone], ["creative", false, true]);
+    const broken = normalizeAiSettings({ creativity: "wild", saveHistory: "no", notifyOnDone: 1 }, "free");
+    assert.deepEqual([broken.creativity, broken.saveHistory, broken.notifyOnDone], ["balanced", true, false]);
+    assert.deepEqual(
+        parseAiSettingsInput({ creativity: "precise", saveHistory: false, notifyOnDone: true }, "free"),
+        { ok: true, settings: { ...DEFAULT_AI_SETTINGS, creativity: "precise", saveHistory: false, notifyOnDone: true } },
+    );
+    for (const [input, field] of [[{ creativity: "max" }, "creativity"], [{ saveHistory: "off" }, "saveHistory"], [{ notifyOnDone: null }, "notifyOnDone"]]) {
+        assert.deepEqual(parseAiSettingsInput(input, "pro"), { ok: false, code: "invalid_value", field }, field);
+    }
+
+    // The answer's temperature: the kind of work sets the base, creativity moves it; with the agent's tools a smaller step.
+    const { answerTemperature } = settings;
+    assert.equal(answerTemperature("balanced", "chat"), 0.45);
+    assert.equal(answerTemperature("balanced", "code"), 0.25);
+    assert.equal(answerTemperature("precise", "chat"), 0.25);
+    assert.equal(answerTemperature("creative", "chat"), 0.8);
+    assert.equal(answerTemperature("precise", "code"), 0.05, "never below 0.05");
+    assert.equal(answerTemperature("creative", "code"), 0.6);
+    assert.deepEqual(["precise", "balanced", "creative"].map((creativity) => answerTemperature(creativity, "agent")), [0.15, 0.3, 0.5]);
+});
+
+test("an exported settings file reads back the same, and a foreign one keeps only what is valid", () => {
+    const mine = normalizeAiSettings({ tone: "friendly", creativity: "precise", preferredLanguages: ["python"], about: "x".repeat(1_200) }, "plus");
+    const file = JSON.parse(JSON.stringify({ app: "hanogt-ai-settings", version: 1, exportedAt: "2026-10-06T00:00:00.000Z", settings: mine }));
+    assert.deepEqual(normalizeAiSettings({ ...DEFAULT_AI_SETTINGS, ...file.settings }, "plus"), mine);
+    // Imported on a smaller plan, the instructions are cut to that plan.
+    assert.equal(normalizeAiSettings({ ...DEFAULT_AI_SETTINGS, ...file.settings }, "free").about.length, 500);
+    const foreign = normalizeAiSettings({ ...mine, tone: "angry", admin: true, saveHistory: "maybe" }, "plus");
+    assert.equal(foreign.tone, DEFAULT_AI_SETTINGS.tone);
+    assert.equal(foreign.saveHistory, true);
+    assert.ok(!("admin" in foreign));
+});

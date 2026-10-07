@@ -24,6 +24,11 @@ export type WorkspaceContextValue = {
     banned: GroupDetailResponse["banned"];
     /** What the group holds by its owner's plan (members, pins, commands, banned words). */
     limits: GroupPlanLimits;
+    /**
+     * The group's rules must be accepted (Rules section) before this person
+     * can write, react or join the voice channel; follows the live document.
+     */
+    mustAcceptRules: boolean;
     /** Wall clock that ticks every 30 s for relative times. */
     now: number;
     /**

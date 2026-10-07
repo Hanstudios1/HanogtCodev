@@ -24,6 +24,20 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.31",
+        version: "v0.3.31",
+        date: "2026-10-06",
+        title: { TR: "Grup kuralları ve yeni Hanogt AI ayarları", EN: "Group rules and new Hanogt AI settings" },
+        desc: { TR: "Hanogt Social gruplarında Discord'daki gibi bir kurallar bölümü var; Hanogt AI ayarları arama, özet, yaratıcılık, gizli sohbet ve bildirimle yenilendi.", EN: "Hanogt Social groups have a rules section like Discord's; the Hanogt AI settings were renewed with search, a summary, creativity, private chats and notifications." },
+        items: [
+            { TR: "Gruplarda madde madde kurallar: kenar çubuğunda “kurallar”, ayarlarda kural düzenleyici; şablonlar artık kural dosyası oluşturmaz.", EN: "Point-by-point rules in groups: “rules” in the sidebar and a rules editor in the settings; templates no longer create a rules file." },
+            { TR: "Grup isterse üyeler yazmadan ve sesli kanala katılmadan önce kuralları kabul eder; katılırken de kabul edilebilir.", EN: "If the group asks, members accept the rules before posting or joining the voice channel; they can also accept while joining." },
+            { TR: "Hanogt AI ayarlarında yan menü, arama, özet, bölüm bölüm sıfırlama ve ayarları dışa/içe aktarma.", EN: "A side menu, search, a summary, per-section reset and settings export/import in the Hanogt AI settings." },
+            { TR: "Yaratıcılık ayarı (Hassas, Dengeli, Yaratıcı), hiçbir yerde saklanmayan gizli sohbetler ve yanıt hazır bildirimi.", EN: "A creativity setting (Precise, Balanced, Creative), private chats that are never stored and an answer-ready notification." },
+            { TR: "Gizlilik Politikası ve Kullanım Şartları 5.7.", EN: "Privacy Policy and Terms of Use 5.7." },
+        ],
+    },
+    {
         id: "v0.3.30",
         version: "v0.3.30",
         date: "2026-10-06",

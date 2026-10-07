@@ -10,11 +10,12 @@ import EditorPane, { SaveIndicator } from "@/components/Groups/workspace/EditorP
 import FilesPanel from "@/components/Groups/workspace/FilesPanel";
 import GettingStarted from "@/components/Groups/workspace/GettingStarted";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { groupHref } from "@/lib/social/model";
+import { groupHref, groupViewOf } from "@/lib/social/model";
 import { useSocial } from "../context";
 import { EmptyState, IconButton, MainHeader, SocialAside } from "../ui";
 import { useGroupSession } from "./GroupSession";
 import MemberList, { GroupUserCard } from "./MemberList";
+import RulesScreen from "./RulesView";
 
 const C = {
     loading: { TR: "Grup açılıyor", EN: "Opening the group" },
@@ -38,12 +39,12 @@ const C = {
     offline: { TR: "Canlı bağlantı yok: mesajlar birkaç saniyede bir yenileniyor; ortak dosyalar bağlantı gelince açılır.", EN: "No live connection: messages refresh every few seconds; shared files open once it's back." },
 } satisfies Record<string, Copy>;
 
-/** The open group's main area: a channel (all messages or one #topic) or the shared files. */
+/** The open group's main area: a channel (all messages or one #topic), the Rules section or the shared files. */
 export default function GroupView() {
     const { tx } = useI18n();
     const session = useGroupSession();
     const params = useSearchParams();
-    const view = params.get("view") === "files" ? "files" : "chat";
+    const view = groupViewOf(params.get("view"));
 
     if (session.phase === "loading" || (session.phase === "ready" && !session.context)) {
         return (
@@ -70,7 +71,7 @@ export default function GroupView() {
 
     return (
         <>
-            {view === "files" ? <FilesScreen /> : <ChannelScreen />}
+            {view === "files" ? <FilesScreen /> : view === "rules" ? <RulesScreen /> : <ChannelScreen />}
             <SocialAside label={tx(session.panel === "pinned" ? C.pinned : C.members)}>
                 {session.panel === "pinned"
                     ? <PinnedPanel messages={session.messages.messages} onJump={(id) => { session.setPanel("members"); session.jumpTo(id); }} onClose={() => session.setPanel("members")} />
@@ -214,6 +215,7 @@ function ChannelScreen() {
                     jumpTarget={session.jumpTarget}
                     onServerChange={session.messages.refresh}
                     onOpenUser={session.openUserCard}
+                    onOpenRules={() => router.push(groupHref(context.groupId, { view: "rules" }))}
                 />
             </div>
         </main>

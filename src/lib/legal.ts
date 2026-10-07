@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.6";
+export const LEGAL_VERSION = "5.7";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.6-2026-10-06";
+export const LEGAL_NOTICE_ID = "5.7-2026-10-06";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,14 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.7",
+        date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
+        items: [
+            { TR: "Hanogt Social grup kuralları: Bir grubun sahibi ve yöneticileri madde madde kurallar yazabilir ve üyelerden yazmadan, tepki vermeden veya sesli kanala katılmadan önce bu kuralları kabul etmelerini isteyebilir. Kabul ettiğiniz kural sürümü, e-posta adresiniz yerine gruba özel takma anahtarınızla grubun kaydında tutulur; gruptan ayrıldığınızda, çıkarıldığınızda veya hesabınızı sildiğinizde silinir. Grup kuralları bu Şartlarla çelişemez ve içeriklerinden grubun sahibi ve yöneticileri sorumludur. Gizlilik Politikası ve Kullanım Şartları buna göre güncellendi.", EN: "Hanogt Social group rules: a group's owner and admins can write rules point by point and ask members to accept them before they post, react or join the voice channel. The rules version you accepted is kept in the group's record under your group-specific pseudonymous key instead of your e-mail address, and is deleted when you leave the group, are removed or delete your account. Group rules can't contradict these Terms, and the group's owner and admins are responsible for their content. The Privacy Policy and the Terms of Use were updated accordingly." },
+            { TR: "Hanogt AI ayarları: Yaratıcılık düzeyi, yeni sohbetlerin bu tarayıcıda saklanıp saklanmayacağı ve yanıt hazır olunca bildirim isteyip istemediğiniz de hesabınızla saklanır. “Yeni sohbetleri sakla” kapalıyken sohbetler hiçbir yerde saklanmaz; bildirimler yalnızca cihazınızda gösterilir.", EN: "Hanogt AI settings: the creativity level, whether new chats are kept in this browser and whether you want a notification when an answer is ready are also stored with your account. With “Keep new chats” off, chats are not stored anywhere; notifications are shown only on your device." },
+        ],
+    },
     {
         version: "5.6",
         date: { TR: "6 Ekim 2026", EN: "6 October 2026" },

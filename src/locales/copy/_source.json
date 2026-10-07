@@ -638,7 +638,8 @@
       "src/components/Editor/StatusBar.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/workspace/EditorPane.tsx",
-      "src/components/HanogtAI/ConnectionsManager.tsx"
+      "src/components/HanogtAI/ConnectionsManager.tsx",
+      "src/components/Social/group/RulesView.tsx"
     ]
   },
   "2554s8khkhe": {
@@ -2093,6 +2094,7 @@
       "src/components/Groups/ui.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx",
       "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Groups/workspace/RulesEditor.tsx",
       "src/components/HanogtAI/ApiKeysPanel.tsx",
       "src/components/HanogtAI/ChangesCard.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
@@ -3950,7 +3952,8 @@
       "src/components/Groups/workspace/GettingStarted.tsx",
       "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
-      "src/components/Social/dm/DmMessages.tsx"
+      "src/components/Social/dm/DmMessages.tsx",
+      "src/components/Social/group/RulesView.tsx"
     ]
   },
   "9i8a86bqos": {
@@ -4532,7 +4535,8 @@
       "src/app/media/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Editor/PublishDialog.tsx",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/RulesEditor.tsx"
     ]
   },
   "222chvj7zln": {
@@ -5030,6 +5034,7 @@
     "files": [
       "src/app/feedback/page.tsx",
       "src/components/Groups/workspace/BotSettings.tsx",
+      "src/components/Groups/workspace/RulesEditor.tsx",
       "src/components/HanogtAI/AgentCard.tsx"
     ]
   },
@@ -7375,9 +7380,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1f3kc4rt1y8": {
-    "en": "Hanogt AI settings: the personal instructions (about you and about the style of answers), tone, answer length, answer language, chat defaults (default mode and model, attaching the open file, the last run's errors and the names of the project's files, agent mode, the send shortcut, the answer font, opening long code in the side panel automatically), code preferences, thinking preferences (whether the model thinks before answering and whether the thinking is shown), voice preferences (dictation language, answer voice and reading speed) and how long chats are kept in this browser that you save on the [Hanogt AI settings](/ai/settings) page are stored in your account record, so the same settings apply on every device. Your instructions and preferences are passed to the language model provider with every message you send while signed in; they are not added to Hanogt AI API requests. You can change or delete your settings at any time; they are included in your account data export and deleted when you delete your account. The “Delete chats when I sign out” setting and the choices you make on this device (for example the selected model) are kept only in your browser.",
-    "tr": "Hanogt AI ayarları: [Hanogt AI ayarları](/ai/settings) sayfasında kaydettiğiniz kişisel talimatlar (kendiniz hakkında ve yanıtların tarzı için), üslup, yanıt uzunluğu, yanıt dili, sohbet varsayılanları (varsayılan mod ve model, açık dosyanın, son çalıştırmanın hatalarının ve proje dosyalarının adlarının eklenmesi, ajan modu, gönderme kısayolu, yanıt yazı tipi, uzun kodun yan panelde kendiliğinden açılması), kod tercihleriniz, düşünme tercihleriniz (modelin yanıt vermeden önce düşünmesi ve düşünmenin gösterilmesi), ses tercihleriniz (dikte dili, yanıt sesi ve okuma hızı) ve sohbetlerin bu tarayıcıda ne kadar saklanacağı hesap kaydınızda saklanır; böylece her cihazda aynı ayarlar kullanılır. Talimatlarınız ve tercihleriniz, giriş yapmışken gönderdiğiniz her mesajla birlikte dil modeli sağlayıcısına iletilir; Hanogt AI API isteklerine eklenmez. Ayarlarınızı istediğiniz zaman değiştirebilir veya silebilirsiniz; hesap verilerinizin dışa aktarımında yer alırlar ve hesabınızı sildiğinizde silinirler. “Çıkışta sohbetleri sil” ayarı ve bu cihazdaki seçimleriniz (ör. seçili model) yalnızca tarayıcınızda tutulur.",
+  "4ofso1txax": {
+    "en": "Hanogt AI settings: the personal instructions (about you and about the style of answers), tone, answer length, answer language, chat defaults (default mode and model, attaching the open file, the last run's errors and the names of the project's files, agent mode, the send shortcut, the answer font, opening long code in the side panel automatically), code preferences, thinking preferences (whether the model thinks before answering and whether the thinking is shown), voice preferences (dictation language, answer voice and reading speed), the creativity level (Precise, Balanced or Creative; it only sets how freely the model writes), whether new chats are kept in this browser, whether you want a notification when an answer is ready and how long chats are kept in this browser that you save on the [Hanogt AI settings](/ai/settings) page are stored in your account record, so the same settings apply on every device. Your instructions and preferences are passed to the language model provider with every message you send while signed in; they are not added to Hanogt AI API requests. You can change or delete your settings at any time; they are included in your account data export and deleted when you delete your account. The “Delete chats when I sign out” setting and the choices you make on this device (for example the selected model) are kept only in your browser.",
+    "tr": "Hanogt AI ayarları: [Hanogt AI ayarları](/ai/settings) sayfasında kaydettiğiniz kişisel talimatlar (kendiniz hakkında ve yanıtların tarzı için), üslup, yanıt uzunluğu, yanıt dili, sohbet varsayılanları (varsayılan mod ve model, açık dosyanın, son çalıştırmanın hatalarının ve proje dosyalarının adlarının eklenmesi, ajan modu, gönderme kısayolu, yanıt yazı tipi, uzun kodun yan panelde kendiliğinden açılması), kod tercihleriniz, düşünme tercihleriniz (modelin yanıt vermeden önce düşünmesi ve düşünmenin gösterilmesi), ses tercihleriniz (dikte dili, yanıt sesi ve okuma hızı), yaratıcılık düzeyi (Hassas, Dengeli ya da Yaratıcı; yalnızca modelin ne kadar özgür yazacağını belirler), yeni sohbetlerin bu tarayıcıda saklanıp saklanmayacağı, yanıt hazır olunca bildirim isteyip istemediğiniz ve sohbetlerin bu tarayıcıda ne kadar saklanacağı hesap kaydınızda saklanır; böylece her cihazda aynı ayarlar kullanılır. Talimatlarınız ve tercihleriniz, giriş yapmışken gönderdiğiniz her mesajla birlikte dil modeli sağlayıcısına iletilir; Hanogt AI API isteklerine eklenmez. Ayarlarınızı istediğiniz zaman değiştirebilir veya silebilirsiniz; hesap verilerinizin dışa aktarımında yer alırlar ve hesabınızı sildiğinizde silinirler. “Çıkışta sohbetleri sil” ayarı ve bu cihazdaki seçimleriniz (ör. seçili model) yalnızca tarayıcınızda tutulur.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7396,9 +7401,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "2e1fn575xa3": {
-    "en": "Your chat history, including any thumbs-up or thumbs-down you give and the model's thinking and steps, is kept only in this browser's local storage; it is not synced to other devices and can be deleted on the Hanogt AI page. For answers about the open file, the file as it was when you asked is also kept there for the three most recent such answers (up to 40,000 characters each), so the proposed change can be shown and applied to the editor. If you choose a retention period in your Hanogt AI settings (7, 30 or 90 days), older chats are deleted from this browser automatically. The thinking is never sent back to the language model with later messages.",
-    "tr": "Sohbet geçmişiniz, yanıtlara verdiğiniz beğeni işaretleri ile modelin düşünme metni ve adımları dahil, yalnızca bu tarayıcının yerel depolamasında tutulur; başka cihazlarla eşitlenmez ve Hanogt AI sayfasından silinebilir. Açık dosya hakkındaki yanıtlarda, önerilen değişikliği gösterip editöre uygulayabilmek için dosyanın sorulduğu andaki hâli de en son üç yanıtta (her biri en fazla 40.000 karakter) bu depolamada tutulur. Hanogt AI ayarlarınızda bir saklama süresi seçerseniz (7, 30 ya da 90 gün) daha eski sohbetler bu tarayıcıdan kendiliğinden silinir. Düşünme metni sonraki mesajlarla dil modeline geri gönderilmez.",
+  "nauj0nxavu": {
+    "en": "Your chat history, including any thumbs-up or thumbs-down you give and the model's thinking and steps, is kept only in this browser's local storage; it is not synced to other devices and can be deleted on the Hanogt AI page. For answers about the open file, the file as it was when you asked is also kept there for the three most recent such answers (up to 40,000 characters each), so the proposed change can be shown and applied to the editor. If you choose a retention period in your Hanogt AI settings (7, 30 or 90 days), older chats are deleted from this browser automatically. If you turn off “Keep new chats in this browser”, new chats are private: they are kept only in the open tab's memory, are gone when the tab closes and are never stored anywhere. If you turn on “Notify me when an answer is ready”, your browser asks for permission to show notifications; the notification, with the first few lines of the answer, is shown only on your device and is not sent anywhere else. The thinking is never sent back to the language model with later messages.",
+    "tr": "Sohbet geçmişiniz, yanıtlara verdiğiniz beğeni işaretleri ile modelin düşünme metni ve adımları dahil, yalnızca bu tarayıcının yerel depolamasında tutulur; başka cihazlarla eşitlenmez ve Hanogt AI sayfasından silinebilir. Açık dosya hakkındaki yanıtlarda, önerilen değişikliği gösterip editöre uygulayabilmek için dosyanın sorulduğu andaki hâli de en son üç yanıtta (her biri en fazla 40.000 karakter) bu depolamada tutulur. Hanogt AI ayarlarınızda bir saklama süresi seçerseniz (7, 30 ya da 90 gün) daha eski sohbetler bu tarayıcıdan kendiliğinden silinir. “Yeni sohbetleri bu tarayıcıda sakla” ayarını kapatırsanız yeni sohbetler gizli olur: yalnızca açık sekmenin belleğinde tutulur, sekme kapanınca kaybolur ve hiçbir yerde saklanmaz. “Yanıt hazır olunca bildirim gönder” ayarını açarsanız bildirim izni tarayıcınızdan istenir; bildirim, yanıtın ilk birkaç satırıyla yalnızca cihazınızda gösterilir ve başka bir yere gönderilmez. Düşünme metni sonraki mesajlarla dil modeline geri gönderilmez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7740,9 +7745,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1t4eh1i19x0": {
-    "en": "Group owners and admins can define the group's own commands (a name, a description and a reply text) and a message that welcomes new members; these are stored in the group record and shown to members. The welcome message is posted to the group chat by Hanogt Security Bot and may contain the new member's display name.",
-    "tr": "Grup sahibi ve yöneticileri gruba özel komutlar (ad, açıklama ve yanıt metni) ve yeni üyeleri karşılayan bir mesaj tanımlayabilir; bunlar grup kaydında saklanır ve üyelere gösterilir. Karşılama mesajı Hanogt Security Bot tarafından grubun sohbetine yazılır ve yeni üyenin görünen adını içerebilir.",
+  "2a9jb07fqqy": {
+    "en": "Group owners and admins can define the group's rules (each a title with an optional description), the group's own commands (a name, a description and a reply text) and a message that welcomes new members; these are stored in the group record and shown to members. A group's rules are also shown on an invite link's page before you join. The welcome message is posted to the group chat by Hanogt Security Bot and may contain the new member's display name. A group can ask its members to accept its rules before they join the chat. When you accept them (while joining or later), the number of the rules version you accepted is stored in the group record under a pseudonymous key derived for you in that group instead of your e-mail address, and like the group record it is visible only to the group's members. This record is deleted when you leave, are removed or are banned from the group, or when you delete your account; it goes with the group record when the group is deleted.",
+    "tr": "Grup sahibi ve yöneticileri grubun kurallarını (her biri bir başlık ve isteğe bağlı bir açıklama), gruba özel komutları (ad, açıklama ve yanıt metni) ve yeni üyeleri karşılayan bir mesajı tanımlayabilir; bunlar grup kaydında saklanır ve üyelere gösterilir. Grubun kuralları, davet bağlantısının sayfasında gruba katılmadan önce de gösterilir. Karşılama mesajı Hanogt Security Bot tarafından grubun sohbetine yazılır ve yeni üyenin görünen adını içerebilir. Bir grup, üyelerinin sohbete katılmadan önce kurallarını kabul etmesini isteyebilir. Kuralları kabul ettiğinizde (gruba katılırken ya da sonradan), kabul ettiğiniz kural sürümünün numarası e-posta adresiniz yerine o gruba özel takma anahtarınızla grup kaydında saklanır ve grup kaydı gibi yalnızca grubun üyelerine açıktır. Bu kayıt gruptan ayrıldığınızda, çıkarıldığınızda veya engellendiğinizde ya da hesabınızı sildiğinizde silinir; grup silindiğinde grup kaydıyla birlikte silinir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8182,16 +8187,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "17m9a53qg5u": {
-    "en": "Enforcing community rules in groups: Hanogt Security Bot commands, AutoMod scanning and moderation records",
-    "tr": "Gruplarda topluluk kurallarının uygulanması: Hanogt Security Bot komutları, AutoMod taraması ve moderasyon kayıtları",
+  "11pl540yg0k": {
+    "en": "Enforcing community rules in groups: the group's rules and their acceptance, Hanogt Security Bot commands, AutoMod scanning and moderation records",
+    "tr": "Gruplarda topluluk kurallarının uygulanması: grubun kuralları ve kabul edilmesi, Hanogt Security Bot komutları, AutoMod taraması ve moderasyon kayıtları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "jftiqwnwp2": {
-    "en": "Group messages, group roles, warning, mute, report and AutoMod records",
-    "tr": "Grup mesajları, grup rolleri, uyarı, susturma, rapor ve AutoMod kayıtları",
+  "dva9117h2d": {
+    "en": "Group messages, group roles, the rules version you accepted (under a pseudonymous key), warning, mute, report and AutoMod records",
+    "tr": "Grup mesajları, grup rolleri, kabul ettiğiniz kural sürümü (takma anahtarla), uyarı, susturma, rapor ve AutoMod kayıtları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8957,16 +8962,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "fwydmza49k": {
-    "en": "Group content (including Hanogt AI's answers in groups, custom commands and the welcome message)",
-    "tr": "Grup içerikleri (Hanogt AI'ın gruplardaki yanıtları, özel komutlar ve karşılama mesajı dahil)",
+  "1ptvet1tcbl": {
+    "en": "Group content (including Hanogt AI's answers in groups, the group's rules, custom commands and the welcome message)",
+    "tr": "Grup içerikleri (Hanogt AI'ın gruplardaki yanıtları, grubun kuralları, özel komutlar ve karşılama mesajı dahil)",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1iw1122tgak": {
-    "en": "Until the group or the content is deleted; when your account is deleted, your messages in other groups are anonymised",
-    "tr": "Grup silinene veya içerik silinene kadar; hesabınız silindiğinde diğer gruplardaki mesajlarınız anonimleştirilir",
+  "227av6ygs9d": {
+    "en": "Until the group or the content is deleted; when your account is deleted, your messages in other groups are anonymised. Your record of accepting a group's rules is deleted when you leave or are removed from the group or when your account is deleted",
+    "tr": "Grup silinene veya içerik silinene kadar; hesabınız silindiğinde diğer gruplardaki mesajlarınız anonimleştirilir. Kuralları kabul kaydınız gruptan ayrıldığınızda, çıkarıldığınızda veya hesabınız silindiğinde silinir",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -11613,7 +11618,8 @@
     "en": "Search settings…",
     "tr": "Ayarlarda ara…",
     "files": [
-      "src/app/settings/page.tsx"
+      "src/app/settings/page.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
   "krbjqdkkdl": {
@@ -11628,6 +11634,7 @@
     "tr": "Aramayı temizle",
     "files": [
       "src/app/settings/page.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/LegalPage.tsx",
       "src/components/News/NewsPage.tsx"
     ]
@@ -11644,7 +11651,8 @@
     "tr": "Bölümler",
     "files": [
       "src/app/settings/page.tsx",
-      "src/components/HanogtAI/AiApiPage.tsx"
+      "src/components/HanogtAI/AiApiPage.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
   "budor6l0mo": {
@@ -12835,9 +12843,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "yj14dj9om8": {
-    "en": "The person who creates a group is its owner: they are responsible for running it in line with these Terms and for choosing its admins, moderators, AutoMod settings, custom commands and welcome message. Owners, admins and moderators may use their powers (warning, muting, deleting messages, removing and banning members) only to enforce the group's rules and these Terms, never for harassment, discrimination or personal grudges. Moderation decisions in a group are not sanctions by Hanogt; if you think these powers are being abused, you can report it to us.",
-    "tr": "Bir grubu oluşturan kişi grubun sahibidir: grubu bu Şartlara uygun yönetmekten ve yöneticileri, moderatörleri, AutoMod ayarlarını, özel komutları ve karşılama mesajını belirlemekten sorumludur. Sahip, yönetici ve moderatörler yetkilerini (uyarma, susturma, mesaj silme, gruptan çıkarma ve engelleme) yalnızca grubun kurallarını ve bu Şartları uygulamak için kullanabilir; bu yetkiler taciz, ayrımcılık veya kişisel husumet için kullanılamaz. Gruptaki moderasyon kararları Hanogt'un yaptırımı değildir; yetkilerin kötüye kullanıldığını düşünüyorsanız bize bildirebilirsiniz.",
+  "1shvurek9ct": {
+    "en": "The person who creates a group is its owner: they are responsible for running it in line with these Terms and for choosing its rules, admins, moderators, AutoMod settings, custom commands and welcome message. A group's rules can't contradict these Terms; a group may require its members to accept its rules before they can post, react or join the voice channel. The content of a group's rules is the responsibility of the group's owner and admins; Hanogt doesn't review these rules in advance and, to the extent permitted by applicable law, is not liable for their content. Owners, admins and moderators may use their powers (warning, muting, deleting messages, removing and banning members) only to enforce the group's rules and these Terms, never for harassment, discrimination or personal grudges. Moderation decisions in a group are not sanctions by Hanogt; if you think these powers are being abused, you can report it to us.",
+    "tr": "Bir grubu oluşturan kişi grubun sahibidir: grubu bu Şartlara uygun yönetmekten ve grubun kurallarını, yöneticileri, moderatörleri, AutoMod ayarlarını, özel komutları ve karşılama mesajını belirlemekten sorumludur. Grubun kuralları bu Şartlarla çelişemez; bir grup, üyelerinin mesaj yazmadan, tepki vermeden veya sesli kanala katılmadan önce kurallarını kabul etmesini isteyebilir. Grup kurallarının içeriği grubun sahibi ve yöneticilerinin sorumluluğundadır; Hanogt bu kuralları önceden denetlemez ve yürürlükteki mevzuatın izin verdiği ölçüde içeriklerinden sorumlu tutulamaz. Sahip, yönetici ve moderatörler yetkilerini (uyarma, susturma, mesaj silme, gruptan çıkarma ve engelleme) yalnızca grubun kurallarını ve bu Şartları uygulamak için kullanabilir; bu yetkiler taciz, ayrımcılık veya kişisel husumet için kullanılamaz. Gruptaki moderasyon kararları Hanogt'un yaptırımı değildir; yetkilerin kötüye kullanıldığını düşünüyorsanız bize bildirebilirsiniz.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -17418,6 +17426,7 @@
     "tr": "Tamamlandı",
     "files": [
       "src/components/Admin/copy.ts",
+      "src/components/Groups/workspace/RulesEditor.tsx",
       "src/lib/groups.ts"
     ]
   },
@@ -19940,7 +19949,8 @@
     "en": "Last updated {time}",
     "tr": "Son güncelleme: {time}",
     "files": [
-      "src/components/Admin/PaddleCard.tsx"
+      "src/components/Admin/PaddleCard.tsx",
+      "src/components/Social/group/RulesView.tsx"
     ]
   },
   "nbmao2wcm8": {
@@ -24200,6 +24210,55 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "32669jbngg": {
+    "en": "Group rules and new Hanogt AI settings",
+    "tr": "Grup kuralları ve yeni Hanogt AI ayarları",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "23aq4tihq2g": {
+    "en": "Hanogt Social groups have a rules section like Discord's; the Hanogt AI settings were renewed with search, a summary, creativity, private chats and notifications.",
+    "tr": "Hanogt Social gruplarında Discord'daki gibi bir kurallar bölümü var; Hanogt AI ayarları arama, özet, yaratıcılık, gizli sohbet ve bildirimle yenilendi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "9sokkxs73v": {
+    "en": "Point-by-point rules in groups: “rules” in the sidebar and a rules editor in the settings; templates no longer create a rules file.",
+    "tr": "Gruplarda madde madde kurallar: kenar çubuğunda “kurallar”, ayarlarda kural düzenleyici; şablonlar artık kural dosyası oluşturmaz.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1gzsus2ipxn": {
+    "en": "If the group asks, members accept the rules before posting or joining the voice channel; they can also accept while joining.",
+    "tr": "Grup isterse üyeler yazmadan ve sesli kanala katılmadan önce kuralları kabul eder; katılırken de kabul edilebilir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "dq4e2cplcn": {
+    "en": "A side menu, search, a summary, per-section reset and settings export/import in the Hanogt AI settings.",
+    "tr": "Hanogt AI ayarlarında yan menü, arama, özet, bölüm bölüm sıfırlama ve ayarları dışa/içe aktarma.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "25rhxma0w0e": {
+    "en": "A creativity setting (Precise, Balanced, Creative), private chats that are never stored and an answer-ready notification.",
+    "tr": "Yaratıcılık ayarı (Hassas, Dengeli, Yaratıcı), hiçbir yerde saklanmayan gizli sohbetler ve yanıt hazır bildirimi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1ba5hdgn6v4": {
+    "en": "Privacy Policy and Terms of Use 5.7.",
+    "tr": "Gizlilik Politikası ve Kullanım Şartları 5.7.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "29af80jxzb7": {
@@ -32185,7 +32244,8 @@
     "en": "Reset to defaults",
     "tr": "Varsayılanlara dön",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
   "i8m0k4bn1v": {
@@ -33943,9 +34003,37 @@
       "src/components/Groups/api.ts"
     ]
   },
-  "17j7hbp48xx": {
-    "en": "The rules can be at most 4000 characters.",
-    "tr": "Kurallar en fazla 4000 karakter olabilir.",
+  "vl53dtq9s2": {
+    "en": "A rule's title can be at most 120 characters and its description at most 600.",
+    "tr": "Bir kuralın başlığı en fazla 120, açıklaması en fazla 600 karakter olabilir.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1xdpl7p3xsb": {
+    "en": "Every rule needs a title.",
+    "tr": "Her kuralın bir başlığı olmalı.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1pbwm6kk6wp": {
+    "en": "You can add at most {limit} rules.",
+    "tr": "En fazla {limit} kural eklenebilir.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "c4kpmos5cw": {
+    "en": "Accept the group's rules before you write, react or join the voice channel.",
+    "tr": "Grupta yazmadan, tepki vermeden veya sesli kanala katılmadan önce grubun kurallarını kabul etmelisin.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "248h3su95s": {
+    "en": "The rules were just updated. Read the current rules and accept them again.",
+    "tr": "Kurallar az önce güncellendi. Güncel kuralları okuyup yeniden kabul et.",
     "files": [
       "src/components/Groups/api.ts"
     ]
@@ -34360,6 +34448,13 @@
       "src/components/Groups/api.ts"
     ]
   },
+  "kg24v4880g": {
+    "en": "This group's rule limit is reached.",
+    "tr": "Bu grubun kural sınırına ulaşıldı.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
   "1t0tvfuufn": {
     "en": "Create a new group",
     "tr": "Yeni grup oluştur",
@@ -34389,9 +34484,9 @@
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
-  "l0qvobgw3p": {
-    "en": "A template prepares the starter files, rules, topics and a pinned welcome message. You can change all of it later.",
-    "tr": "Şablon; başlangıç dosyalarını, kuralları, konuları ve sabitlenmiş karşılama mesajını hazırlar. Hepsini sonradan değiştirebilirsin.",
+  "1mda771gwdj": {
+    "en": "A template prepares the starter files, the group's Rules section, topics and a pinned welcome message. You can change all of it later.",
+    "tr": "Şablon; başlangıç dosyalarını, grubun Kurallar bölümünü, konuları ve sabitlenmiş karşılama mesajını hazırlar. Hepsini sonradan değiştirebilirsin.",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
@@ -34461,9 +34556,9 @@
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
-  "18ncfdaiybi": {
-    "en": "If you pick one, its files are imported and the template only adds documents such as the README, rules and task list.",
-    "tr": "Seçersen projenin dosyaları aktarılır; şablon yalnızca README, kurallar ve görev listesi gibi belgeleri ekler.",
+  "19ef57m0gi8": {
+    "en": "If you pick one, its files are imported and the template only adds documents such as the README and task list. The rules still go into the group's Rules section.",
+    "tr": "Seçersen projenin dosyaları aktarılır; şablon yalnızca README ve görev listesi gibi belgeleri ekler. Kurallar yine grubun Kurallar bölümünde olur.",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
@@ -34502,6 +34597,35 @@
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1w0kmgm7rud": {
+    "en": "Rules section",
+    "tr": "Kurallar bölümü",
+    "files": [
+      "src/components/Groups/CreateGroupWizard.tsx"
+    ]
+  },
+  "1feirs7cln6": {
+    "en": "Members accept these rules before they chat.",
+    "tr": "Üyeler sohbet etmeden önce bu kuralları kabul eder.",
+    "files": [
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "v5z0ss2yy0": {
+    "en": "A blank group starts without rules; you can add them any time.",
+    "tr": "Boş grup kuralsız başlar; kuralları istediğin zaman ekleyebilirsin.",
+    "files": [
+      "src/components/Groups/CreateGroupWizard.tsx"
+    ]
+  },
+  "1026a5w9djv": {
+    "en": "You can change the rules in Group settings → Rules & topics.",
+    "tr": "Kuralları Grup ayarları → Kurallar ve konular bölümünden değiştirebilirsin.",
+    "files": [
+      "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
   "4cffuntixl": {
@@ -34554,6 +34678,7 @@
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/Groups/workspace/BotSettings.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Groups/workspace/RulesEditor.tsx",
       "src/components/Groups/workspace/SettingsDialog.tsx",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/Social/chat/Composer.tsx",
@@ -34693,6 +34818,36 @@
   "h6jbhkqxdz": {
     "en": "Couldn't join the group.",
     "tr": "Gruba katılınamadı.",
+    "files": [
+      "src/components/Groups/JoinGroupView.tsx"
+    ]
+  },
+  "1ufygz8pnrd": {
+    "en": "The group's rules",
+    "tr": "Grubun kuralları",
+    "files": [
+      "src/components/Groups/JoinGroupView.tsx",
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "rke1rp3owb": {
+    "en": "This group asks you to accept its rules before you join the chat.",
+    "tr": "Bu grup, sohbete katılmadan önce kurallarını kabul etmeni istiyor.",
+    "files": [
+      "src/components/Groups/JoinGroupView.tsx"
+    ]
+  },
+  "1jil4e011yw": {
+    "en": "I've read the rules and accept them",
+    "tr": "Kuralları okudum ve kabul ediyorum",
+    "files": [
+      "src/components/Groups/JoinGroupView.tsx",
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "xp01lbzoec": {
+    "en": "Accept the rules first to join.",
+    "tr": "Katılmak için önce kuralları kabul et.",
     "files": [
       "src/components/Groups/JoinGroupView.tsx"
     ]
@@ -35118,6 +35273,20 @@
   "xvml6w0w0x": {
     "en": "Slow mode is on: {duration} between two messages.",
     "tr": "Yavaş mod açık: iki mesaj arasında {duration}.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "2bqctxsr8gm": {
+    "en": "You need to accept the group's rules before you can send messages.",
+    "tr": "Mesaj göndermeden önce grubun kurallarını kabul etmelisin.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "f0t7ey90s5": {
+    "en": "See the rules",
+    "tr": "Kuralları gör",
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
@@ -35836,6 +36005,196 @@
       "src/components/Groups/workspace/MessageItem.tsx"
     ]
   },
+  "1m156stevor": {
+    "en": "Group rules",
+    "tr": "Grup kuralları",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx",
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "1ox1l2u35fl": {
+    "en": "{count}/{max} rules",
+    "tr": "{count}/{max} kural",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "1u40v27vb4j": {
+    "en": "Rules are shown to everyone in the Rules section at the top of the channel list, and the /rules command lists them too.",
+    "tr": "Kurallar, kanal listesinin en üstündeki Kurallar bölümünde herkese gösterilir; /kurallar komutu da onları listeler.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "fp82p9uow0": {
+    "en": "No rules yet. Add one below or start with the suggested rules.",
+    "tr": "Henüz kural yok. Aşağıdan bir kural ekle ya da önerilen kurallarla başla.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "torexkb1wq": {
+    "en": "No rules have been added for this group yet.",
+    "tr": "Bu grup için henüz kural eklenmedi.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "1y3eh7dbdq8": {
+    "en": "Move rule {n} up",
+    "tr": "{n}. kuralı yukarı taşı",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "1d061bo593x": {
+    "en": "Move rule {n} down",
+    "tr": "{n}. kuralı aşağı taşı",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "14rtjuots0y": {
+    "en": "Edit rule {n}",
+    "tr": "{n}. kuralı düzenle",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "1kszbinekql": {
+    "en": "Delete rule {n}",
+    "tr": "{n}. kuralı sil",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "138qqyu7j7d": {
+    "en": "e.g. Be respectful and constructive",
+    "tr": "Örn. Saygılı ve yapıcı ol",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "ynf735cs3a": {
+    "en": "Explain the rule in a sentence or two.",
+    "tr": "Kuralı birkaç cümleyle açıkla.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "ghb9ae5jrc": {
+    "en": "Add rule",
+    "tr": "Kural ekle",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "6583cs2q41": {
+    "en": "New rule",
+    "tr": "Yeni kural",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "8a620vjhqq": {
+    "en": "Add the suggested rules",
+    "tr": "Önerilen kuralları ekle",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "12bfkln31rx": {
+    "en": "Suggested rules added: {count}. Don't forget to save.",
+    "tr": "{count} önerilen kural eklendi. Kaydetmeyi unutma.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "2dfejeu97pn": {
+    "en": "All of the suggested rules are already on the list.",
+    "tr": "Önerilen kuralların hepsi zaten listede.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "21alav6vsi7": {
+    "en": "The rule needs a title.",
+    "tr": "Kuralın bir başlığı olmalı.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "mz9bncgupw": {
+    "en": "You can add at most {max} rules.",
+    "tr": "En fazla {max} kural eklenebilir.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "r5ecas04d2": {
+    "en": "Members accept the rules before they chat",
+    "tr": "Üyeler sohbet etmeden önce kuralları kabul etsin",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "zssct3ne8i": {
+    "en": "While it's on, members can't write, react or join the voice channel until they accept the rules; they can still read. The owner, admins and moderators are exempt.",
+    "tr": "Açıkken üyeler kuralları kabul edene kadar mesaj yazamaz, tepki veremez ve sesli kanala katılamaz; okumaya devam edebilir. Sahip, yöneticiler ve moderatörler muaftır.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "129kd3wnjdt": {
+    "en": "Once you save, members will need to accept the rules before they join the chat.",
+    "tr": "Kaydettiğinde üyelerin sohbete katılmadan önce kuralları kabul etmesi gerekecek.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "1qbhyf2o4lt": {
+    "en": "Acceptance applies once there is at least one rule.",
+    "tr": "Kabul zorunluluğu en az bir kural olduğunda çalışır.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "25csvkk73sr": {
+    "en": "Ask everyone to accept the rules again",
+    "tr": "Herkes kuralları yeniden kabul etsin",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "lnci5ni9oo": {
+    "en": "If you leave it unticked, people who already accepted aren't asked again; small fixes don't need it.",
+    "tr": "İşaretlemezsen kuralları daha önce kabul edenlerden yeniden istenmez; küçük düzeltmeler için gerekmez.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "jt3oddehdc": {
+    "en": "Save the rules",
+    "tr": "Kuralları kaydet",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "rjozibux6q": {
+    "en": "Finish the rule you're editing before saving.",
+    "tr": "Kaydetmeden önce düzenlediğin kuralı tamamla.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
+  "28qvd4kk592": {
+    "en": "In this group, members accept the rules before they chat.",
+    "tr": "Bu grupta üyeler sohbet etmeden önce kuralları kabul ediyor.",
+    "files": [
+      "src/components/Groups/workspace/RulesEditor.tsx"
+    ]
+  },
   "2bz3oco16tj": {
     "en": "AutoMod",
     "tr": "AutoMod",
@@ -36247,23 +36606,9 @@
       "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
-  "1m156stevor": {
-    "en": "Group rules",
-    "tr": "Grup kuralları",
-    "files": [
-      "src/components/Groups/workspace/SettingsDialog.tsx"
-    ]
-  },
-  "1ndjgba1bk0": {
-    "en": "Rules are shown to every member from the Members panel. You can also keep detailed rules in a RULES.md file.",
-    "tr": "Kurallar her üyeye Üyeler panelinden gösterilir. Ayrıntılı kurallar için KURALLAR.md dosyasını da kullanabilirsin.",
-    "files": [
-      "src/components/Groups/workspace/SettingsDialog.tsx"
-    ]
-  },
-  "4hibg1x2h8": {
-    "en": "No rules have been written for this group yet.",
-    "tr": "Bu grup için henüz kural yazılmadı.",
+  "dwywea8grd": {
+    "en": "Save the topics",
+    "tr": "Konuları kaydet",
     "files": [
       "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
@@ -36584,6 +36929,13 @@
   "10ndf0mdzea": {
     "en": "You're timed out in this group, so you can't join its voice channel.",
     "tr": "Bu grupta susturulduğun için sesli kanala katılamazsın.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "1gsy0fanyg8": {
+    "en": "Accept the group's rules before joining its voice channel. You'll find them in the Rules section at the top of the channel list.",
+    "tr": "Sesli kanala katılmadan önce grubun kurallarını kabul etmelisin. Kuralları kanal listesinin en üstündeki Kurallar bölümünde bulabilirsin.",
     "files": [
       "src/components/GroupVoiceProvider.tsx"
     ]
@@ -39853,6 +40205,188 @@
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
+  "13znfzvtbti": {
+    "en": "No setting matches “{query}”.",
+    "tr": "“{query}” ile eşleşen bir ayar yok.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1fnq3a9x59q": {
+    "en": "The section is back to its defaults; remember to save.",
+    "tr": "Bölüm varsayılanlara döndü; kaydetmeyi unutma.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "22p0bahejwx": {
+    "en": "This is how Hanogt AI will answer you",
+    "tr": "Hanogt AI seni böyle yanıtlayacak",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2bvby1nevu1": {
+    "en": "Personal instructions: {count} characters",
+    "tr": "Kişisel talimat: {count} karakter",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "kob4ip8ndx": {
+    "en": "No personal instructions",
+    "tr": "Kişisel talimat yok",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "tgwepc6n3r": {
+    "en": "Chats are kept in this browser",
+    "tr": "Sohbetler bu tarayıcıda saklanır",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2373s02m4i4": {
+    "en": "Private chats: never stored",
+    "tr": "Gizli sohbetler: hiçbir yerde saklanmaz",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1kqu22vjpy1": {
+    "en": "Export settings",
+    "tr": "Ayarları dışa aktar",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1sjz184qsrz": {
+    "en": "Import settings",
+    "tr": "Ayarları içe aktar",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "mpg729t4l3": {
+    "en": "Settings imported; remember to save.",
+    "tr": "Ayarlar içe aktarıldı; kaydetmeyi unutma.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "wywur34cg2": {
+    "en": "This file couldn't be read. Pick a Hanogt AI settings file (JSON).",
+    "tr": "Bu dosya okunamadı. Hanogt AI ayarları dosyası (JSON) seç.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "q3f27rd47r": {
+    "en": "Creativity",
+    "tr": "Yaratıcılık",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "278nt6ef8xi": {
+    "en": "Precise answers stick to the likeliest words; creative ones are freer. With agent mode on the effect is smaller so proposed actions stay exact; while thinking the model's recommended value is used.",
+    "tr": "Hassas yanıtlar en olası sözcüklere bağlı kalır; yaratıcı yanıtlar daha özgürdür. Ajan modu açıkken etkisi daha küçüktür ki önerilen işlemler doğru kalsın; düşünürken modelin önerdiği değer kullanılır.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "21ioyg3sz8f": {
+    "en": "Keep new chats in this browser",
+    "tr": "Yeni sohbetleri bu tarayıcıda sakla",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2aa7g9lkprd": {
+    "en": "When off, new chats are private: they're gone when the tab closes and are never stored. They show an eye icon in the sidebar.",
+    "tr": "Kapalıyken yeni sohbetler gizli olur: sekme kapanınca kaybolur ve hiçbir yerde saklanmaz. Kenar çubuğunda göz simgesiyle görünür.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1yihknf1arc": {
+    "en": "Notify me when an answer is ready",
+    "tr": "Yanıt hazır olunca bildirim gönder",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "7vk5cff2pr": {
+    "en": "If an answer finishes while the tab is in the background, a browser notification appears.",
+    "tr": "Sekme arka plandayken yanıt biterse tarayıcı bildirimi gösterilir.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1e19s7l2uvf": {
+    "en": "The browser didn't allow notifications; you can allow them in the browser's site settings.",
+    "tr": "Tarayıcı bildirim izni vermedi; izni tarayıcının site ayarlarından açabilirsin.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1zrnqloo2ox": {
+    "en": "This browser doesn't support notifications.",
+    "tr": "Bu tarayıcı bildirimleri desteklemiyor.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1t0ugupxa42": {
+    "en": "Reset this device's choices",
+    "tr": "Bu cihazdaki seçimleri sıfırla",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1ily8vqw4xq": {
+    "en": "The model and agent mode picked on this device win over these defaults. Reset them and your account defaults apply on this device too.",
+    "tr": "Bu cihazda seçtiğin model ve ajan modu buradaki varsayılanların önüne geçer. Sıfırlarsan bu cihazda da hesap varsayılanların geçerli olur.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "ukca8y7wva": {
+    "en": "This device now uses your account defaults.",
+    "tr": "Bu cihaz artık hesap varsayılanlarını kullanıyor.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "h4d9liacq4": {
+    "en": "Personalization applies to your chats; the group bot and the developer API don't use it.",
+    "tr": "Kişiselleştirme sohbetlerine uygulanır; grup botu ve geliştirici API'si bunları kullanmaz.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2b0kba61guh": {
+    "en": "Precise",
+    "tr": "Hassas",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "jy5ya4dnaf": {
+    "en": "Balanced",
+    "tr": "Dengeli",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2b1qrbnil4j": {
+    "en": "Creative",
+    "tr": "Yaratıcı",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
   "kmnrvrfbdr": {
     "en": "I'm a beginner",
     "tr": "Yeni başlıyorum",
@@ -39926,13 +40460,6 @@
   "1eto53cddmq": {
     "en": "Sans-serif",
     "tr": "Sans-serif",
-    "files": [
-      "src/components/HanogtAI/AiSettingsPage.tsx"
-    ]
-  },
-  "jy5ya4dnaf": {
-    "en": "Balanced",
-    "tr": "Dengeli",
     "files": [
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
@@ -40943,6 +41470,20 @@
       "src/components/HanogtAI/chat-copy.ts"
     ]
   },
+  "2h6lp2rpqo": {
+    "en": "Hanogt AI answered",
+    "tr": "Hanogt AI yanıtladı",
+    "files": [
+      "src/components/HanogtAI/chat-copy.ts"
+    ]
+  },
+  "2frzfl9uyj6": {
+    "en": "Private chat: this chat isn't saved",
+    "tr": "Gizli sohbet: bu sohbet kaydedilmez",
+    "files": [
+      "src/components/HanogtAI/chat-copy.ts"
+    ]
+  },
   "2dzmn3tbxtb": {
     "en": "Try again in {seconds} s.",
     "tr": "{seconds} sn sonra tekrar dene.",
@@ -41337,6 +41878,13 @@
       "src/components/HanogtAI/ChatSidebar.tsx",
       "src/components/HanogtAI/HanogtAIChat.tsx",
       "src/components/HanogtAI/RecentChats.tsx"
+    ]
+  },
+  "11izi2gfd86": {
+    "en": "Private chat (not saved)",
+    "tr": "Gizli sohbet (kaydedilmez)",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
     ]
   },
   "ajx7a22yg2": {
@@ -47748,6 +48296,7 @@
     "tr": "Kabul et",
     "files": [
       "src/components/Social/FriendsView.tsx",
+      "src/components/Social/group/RulesView.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -48370,6 +48919,118 @@
       "src/components/Social/group/MemberList.tsx"
     ]
   },
+  "2al5pp70r64": {
+    "en": "The group's rules; this channel is read-only.",
+    "tr": "Grubun kuralları; bu kanal yalnızca okunur.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "1an387o2jj5": {
+    "en": "These rules keep the group safe, productive and fun for everyone. Please read them before joining the chat.",
+    "tr": "Bu kurallar grubu herkes için güvenli, verimli ve keyifli tutar. Lütfen sohbete katılmadan önce oku.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "1hwosdu9utu": {
+    "en": "In this group you accept the rules before you write, react or join the voice channel.",
+    "tr": "Bu grupta mesaj yazmadan, tepki vermeden ve sesli kanala katılmadan önce kuralları kabul etmen gerekiyor.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "29jghrlwjec": {
+    "en": "Rules: {count}",
+    "tr": "Kural sayısı: {count}",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "1ayyjolztw6": {
+    "en": "No rules yet",
+    "tr": "Henüz kural yok",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "27yubtfnd7w": {
+    "en": "Add the group's rules; members see them here. You can also ask them to accept the rules before they chat.",
+    "tr": "Grubun kurallarını ekle; üyeler onları burada görür. İstersen sohbet etmeden önce kabul etmelerini de isteyebilirsin.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "19m1ceaomdz": {
+    "en": "This group's admins haven't added any rules yet.",
+    "tr": "Bu grubun yöneticileri henüz kural eklemedi.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "2156hzo6f2u": {
+    "en": "Add rules",
+    "tr": "Kural ekle",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "1vb3v1ar9mk": {
+    "en": "Before you join the chat",
+    "tr": "Sohbete katılmadan önce",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "mnx7n41n1l": {
+    "en": "This group asks its members to accept the rules before they write.",
+    "tr": "Bu grup, üyelerinin yazmadan önce kuralları kabul etmesini istiyor.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "kpwyldrod7": {
+    "en": "You accepted the rules. Welcome to the chat!",
+    "tr": "Kuralları kabul ettin. Sohbete hoş geldin!",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "gjub1b7o81": {
+    "en": "You accepted the rules",
+    "tr": "Kuralları kabul ettin",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "44z11yd5ea": {
+    "en": "You can join the chat, react and use the voice channel.",
+    "tr": "Sohbete, tepkilere ve sesli kanala katılabilirsin.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "239xxf01wct": {
+    "en": "Go to the chat",
+    "tr": "Sohbete git",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "tin57y1209": {
+    "en": "The owner, admins and moderators can take part without accepting the rules.",
+    "tr": "Sahip, yöneticiler ve moderatörler kuralları kabul etmeden de katılabilir.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
+  "23b6hh2a3ew": {
+    "en": "This group doesn't ask you to accept the rules separately, but everyone is expected to follow them.",
+    "tr": "Bu grupta kuralları ayrıca kabul etmek gerekmiyor; yine de herkesin uyması beklenir.",
+    "files": [
+      "src/components/Social/group/RulesView.tsx"
+    ]
+  },
   "v3858ggy77": {
     "en": "{name} group menu",
     "tr": "{name} grubu menüsü",
@@ -48480,6 +49141,29 @@
   "1c235jpxcce": {
     "en": "You no longer have access to this group.",
     "tr": "Bu gruba artık erişimin yok.",
+    "files": [
+      "src/components/Social/GroupSidebar.tsx"
+    ]
+  },
+  "khrd6mhj36": {
+    "en": "rules",
+    "tr": "kurallar",
+    "files": [
+      "src/components/Social/GroupSidebar.tsx",
+      "src/components/Social/group/RulesView.tsx",
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "e535dkest3": {
+    "en": "rules, waiting for you to accept them",
+    "tr": "kurallar, kabul etmen gerekiyor",
+    "files": [
+      "src/components/Social/GroupSidebar.tsx"
+    ]
+  },
+  "1eymrihud72": {
+    "en": "Accept the rules to join the chat",
+    "tr": "Sohbete katılmak için kuralları kabul et",
     "files": [
       "src/components/Social/GroupSidebar.tsx"
     ]
@@ -51668,9 +52352,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "orqewcmmee": {
-    "en": "On the [Hanogt AI settings](/ai/settings) page (the ⚙ button above the chat, or Account Settings › Hanogt AI) you can choose:\n• **Personalization:** what Hanogt AI should know about you and how you want answers ({instructionsFree} characters each on Free, {instructionsPlus} on Plus, {instructionsPro} on Pro), the tone (balanced, friendly, professional), answer length and a fixed answer language. They can't change the safety rules.\n• **Chat defaults:** the answer mode of a new chat, the default model (Hanogt AI or one of your connections), the agent mode and attaching the open editor file. The agent mode and model you pick yourself on a device win over the defaults there.\n• **History and privacy:** your chats stay in your browser only; export them as JSON, delete them all, or have this device's chats deleted when you sign out.\n• **Usage and early access:** today's messages, every benefit of your plan and new features open to you.\nSettings are kept with your account and included when you download your account data.",
-    "tr": "[Hanogt AI ayarları](/ai/settings) sayfasında (sohbetin üstündeki ⚙ düğmesi ya da Hesap Ayarları › Hanogt AI) şunları seçebilirsin:\n• **Kişiselleştirme:** Hanogt AI'ın senin hakkında bilmesini istediklerin ve nasıl yanıt vermesini istediğin (her biri Ücretsiz'de {instructionsFree}, Plus'ta {instructionsPlus}, Pro'da {instructionsPro} karakter), üslup (dengeli, samimi, profesyonel), yanıt uzunluğu ve sabit bir yanıt dili. Bunlar güvenlik kurallarını değiştiremez.\n• **Sohbet varsayılanları:** yeni sohbetin yanıt modu, varsayılan model (Hanogt AI ya da kendi bağlantın), ajan modu ve açık editör dosyasının sorulara eklenmesi. Bir cihazda kendin seçtiğin ajan modu ve model, oradaki varsayılandan önce gelir.\n• **Geçmiş ve gizlilik:** sohbetlerin yalnızca tarayıcında saklanır; JSON olarak dışa aktarabilir, hepsini silebilir ya da çıkış yapınca bu cihazdaki sohbetlerin silinmesini açabilirsin.\n• **Kullanım ve erken erişim:** bugünkü mesajların, planındaki bütün haklar ve sana açık yeni özellikler.\nAyarlar hesabınla saklanır; hesap verilerini indirdiğinde dosyada yer alır.",
+  "1rqa9hz457o": {
+    "en": "On the [Hanogt AI settings](/ai/settings) page (the ⚙ button above the chat, or Account Settings › Hanogt AI) you can choose:\n• **Personalization:** what Hanogt AI should know about you and how you want answers ({instructionsFree} characters each on Free, {instructionsPlus} on Plus, {instructionsPro} on Pro), the tone (balanced, friendly, professional), answer length and a fixed answer language. They can't change the safety rules.\n• **Chat defaults:** the answer mode of a new chat, the default model (Hanogt AI or one of your connections), the agent mode and attaching the open editor file. The agent mode and model you pick yourself on a device win over the defaults there.\n• **Creativity:** Precise, Balanced or Creative; how freely answers are written (with agent mode on the effect is smaller).\n• **History and privacy:** your chats stay in your browser only; export them as JSON, delete them all, or have this device's chats deleted when you sign out. With **Keep new chats** off, chats are private: they're gone when the tab closes and are never stored.\n• **Notifications:** get a browser notification when an answer finishes while the tab is in the background.\n• You can search the settings, **Reset to defaults** in each section, export or import your settings as JSON, and **Reset this device's choices**.\n• **Usage and early access:** today's messages, every benefit of your plan and new features open to you.\nSettings are kept with your account and included when you download your account data.",
+    "tr": "[Hanogt AI ayarları](/ai/settings) sayfasında (sohbetin üstündeki ⚙ düğmesi ya da Hesap Ayarları › Hanogt AI) şunları seçebilirsin:\n• **Kişiselleştirme:** Hanogt AI'ın senin hakkında bilmesini istediklerin ve nasıl yanıt vermesini istediğin (her biri Ücretsiz'de {instructionsFree}, Plus'ta {instructionsPlus}, Pro'da {instructionsPro} karakter), üslup (dengeli, samimi, profesyonel), yanıt uzunluğu ve sabit bir yanıt dili. Bunlar güvenlik kurallarını değiştiremez.\n• **Sohbet varsayılanları:** yeni sohbetin yanıt modu, varsayılan model (Hanogt AI ya da kendi bağlantın), ajan modu ve açık editör dosyasının sorulara eklenmesi. Bir cihazda kendin seçtiğin ajan modu ve model, oradaki varsayılandan önce gelir.\n• **Yaratıcılık:** Hassas, Dengeli ya da Yaratıcı; yanıtların ne kadar özgür yazılacağını belirler (ajan modu açıkken etkisi daha küçüktür).\n• **Geçmiş ve gizlilik:** sohbetlerin yalnızca tarayıcında saklanır; JSON olarak dışa aktarabilir, hepsini silebilir ya da çıkış yapınca bu cihazdaki sohbetlerin silinmesini açabilirsin. **Yeni sohbetleri sakla** kapalıyken sohbetler gizli olur: sekme kapanınca kaybolur, hiçbir yerde saklanmaz.\n• **Bildirim:** sekme arka plandayken yanıt biterse tarayıcı bildirimi alabilirsin.\n• Ayarlarda arama, her bölümde **Varsayılana döndür**, ayarları JSON olarak dışa/içe aktarma ve **Bu cihazdaki seçimleri sıfırla** düğmesi var.\n• **Kullanım ve erken erişim:** bugünkü mesajların, planındaki bütün haklar ve sana açık yeni özellikler.\nAyarlar hesabınla saklanır; hesap verilerini indirdiğinde dosyada yer alır.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -52047,9 +52731,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "24zzb37jrm4": {
-    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, #channels, /commands, GIFs, Markdown, search, voice messages, files and voice calls, and up to 5 people at a time can join the **voice channel** in the sidebar. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin, moderator and member; owners and admins manage members, settings and AutoMod, and moderators warn, mute, delete messages and remove members. See “Bots and AutoMod in groups” for Hanogt Security Bot and AutoMod.\nLimits: 50 files per group; a group's size follows its owner's plan: {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro (the limits for pinned messages, custom bot commands and AutoMod banned words grow with the plan too). How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
-    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, #kanal, /komutlar, GIF, Markdown, arama, sesli mesaj, dosya gönderme ve sesli arama var; kenar çubuğundaki **sesli kanala** aynı anda 5 kişi katılabilir. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici, moderatör ve üye; sahip ve yöneticiler üyeleri, ayarları ve AutoMod'u yönetir, moderatörler uyarır, susturur, mesaj siler ve gruptan çıkarır. Hanogt Security Bot ve AutoMod için “Gruplarda botlar ve AutoMod” notuna bak.\nSınırlar: grup başına 50 dosya; grubun büyüklüğü sahibinin planına göredir: Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye (sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelime sınırları da planla büyür). Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
+  "158v5o47v2q": {
+    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README and a task list, a ready **Rules** section, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, #channels, /commands, GIFs, Markdown, search, voice messages, files and voice calls, and up to 5 people at a time can join the **voice channel** in the sidebar. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin, moderator and member; owners and admins manage members, settings and AutoMod, and moderators warn, mute, delete messages and remove members. See “Bots and AutoMod in groups” for Hanogt Security Bot and AutoMod.\n5. **Rules:** the Rules section at the top of the channel list (like Discord's) shows the group's numbered rules with their titles and descriptions. Owners and admins add, edit and reorder them in Group settings → Rules & topics, or start from the suggested rules (20 rules at most). When “Members accept the rules before they chat” is on, members can't write, react, send files or voice messages or join the voice channel until they accept the rules; they can still read. The rules also show on the invite page before joining, where you join by ticking “I've read the rules and accept them”. The owner, admins and moderators don't have to accept; if the rules change a lot, the owner can ask everyone to accept them again.\nLimits: 50 files per group; a group's size follows its owner's plan: {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro (the limits for pinned messages, custom bot commands and AutoMod banned words grow with the plan too). How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
+    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README ve görev listesi gibi başlangıç dosyaları, hazır bir **Kurallar** bölümü, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, #kanal, /komutlar, GIF, Markdown, arama, sesli mesaj, dosya gönderme ve sesli arama var; kenar çubuğundaki **sesli kanala** aynı anda 5 kişi katılabilir. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici, moderatör ve üye; sahip ve yöneticiler üyeleri, ayarları ve AutoMod'u yönetir, moderatörler uyarır, susturur, mesaj siler ve gruptan çıkarır. Hanogt Security Bot ve AutoMod için “Gruplarda botlar ve AutoMod” notuna bak.\n5. **Kurallar:** kanal listesinin en üstündeki Kurallar bölümü (Discord'daki gibi) grubun numaralı kurallarını başlık ve açıklamalarıyla gösterir. Sahip ve yöneticiler kuralları Grup ayarları → Kurallar ve konular'dan ekler, düzenler, sıralar ya da önerilen kurallarla başlar (en fazla 20 kural). “Üyeler sohbet etmeden önce kuralları kabul etsin” açıksa üyeler kuralları kabul edene kadar yazamaz, tepki veremez, dosya ya da sesli mesaj gönderemez ve sesli kanala katılamaz; okumaya devam edebilirler. Kurallar davet sayfasında katılmadan önce de gösterilir ve “Kuralları okudum ve kabul ediyorum” işaretlenerek katılınır. Sahip, yöneticiler ve moderatörler kabul etmek zorunda değildir; kurallar önemli ölçüde değişirse sahip herkesten yeniden kabul isteyebilir.\nSınırlar: grup başına 50 dosya; grubun büyüklüğü sahibinin planına göredir: Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye (sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelime sınırları da planla büyür). Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -52061,9 +52745,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "qafgaz9fjp": {
-    "en": "Every group has two bots:\n• **Hanogt Security Bot** (can't be removed): shows the rules and welcome message and announces moderation. Commands: `/help`, `/rules`, `/warnings` and `/report @person reason` for everyone; `/warn`, `/mute @person 10m reason` (28 days at most), `/unmute`, `/kick`, `/purge 20` and `/slowmode 10s` for moderators; `/ban` for owners and admins. Command replies are visible only to you. Warnings and reports are kept for 180 days.\n• **Hanogt AI**: ask with `/ai question` or `@Hanogt AI`; it reads the channel's last 12 messages, answers in the group and uses your Hanogt AI message allowance. It can be switched off in Group settings → Bots.\n**AutoMod** (Group settings → Safety): rules for profanity, slang, the group's own banned words, spam, too many mentions, links, capital letters and personal data (e-mail, phone, Turkish ID, card, IBAN). A message that breaks a rule is never sent; if the group chooses, a warning is given and a set number of warnings mutes automatically. The owner is always exempt, and admins are by default. Owners and admins can also define **custom commands** and a **welcome message**.",
-    "tr": "Her grupta iki bot var:\n• **Hanogt Security Bot** (kaldırılamaz): kuralları ve karşılama mesajını gösterir, moderasyonu duyurur. Komutlar: herkes için `/yardim`, `/kurallar`, `/uyarilar`, `/rapor @kişi sebep`; moderatörler için `/uyar`, `/sustur @kişi 10dk sebep` (en çok 28 gün), `/sesiac`, `/at`, `/temizle 20`, `/yavasmod 10s`; sahip ve yöneticiler için `/yasakla`. Komut yanıtları yalnızca sana görünür. Uyarılar ve raporlar 180 gün saklanır.\n• **Hanogt AI**: `/ai soru` ya da `@Hanogt AI` ile sor; kanalın son 12 mesajını okuyup grupta yanıtlar ve senin Hanogt AI mesaj hakkından düşer. Grup ayarları → Botlar'dan kapatılabilir.\n**AutoMod** (Grup ayarları → Güvenlik): küfür, argo, gruba özel yasaklı kelimeler, spam, çok fazla bahsetme, bağlantılar, büyük harf ve kişisel veri (e-posta, telefon, T.C. kimlik, kart, IBAN) kuralları. Kurala takılan mesaj hiç gönderilmez; grup seçerse uyarı verilir ve belli sayıda uyarıda otomatik susturulur. Sahip her zaman, yöneticiler varsayılan olarak muaftır. Sahip ve yöneticiler ayrıca **özel komutlar** ve bir **karşılama mesajı** tanımlayabilir.",
+  "nn950hitew": {
+    "en": "Every group has two bots:\n• **Hanogt Security Bot** (can't be removed): lists the rules of the group's Rules section, numbered, with `/rules`, shows the welcome message and announces moderation. Commands: `/help`, `/rules`, `/warnings` and `/report @person reason` for everyone; `/warn`, `/mute @person 10m reason` (28 days at most), `/unmute`, `/kick`, `/purge 20` and `/slowmode 10s` for moderators; `/ban` for owners and admins. Command replies are visible only to you. Warnings and reports are kept for 180 days.\n• **Hanogt AI**: ask with `/ai question` or `@Hanogt AI`; it reads the channel's last 12 messages, answers in the group and uses your Hanogt AI message allowance. It can be switched off in Group settings → Bots.\n**AutoMod** (Group settings → Safety): rules for profanity, slang, the group's own banned words, spam, too many mentions, links, capital letters and personal data (e-mail, phone, Turkish ID, card, IBAN). A message that breaks a rule is never sent; if the group chooses, a warning is given and a set number of warnings mutes automatically. The owner is always exempt, and admins are by default. Owners and admins can also define **custom commands** and a **welcome message**.",
+    "tr": "Her grupta iki bot var:\n• **Hanogt Security Bot** (kaldırılamaz): grubun Kurallar bölümündeki kuralları `/kurallar` ile numaralı olarak listeler, karşılama mesajını gösterir ve moderasyonu duyurur. Komutlar: herkes için `/yardim`, `/kurallar`, `/uyarilar`, `/rapor @kişi sebep`; moderatörler için `/uyar`, `/sustur @kişi 10dk sebep` (en çok 28 gün), `/sesiac`, `/at`, `/temizle 20`, `/yavasmod 10s`; sahip ve yöneticiler için `/yasakla`. Komut yanıtları yalnızca sana görünür. Uyarılar ve raporlar 180 gün saklanır.\n• **Hanogt AI**: `/ai soru` ya da `@Hanogt AI` ile sor; kanalın son 12 mesajını okuyup grupta yanıtlar ve senin Hanogt AI mesaj hakkından düşer. Grup ayarları → Botlar'dan kapatılabilir.\n**AutoMod** (Grup ayarları → Güvenlik): küfür, argo, gruba özel yasaklı kelimeler, spam, çok fazla bahsetme, bağlantılar, büyük harf ve kişisel veri (e-posta, telefon, T.C. kimlik, kart, IBAN) kuralları. Kurala takılan mesaj hiç gönderilmez; grup seçerse uyarı verilir ve belli sayıda uyarıda otomatik susturulur. Sahip her zaman, yöneticiler varsayılan olarak muaftır. Sahip ve yöneticiler ayrıca **özel komutlar** ve bir **karşılama mesajı** tanımlayabilir.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -54200,9 +54884,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "150zg3tau39": {
-    "en": "Press New group on the Groups page and pick a template in the three-step wizard (blank, study group, game dev, open source, classroom, hackathon). The group opens with starter files, rules and a pinned welcome message. Invite friends directly or share an invite link that expires, has a usage limit and can be revoked any time. Group chat has pins, reactions, @mentions and search; files can be renamed, downloaded as a ZIP and opened in the editor.",
-    "tr": "Gruplar sayfasında Yeni grup'a basın ve üç adımlı sihirbazda bir şablon seçin (boş, çalışma grubu, oyun geliştirme, açık kaynak, sınıf, hackathon). Grup başlangıç dosyaları, kurallar ve sabitlenmiş bir karşılama mesajıyla açılır. Arkadaşlarınızı doğrudan davet edebilir ya da süreli, kullanım sınırlı ve istediğiniz an iptal edebileceğiniz bir davet bağlantısı paylaşabilirsiniz. Grup sohbetinde sabitleme, tepkiler, @bahsetme ve arama; dosyalarda yeniden adlandırma, ZIP indirme ve editörde açma vardır.",
+  "1conv8eoymn": {
+    "en": "Press New group on the Groups page and pick a template in the three-step wizard (blank, study group, game dev, open source, classroom, hackathon). The group opens with starter files, a ready Rules section at the top of the channel list and a pinned welcome message; if the group asks for it, members accept the rules before they join the chat. Invite friends directly or share an invite link that expires, has a usage limit and can be revoked any time. Group chat has pins, reactions, @mentions and search; files can be renamed, downloaded as a ZIP and opened in the editor.",
+    "tr": "Gruplar sayfasında Yeni grup'a basın ve üç adımlı sihirbazda bir şablon seçin (boş, çalışma grubu, oyun geliştirme, açık kaynak, sınıf, hackathon). Grup başlangıç dosyaları, kanal listesinin en üstünde hazır bir Kurallar bölümü ve sabitlenmiş bir karşılama mesajıyla açılır; grup isterse üyeler sohbete katılmadan önce kuralları kabul eder. Arkadaşlarınızı doğrudan davet edebilir ya da süreli, kullanım sınırlı ve istediğiniz an iptal edebileceğiniz bir davet bağlantısı paylaşabilirsiniz. Grup sohbetinde sabitleme, tepkiler, @bahsetme ve arama; dosyalarda yeniden adlandırma, ZIP indirme ve editörde açma vardır.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -55047,9 +55731,9 @@
       "src/lib/groups.ts"
     ]
   },
-  "2dp2i152epf": {
-    "en": "📚 Welcome to the {group} study group! The weekly plan lives in TODO.md. Read the rules, ask questions freely and share what you learn.",
-    "tr": "📚 {group} çalışma grubuna hoş geldiniz! Haftalık plan TODO.md dosyasında. Kuralları okuyun, sorularınızı çekinmeden sorun ve öğrendiklerinizi paylaşın.",
+  "19fkrcmh7b9": {
+    "en": "📚 Welcome to the {group} study group! The weekly plan lives in TODO.md. Read the Rules section, ask questions freely and share what you learn.",
+    "tr": "📚 {group} çalışma grubuna hoş geldiniz! Haftalık plan TODO.md dosyasında. Kurallar bölümünü okuyun, sorularınızı çekinmeden sorun ve öğrendiklerinizi paylaşın.",
     "files": [
       "src/lib/groups.ts"
     ]
@@ -55197,6 +55881,20 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1hamfv14nyh": {
+    "en": "Hanogt Social group rules: a group's owner and admins can write rules point by point and ask members to accept them before they post, react or join the voice channel. The rules version you accepted is kept in the group's record under your group-specific pseudonymous key instead of your e-mail address, and is deleted when you leave the group, are removed or delete your account. Group rules can't contradict these Terms, and the group's owner and admins are responsible for their content. The Privacy Policy and the Terms of Use were updated accordingly.",
+    "tr": "Hanogt Social grup kuralları: Bir grubun sahibi ve yöneticileri madde madde kurallar yazabilir ve üyelerden yazmadan, tepki vermeden veya sesli kanala katılmadan önce bu kuralları kabul etmelerini isteyebilir. Kabul ettiğiniz kural sürümü, e-posta adresiniz yerine gruba özel takma anahtarınızla grubun kaydında tutulur; gruptan ayrıldığınızda, çıkarıldığınızda veya hesabınızı sildiğinizde silinir. Grup kuralları bu Şartlarla çelişemez ve içeriklerinden grubun sahibi ve yöneticileri sorumludur. Gizlilik Politikası ve Kullanım Şartları buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "19fo114vwlg": {
+    "en": "Hanogt AI settings: the creativity level, whether new chats are kept in this browser and whether you want a notification when an answer is ready are also stored with your account. With “Keep new chats” off, chats are not stored anywhere; notifications are shown only on your device.",
+    "tr": "Hanogt AI ayarları: Yaratıcılık düzeyi, yeni sohbetlerin bu tarayıcıda saklanıp saklanmayacağı ve yanıt hazır olunca bildirim isteyip istemediğiniz de hesabınızla saklanır. “Yeni sohbetleri sakla” kapalıyken sohbetler hiçbir yerde saklanmaz; bildirimler yalnızca cihazınızda gösterilir.",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -59700,6 +60398,13 @@
       "src/lib/social/api.ts"
     ]
   },
+  "q7o704gvx5": {
+    "en": "Accept the group's rules before you send messages in this group.",
+    "tr": "Bu grupta mesaj göndermeden önce grubun kurallarını kabul etmelisin.",
+    "files": [
+      "src/lib/social/api.ts"
+    ]
+  },
   "m8glogwwc0": {
     "en": "GIFs can't be loaded right now. Try again in a moment.",
     "tr": "GIF'ler şu anda yüklenemiyor. Biraz sonra tekrar dene.",
@@ -60015,16 +60720,16 @@
       "src/lib/social/bots.ts"
     ]
   },
-  "1ufygz8pnrd": {
-    "en": "The group's rules",
-    "tr": "Grubun kuralları",
+  "oirk8tgyv4": {
+    "en": "This group hasn't written any rules yet.",
+    "tr": "Bu grup henüz kural yazmadı.",
     "files": [
       "src/lib/social/bots.ts"
     ]
   },
-  "oirk8tgyv4": {
-    "en": "This group hasn't written any rules yet.",
-    "tr": "Bu grup henüz kural yazmadı.",
+  "182tenk1r8x": {
+    "en": "Open the Rules section",
+    "tr": "Kurallar bölümünü aç",
     "files": [
       "src/lib/social/bots.ts"
     ]
@@ -60193,13 +60898,6 @@
   "1wtjjkirnb4": {
     "en": "Asks Hanogt AI; the answer counts against your Hanogt AI allowance.",
     "tr": "Hanogt AI'a sorar; yanıt senin Hanogt AI hakkından düşer.",
-    "files": [
-      "src/lib/social/commands.ts"
-    ]
-  },
-  "khrd6mhj36": {
-    "en": "rules",
-    "tr": "kurallar",
     "files": [
       "src/lib/social/commands.ts"
     ]
@@ -60435,9 +61133,9 @@
       "src/lib/social/disclaimer.ts"
     ]
   },
-  "214regnbjxx": {
-    "en": "When you create the group, you become its owner: you're responsible for running it in line with the Terms of Use and for choosing its admins, moderators and AutoMod settings. Hanogt Security Bot is part of every group and can't be removed.",
-    "tr": "Grubu oluşturduğunda grubun sahibi olursun: grubu Kullanım Şartları'na uygun yönetmekten ve yöneticileri, moderatörleri ve AutoMod ayarlarını belirlemekten sen sorumlusun. Hanogt Security Bot her grupta bulunur ve kaldırılamaz.",
+  "1e9pf5katpl": {
+    "en": "When you create the group, you become its owner: you're responsible for running it in line with the Terms of Use and for choosing its rules, admins, moderators and AutoMod settings. Hanogt Security Bot is part of every group and can't be removed.",
+    "tr": "Grubu oluşturduğunda grubun sahibi olursun: grubu Kullanım Şartları'na uygun yönetmekten ve grubun kurallarını, yöneticileri, moderatörleri ve AutoMod ayarlarını belirlemekten sen sorumlusun. Hanogt Security Bot her grupta bulunur ve kaldırılamaz.",
     "files": [
       "src/lib/social/disclaimer.ts"
     ]

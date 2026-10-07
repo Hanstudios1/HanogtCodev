@@ -32,6 +32,7 @@ import {
     groupEmoji,
     isGroupId,
     isManagerRole,
+    mustAcceptRules as rulesStillToAccept,
     toMillis,
     type GroupDetailResponse,
     type GroupInfo,
@@ -112,6 +113,12 @@ export type GroupSession = {
     closeUserCard: () => void;
     /** The channel ("" = the main one, else a #topic) is on screen up to `time`. */
     markChannelRead: (topic: string, time: number) => void;
+    /** The group's rules must still be accepted before this person can take part. */
+    mustAcceptRules: boolean;
+    /** The rules version this person accepted (0: never). */
+    rulesAcceptedVersion: number;
+    /** "I've read and accept the rules": records the shown version; false when it didn't go through (a toast says why). */
+    acceptRules: () => Promise<boolean>;
 };
 
 const GroupSessionContext = createContext<GroupSession | null>(null);
@@ -173,6 +180,8 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     const [userCard, setUserCard] = useState<PopoutState | null>(null);
     // When each channel was last on screen in this visit (the channel list's unread markers).
     const [channelReadAt, setChannelReadAt] = useState<Record<string, number>>({});
+    // The rules version accepted from this tab, until the group document (or the next detail) shows it.
+    const [acceptedHere, setAcceptedHere] = useState(0);
     const typingRef = useRef<Record<string, number>>({});
     const typingPrimedRef = useRef(false);
     const typingSentRef = useRef(0);
@@ -291,6 +300,11 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
             emoji: liveFields.emoji !== undefined ? groupEmoji(liveFields.emoji) : base.emoji,
             color: liveFields.color !== undefined ? groupColor(liveFields.color) : base.color,
             rules: liveFields.rules ?? base.rules,
+            rulesList: liveFields.rulesList ?? base.rulesList,
+            rulesVersion: liveFields.rulesVersion ?? base.rulesVersion,
+            rulesUpdatedAt: liveFields.rulesUpdatedAt !== undefined ? liveFields.rulesUpdatedAt : base.rulesUpdatedAt,
+            rulesScreening: liveFields.rulesScreening ?? base.rulesScreening,
+            rulesAcceptVersion: liveFields.rulesAcceptVersion ?? base.rulesAcceptVersion,
             topics: liveFields.topics ?? base.topics,
             ownerEmail: liveFields.ownerEmail ?? base.ownerEmail,
             admins: liveFields.admins ?? base.admins,
@@ -369,6 +383,33 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         return fallback ? { ...fallback, role: detail.me.role } : null;
     }, [detail, members]);
 
+    /* ------------------------------ rules ------------------------------- */
+
+    // The live document says what this person accepted (by their member key); without it, the last detail does.
+    const myKey = detail?.me.key ?? "";
+    const liveAccepted = liveFields?.rulesAccepted;
+    const rulesAcceptedVersion = Math.max(acceptedHere, liveAccepted ? liveAccepted[myKey] ?? 0 : detail?.me.rulesAcceptedVersion ?? 0);
+    const mustAcceptRules = Boolean(group && me && rulesStillToAccept(
+        { list: group.rulesList, version: group.rulesVersion, updatedAt: group.rulesUpdatedAt, screening: group.rulesScreening, acceptVersion: group.rulesAcceptVersion },
+        me.role,
+        rulesAcceptedVersion,
+    ));
+
+    const acceptRules = useCallback(async () => {
+        if (!group) return false;
+        try {
+            const result = await groupsApi.acceptRules(groupId, group.rulesVersion);
+            setAcceptedHere((value) => Math.max(value, result.version));
+            void refresh();
+            return true;
+        } catch (error) {
+            notify(errorTextRef.current(error), "error");
+            // Changed rules arrive with the next read; the person reads them and accepts again.
+            if (error instanceof GroupRequestError && error.code === "rules_changed") void refresh();
+            return false;
+        }
+    }, [group, groupId, notify, refresh]);
+
     /* ------------------------------ typing ------------------------------ */
 
     const stopTyping = useCallback(() => {
@@ -417,6 +458,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
             banned: detail.banned,
             // A server from before plan-based groups sends no limits: Free's.
             limits: detail.limits ?? PLAN_GROUP_FEATURES.free,
+            mustAcceptRules,
             now,
             live,
             notify,
@@ -424,7 +466,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
             errorText,
             refresh,
         };
-    }, [confirm, detail, errorText, group, groupId, live, me, members, notify, now, refresh]);
+    }, [confirm, detail, errorText, group, groupId, live, me, members, mustAcceptRules, notify, now, refresh]);
 
     // Joined into a key so the chat only re-renders when the set of typing members changes.
     const typingKey = useMemo(() => {
@@ -595,7 +637,8 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         const chat = () => router.push(groupHref(groupId));
         return [
             { id: "invite", done: members.length > 1 || (detail?.stats?.pendingInvites ?? 0) > 0 || (detail?.stats?.activeLinks ?? 0) > 0, onAction: openInvite },
-            { id: "rules", done: Boolean(group.description.trim() && group.rules.trim()), onAction: () => openSettings(group.description.trim() ? "rules" : "general") },
+            // The Rules section counts (not the old plain-text rules).
+            { id: "rules", done: Boolean(group.description.trim() && group.rulesList.length), onAction: () => openSettings(group.description.trim() ? "rules" : "general") },
             { id: "file", done: files.some((file) => file.updatedAt > createdMs + 10_000), onAction: () => { router.push(groupHref(groupId, { view: "files" })); openNewFile(); } },
             { id: "message", done: messagesApi.messages.some((message) => message.type !== "system" && message.fromEmail !== SYSTEM_SENDER), onAction: () => { chat(); focusComposer(); } },
             { id: "call", done: group.onboarding.callStarted, onAction: () => { setPanel("members"); if (social.ui.wide ? social.ui.asideCollapsed : !social.ui.asideOpen) social.ui.toggleAside(); } },
@@ -646,6 +689,9 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         openUserCard,
         closeUserCard,
         markChannelRead,
+        mustAcceptRules,
+        rulesAcceptedVersion,
+        acceptRules,
     };
 
     /* ------------------------------ sidebar ------------------------------ */
@@ -655,6 +701,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     const sessionPhase = session.phase;
     const fileCount = files.length;
     const pinnedCount = group?.pinnedMessageIds.length ?? 0;
+    const rulesCount = group?.rulesList.length ?? 0;
     const guideDone = checklist.filter((step) => step.done).length;
     const myName = socialMe.username;
     const channelUnread = useMemo(() => channelUnreadState(messagesApi.messages, {
@@ -680,6 +727,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         fileCount,
         filesAvailable: live,
         pinnedCount,
+        rules: { count: rulesCount, mustAccept: mustAcceptRules },
         guide: { show: showGuide, done: guideDone, total: guideTotal, open: guideOpen },
         channelUnread,
         openInvite,
@@ -687,7 +735,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         leave: () => void leave(),
         toggleGuide,
         showPinned,
-    }), [channelUnread, context?.canInvite, context?.isManager, context?.role, fileCount, group, groupId, guideDone, guideOpen, guideTotal, leave, live, openInvite, openSettings, pinnedCount, sessionPhase, showGuide, showPinned, toggleGuide]);
+    }), [channelUnread, context?.canInvite, context?.isManager, context?.role, fileCount, group, groupId, guideDone, guideOpen, guideTotal, leave, live, mustAcceptRules, openInvite, openSettings, pinnedCount, rulesCount, sessionPhase, showGuide, showPinned, toggleGuide]);
     useEffect(() => {
         publish(nav);
     }, [nav, publish]);

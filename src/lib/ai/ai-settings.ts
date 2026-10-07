@@ -33,6 +33,9 @@ export const AI_RETENTION_DAYS = [0, 7, 30, 90] as const;
 export type AiRetentionDays = (typeof AI_RETENTION_DAYS)[number];
 export const AI_ANSWER_FONTS = ["serif", "sans"] as const;
 export type AiAnswerFont = (typeof AI_ANSWER_FONTS)[number];
+/** How freely Hanogt AI writes: "precise" keeps to the likeliest words, "creative" explores more. */
+export const AI_CREATIVITY = ["precise", "balanced", "creative"] as const;
+export type AiCreativity = (typeof AI_CREATIVITY)[number];
 /** Preferred programming languages (ids of src/lib/runtimes/languages.ts). */
 export const AI_PREFERRED_LANGUAGES_MAX = 5;
 export const AI_CODE_STYLE_MAX = 300;
@@ -85,6 +88,12 @@ export type AiSettings = {
     answerVoiceRate: number;
     /** Answers in a serif (paper) or a sans-serif face. */
     answerFont: AiAnswerFont;
+    /** How freely answers are written (the sampling temperature; a smaller step while the agent's tools are on). */
+    creativity: AiCreativity;
+    /** New chats are kept in this browser; off starts private chats that are never stored. */
+    saveHistory: boolean;
+    /** A browser notification when an answer finishes while the tab is in the background. */
+    notifyOnDone: boolean;
 };
 
 export const DEFAULT_AI_SETTINGS: AiSettings = {
@@ -113,7 +122,23 @@ export const DEFAULT_AI_SETTINGS: AiSettings = {
     answerVoice: "",
     answerVoiceRate: 1,
     answerFont: "serif",
+    creativity: "balanced",
+    saveHistory: true,
+    notifyOnDone: false,
 };
+
+/**
+ * The sampling temperature of an answer: the kind of work sets the base (code
+ * and agent requests low) and the creativity setting moves it. With the agent's
+ * tools on the move is smaller (0.15 to 0.5) so proposed actions stay exact.
+ */
+export function answerTemperature(creativity: AiCreativity, kind: "chat" | "code" | "agent") {
+    const base = kind === "agent" ? 0.3 : kind === "code" ? 0.25 : 0.45;
+    const shift = kind === "agent"
+        ? creativity === "precise" ? -0.15 : creativity === "creative" ? 0.2 : 0
+        : creativity === "precise" ? -0.2 : creativity === "creative" ? 0.35 : 0;
+    return Math.round(Math.min(1, Math.max(0.05, base + shift)) * 100) / 100;
+}
 
 /** The longest instruction any plan allows (Pro); a stored text is cut to the person's plan when used. */
 export const AI_INSTRUCTIONS_MAX = Math.max(...Object.values(PLAN_AI_FEATURES).map((features) => features.instructionsChars));
@@ -175,6 +200,9 @@ export function normalizeAiSettings(value: unknown, plan: PlanId): AiSettings {
         answerVoice: typeof record.answerVoice === "string" ? oneLine(record.answerVoice).slice(0, AI_VOICE_NAME_MAX) : "",
         answerVoiceRate: isVoiceRate(record.answerVoiceRate) ? Math.round(record.answerVoiceRate * 100) / 100 : DEFAULT_AI_SETTINGS.answerVoiceRate,
         answerFont: oneOf(AI_ANSWER_FONTS, record.answerFont) ? record.answerFont : DEFAULT_AI_SETTINGS.answerFont,
+        creativity: oneOf(AI_CREATIVITY, record.creativity) ? record.creativity : DEFAULT_AI_SETTINGS.creativity,
+        saveHistory: typeof record.saveHistory === "boolean" ? record.saveHistory : DEFAULT_AI_SETTINGS.saveHistory,
+        notifyOnDone: typeof record.notifyOnDone === "boolean" ? record.notifyOnDone : DEFAULT_AI_SETTINGS.notifyOnDone,
     };
 }
 
@@ -209,6 +237,9 @@ export function parseAiSettingsInput(value: unknown, plan: PlanId): { ok: true; 
         answerVoice: (input) => typeof input === "string" && oneLine(input).length <= AI_VOICE_NAME_MAX,
         answerVoiceRate: isVoiceRate,
         answerFont: (input) => oneOf(AI_ANSWER_FONTS, input),
+        creativity: (input) => oneOf(AI_CREATIVITY, input),
+        saveHistory: (input) => typeof input === "boolean",
+        notifyOnDone: (input) => typeof input === "boolean",
         tone: (input) => oneOf(AI_TONES, input),
         length: (input) => oneOf(AI_LENGTHS, input),
         language: isLanguageSetting,

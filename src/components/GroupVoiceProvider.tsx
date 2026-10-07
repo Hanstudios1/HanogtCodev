@@ -68,6 +68,7 @@ export const VOICE_COPY = {
 export const VOICE_NOTICES: Record<GroupVoiceNotice, Copy> = {
     full: { TR: "Sesli kanal dolu (en fazla 5 kişi).", EN: "The voice channel is full (5 people at most)." },
     muted: { TR: "Bu grupta susturulduğun için sesli kanala katılamazsın.", EN: "You're timed out in this group, so you can't join its voice channel." },
+    rules: { TR: "Sesli kanala katılmadan önce grubun kurallarını kabul etmelisin. Kuralları kanal listesinin en üstündeki Kurallar bölümünde bulabilirsin.", EN: "Accept the group's rules before joining its voice channel. You'll find them in the Rules section at the top of the channel list." },
     removed: { TR: "Bu grubun sesli kanalına artık erişimin yok.", EN: "You no longer have access to this group's voice channel." },
     moved: { TR: "Sesli kanala başka bir sekmeden veya cihazdan katıldın; buradaki bağlantı kapandı.", EN: "You joined the voice channel from another tab or device, so this one disconnected." },
     mic_denied: { TR: "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin verip tekrar dene.", EN: "Microphone access was denied. Allow the microphone from the lock icon in the address bar and try again." },

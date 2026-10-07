@@ -531,6 +531,34 @@ is a device setting that every sign-out button applies (`src/lib/ai/sign-out.ts`
 The page also exports this browser's chats as JSON, deletes them, shows the
 plan's usage (`GET /api/ai/usage?full=1`) and the features open to the person.
 
+Since 0.3.31 the settings also hold:
+
+- `creativity` (`precise`, `balanced` or `creative`). It sets the sampling
+  temperature through `answerTemperature()`: chat starts from 0.45 and code
+  from 0.25; precise subtracts 0.2 and creative adds 0.35, kept within
+  0.05–1. When the agent's tools go with the request (agent mode on), the base
+  is 0.3 and the step is smaller (0.15 / 0.3 / 0.5) so proposed actions stay
+  exact. Thinking answers keep the model's recommended values.
+- `saveHistory` (on by default). When it's off, new chats are private: they
+  stay in the tab's memory, are never written to `localStorage`, and show an
+  eye icon in the sidebar. A save from another tab doesn't drop them.
+- `notifyOnDone` (off by default). When an answer finishes while the tab is
+  hidden, a browser notification appears (`src/components/HanogtAI/notify.ts`).
+  Permission is asked when the person turns it on, and only the first 140
+  characters of the answer are shown.
+
+The page layout:
+
+- A side menu with search (in the site's language and in English) and a
+  summary of how Hanogt AI will answer.
+- "Reset to defaults" on each section.
+- Export and import of the settings as JSON (`{app, version, exportedAt, settings}`).
+  An imported file goes through `normalizeAiSettings`, so unknown or broken
+  fields keep the draft's values and the instructions are cut to the plan.
+  Nothing is saved until the person presses Save.
+- "Reset this device's choices", which forgets the agent mode and model
+  picked on this device so the account defaults apply there again.
+
 ### Features opened step by step
 
 `src/lib/features.ts` lists features with an audience: `off`, `staff`,

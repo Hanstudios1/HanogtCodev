@@ -1,10 +1,11 @@
 "use client";
 
-import { BadgeCheck, EyeOff, X } from "lucide-react";
+import { BadgeCheck, EyeOff, ScrollText, X } from "lucide-react";
 import type { ReactNode } from "react";
 import ProductLogo from "@/components/ProductLogo";
+import RulesList from "@/components/Groups/RulesList";
 import { cx, fullDateTime } from "@/components/Groups/ui";
-import type { CustomCommand, GroupBot } from "@/lib/groups";
+import type { CustomCommand, GroupBot, GroupRuleDraft } from "@/lib/groups";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { BOT_EVENT_COPY, BOT_REASON_COPY, COMMAND_ERROR_COPY, EPHEMERAL_COPY, formatDuration, type BotEvent, type EphemeralReply } from "@/lib/social/bots";
 import { suggestCommands, type GroupRank } from "@/lib/social/commands";
@@ -80,14 +81,17 @@ function formatWhen(iso: string | null, locale: string) {
  * What only the person who ran a command sees (never stored): the command
  * list, the rules, warnings, a report receipt, or why it didn't work.
  */
-export function EphemeralCard({ reply, onDismiss, rank, customCommands, rules, renderRules }: {
+export function EphemeralCard({ reply, onDismiss, rank, customCommands, rules, renderRules, onOpenRules }: {
     reply: EphemeralReply;
     onDismiss: () => void;
     rank: GroupRank;
     customCommands: readonly CustomCommand[];
-    rules: string;
-    /** Renders the group's rules with the chat's Markdown. */
+    /** The group's Rules section (shown when the reply carries no list). */
+    rules: readonly GroupRuleDraft[];
+    /** Renders rule texts with the chat's Markdown. */
     renderRules: (text: string) => ReactNode;
+    /** Opens the group's Rules section. */
+    onOpenRules?: () => void;
 }) {
     const { tx, language, locale } = useI18n();
     let body: ReactNode;
@@ -116,14 +120,25 @@ export function EphemeralCard({ reply, onDismiss, rank, customCommands, rules, r
             );
             break;
         }
-        case "rules":
+        case "rules": {
+            // The numbered list the server sent; the group's own list, or the plain text of an older server, otherwise.
+            const items = Array.isArray(reply.items) ? reply.items : rules;
+            const text = typeof reply.rules === "string" ? reply.rules.trim() : "";
             body = (
                 <>
                     <p className="font-bold">{tx(EPHEMERAL_COPY.rulesTitle)}</p>
-                    <div className="mt-1">{(reply.rules || rules).trim() ? renderRules(reply.rules || rules) : <p className="text-zinc-500">{tx(EPHEMERAL_COPY.noRules)}</p>}</div>
+                    <div className="mt-1.5">
+                        {items.length ? <RulesList rules={items} renderDescription={renderRules} /> : text ? renderRules(text) : <p className="text-zinc-500">{tx(EPHEMERAL_COPY.noRules)}</p>}
+                    </div>
+                    {onOpenRules && (items.length > 0 || text !== "") && (
+                        <button type="button" onClick={onOpenRules} className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-indigo-300">
+                            <ScrollText className="h-3.5 w-3.5" aria-hidden />{tx(EPHEMERAL_COPY.openRules)}
+                        </button>
+                    )}
                 </>
             );
             break;
+        }
         case "warnings":
             body = (
                 <>

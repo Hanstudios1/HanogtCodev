@@ -52,7 +52,8 @@ export function formatDuration(ms: number, language: "TR" | "EN") {
  */
 export type EphemeralReply =
     | { kind: "help" }
-    | { kind: "rules"; rules: string }
+    /** The Rules section, numbered (`items`); `rules` is the same as plain text for older readers. */
+    | { kind: "rules"; rules: string; items?: Array<{ title: string; description: string }> }
     | { kind: "warnings"; target: string; items: Array<{ reason: string; at: string; auto: boolean }> }
     | { kind: "reported"; target: string }
     | { kind: "unmuted_none"; target: string }
@@ -68,6 +69,7 @@ export const EPHEMERAL_COPY = {
     customTitle: { TR: "Bu grubun komutları", EN: "This group's commands" },
     rulesTitle: { TR: "Grubun kuralları", EN: "The group's rules" },
     noRules: { TR: "Bu grup henüz kural yazmadı.", EN: "This group hasn't written any rules yet." },
+    openRules: { TR: "Kurallar bölümünü aç", EN: "Open the Rules section" },
     warningsTitle: { TR: "{name} için uyarılar", EN: "Warnings for {name}" },
     noWarnings: { TR: "Uyarı yok. 👍", EN: "No warnings. 👍" },
     auto: { TR: "AutoMod", EN: "AutoMod" },

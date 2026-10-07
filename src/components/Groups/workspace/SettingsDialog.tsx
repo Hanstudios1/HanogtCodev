@@ -9,6 +9,7 @@ import { groupsApi } from "../api";
 import { GroupTile, Modal, ModalHeader, Spinner, cx } from "../ui";
 import BotSettings from "./BotSettings";
 import { useWorkspace } from "./context";
+import RulesEditor from "./RulesEditor";
 import SafetySettings from "./SafetySettings";
 
 export type SettingsTab = "general" | "rules" | "membership" | "safety" | "bots" | "danger";
@@ -29,10 +30,8 @@ const C = {
     save: { TR: "Değişiklikleri kaydet", EN: "Save changes" },
     saved: { TR: "Ayarlar kaydedildi.", EN: "Settings saved." },
     readOnly: { TR: "Bu ayarları yalnızca grup sahibi ve yöneticiler değiştirebilir.", EN: "Only the owner and admins can change these settings." },
-    rulesLabel: { TR: "Grup kuralları", EN: "Group rules" },
-    rulesHint: { TR: "Kurallar her üyeye Üyeler panelinden gösterilir. Ayrıntılı kurallar için KURALLAR.md dosyasını da kullanabilirsin.", EN: "Rules are shown to every member from the Members panel. You can also keep detailed rules in a RULES.md file." },
-    rulesEmpty: { TR: "Bu grup için henüz kural yazılmadı.", EN: "No rules have been written for this group yet." },
     topics: { TR: "Sohbet konuları", EN: "Chat topics" },
+    saveTopics: { TR: "Konuları kaydet", EN: "Save the topics" },
     topicsHint: { TR: "Konular sohbetin üstünde filtre olarak görünür; mesajlarda #konu yazarak etiketlenir.", EN: "Topics appear as filters above the chat; messages are tagged by writing #topic." },
     addTopic: { TR: "Konu ekle", EN: "Add topic" },
     topicPlaceholder: { TR: "örn. sorular", EN: "e.g. questions" },
@@ -88,7 +87,6 @@ export default function SettingsDialog({ open, onClose, initialTab, onLeft, onRe
     const [description, setDescription] = useState(group.description);
     const [emoji, setEmoji] = useState(group.emoji);
     const [color, setColor] = useState<GroupColor>(group.color);
-    const [rules, setRules] = useState(group.rules);
     const [topics, setTopics] = useState<string[]>(group.topics);
     const [topicInput, setTopicInput] = useState("");
     const [topicError, setTopicError] = useState("");
@@ -97,7 +95,7 @@ export default function SettingsDialog({ open, onClose, initialTab, onLeft, onRe
     const [confirmName, setConfirmName] = useState("");
 
     const generalDirty = name.trim() !== group.name || description.trim() !== group.description || emoji !== group.emoji || color !== group.color;
-    const rulesDirty = rules.trim() !== group.rules || topics.join("|") !== group.topics.join("|");
+    const topicsDirty = topics.join("|") !== group.topics.join("|");
     const tabs: Array<{ id: SettingsTab; label: Copy; icon: ReactNode }> = [
         { id: "general", label: C.general, icon: <Settings2 className="h-4 w-4" aria-hidden /> },
         { id: "rules", label: C.rules, icon: <BookOpen className="h-4 w-4" aria-hidden /> },
@@ -249,16 +247,8 @@ export default function SettingsDialog({ open, onClose, initialTab, onLeft, onRe
 
                     {tab === "rules" && (
                         <div className="space-y-6">
-                            <div>
-                                <label htmlFor="settings-rules" className="flex items-center justify-between text-sm font-semibold"><span>{tx(C.rulesLabel)}</span>{isManager && <span className="text-xs tabular-nums text-zinc-400">{tx(C.chars, { count: rules.length, max: GROUP_LIMITS.rulesMax })}</span>}</label>
-                                {isManager ? (
-                                    <textarea id="settings-rules" value={rules} maxLength={GROUP_LIMITS.rulesMax} rows={9} onChange={(event) => setRules(event.target.value)} className={cx(inputClass, "resize-y font-mono text-[13px] leading-6")} />
-                                ) : (
-                                    <div className="mt-2 whitespace-pre-wrap rounded-2xl bg-zinc-50 p-4 text-sm leading-6 text-zinc-700 dark:bg-white/5 dark:text-zinc-200">{group.rules || tx(C.rulesEmpty)}</div>
-                                )}
-                                <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.rulesHint)}</p>
-                            </div>
-                            <div>
+                            <RulesEditor busy={busy === "rules"} onSave={(body) => save(body, "rules")} />
+                            <div className="border-t border-zinc-200 pt-6 dark:border-white/10">
                                 <p className="text-sm font-semibold">{tx(C.topics)}</p>
                                 <ul className="mt-2 flex flex-wrap gap-1.5">
                                     {topics.map((topic) => (
@@ -279,8 +269,8 @@ export default function SettingsDialog({ open, onClose, initialTab, onLeft, onRe
                             </div>
                             {isManager && (
                                 <div className="flex justify-end">
-                                    <button type="button" disabled={!rulesDirty || Boolean(busy)} onClick={() => void save({ rules: rules.trim(), topics }, "rules")} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:opacity-50">
-                                        {busy === "rules" ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" aria-hidden />}{tx(C.save)}
+                                    <button type="button" disabled={!topicsDirty || Boolean(busy)} onClick={() => void save({ topics }, "topics")} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:opacity-50">
+                                        {busy === "topics" ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" aria-hidden />}{tx(C.saveTopics)}
                                     </button>
                                 </div>
                             )}

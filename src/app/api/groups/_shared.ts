@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getActiveSession } from "@/lib/server/active-session";
 import { memberKey } from "@/lib/server/group-keys";
+import { RULES_NOT_ACCEPTED_MESSAGE, rulesAcceptedField, rulesBlock } from "@/lib/server/group-rules";
 import { deleteGroupVoice, removeFromVoice } from "@/lib/server/group-voice";
 import {
     commitServerMutations,
@@ -12,6 +13,7 @@ import {
     deleteServerDocument,
     getServerDocument,
     listServerCollection,
+    patchServerDocument,
     queryServerCollection,
 } from "@/lib/server/firebase-rest";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
@@ -26,18 +28,28 @@ import {
     GROUP_SYSTEM_EVENT_COPY,
     SYSTEM_SENDER,
     WELCOME_MESSAGE_MAX,
+    acceptanceVersion,
+    acceptedRulesVersion,
     cleanMultiLine,
     fillVars,
     groupColor,
     groupEmoji,
+    hasAcceptedRules,
     isGroupId,
     isGroupTemplateId,
     isInviteToken,
     isManagerRole,
     isMemberKey,
+    nextRulesVersions,
     normalizeGroupEmail,
+    normalizeRulesInput,
     outranks,
+    parseLegacyRules,
+    readGroupRules,
+    readRulesVersion,
     readSlowmode,
+    rulesGateActive,
+    rulesText,
     safeGroupVoicePath,
     sanitizeCustomCommands,
     toMillis,
@@ -45,6 +57,7 @@ import {
     type GroupInfo,
     type GroupMemberInfo,
     type GroupRole,
+    type GroupRule,
     type GroupSystemEvent,
 } from "@/lib/groups";
 import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
@@ -184,7 +197,16 @@ export type StoredGroup = {
     schemaVersion?: number;
     emoji?: string;
     color?: string;
+    /** Plain-text rules (older groups only have these; newer ones keep them in step with rulesList). */
     rules?: string;
+    /** The Rules section (lib/groups.ts readGroupRules reads all of the rule fields). */
+    rulesList?: unknown;
+    rulesVersion?: unknown;
+    rulesUpdatedAt?: unknown;
+    rulesScreening?: unknown;
+    rulesAcceptVersion?: unknown;
+    /** Accepted rule versions by pseudonymous member key (lib/server/group-rules.ts). */
+    rulesAccepted?: unknown;
     topics?: unknown;
     template?: string;
     contentLanguage?: string;
@@ -267,15 +289,21 @@ export function groupLanguage(group: StoredGroup) {
     return group.contentLanguage === "en" ? "en" : "tr";
 }
 
-/** The client-facing view of a group document (internal fields such as typing state stay out). */
+/** The client-facing view of a group document (internal fields such as typing state and rule acceptances stay out). */
 export function publicGroup(groupId: string, group: StoredGroup): GroupInfo {
+    const rules = readGroupRules(group);
     return {
         id: groupId,
         name: group.name || "Hanogt",
         description: group.description || "",
         emoji: groupEmoji(group.emoji),
         color: groupColor(group.color),
-        rules: group.rules || "",
+        rules: typeof group.rules === "string" && group.rules ? group.rules : rulesText(rules.list),
+        rulesList: rules.list,
+        rulesVersion: rules.version,
+        rulesUpdatedAt: rules.updatedAt,
+        rulesScreening: rules.screening,
+        rulesAcceptVersion: rules.acceptVersion,
         topics: strings(group.topics).slice(0, GROUP_LIMITS.topicsMax),
         template: isGroupTemplateId(group.template) ? group.template : null,
         contentLanguage: groupLanguage(group),
@@ -299,6 +327,111 @@ export function publicGroup(groupId: string, group: StoredGroup): GroupInfo {
 
 /** The per-group member key (reactions, typing, voice channels): see lib/server/group-keys.ts. */
 export { memberKey };
+
+/* -------------------------------------------------------------------------- */
+/* Rules                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Refuses a write (message, edit, file, reaction) from a member who hasn't
+ * accepted the group's rules while the group asks for it (lib/server/group-rules.ts).
+ */
+export function assertRulesAccepted(groupId: string, group: StoredGroup, email: string) {
+    if (rulesBlock(groupId, group, email)) throw new GroupApiError(409, "rules_not_accepted", RULES_NOT_ACCEPTED_MESSAGE);
+}
+
+/** The rules version the browser showed (sent with an acceptance); undefined when none (or nothing usable) was sent. */
+export function readSeenRulesVersion(value: unknown) {
+    const version = readRulesVersion(value);
+    return version >= 1 ? version : undefined;
+}
+
+/**
+ * Records that a member accepted the group's rules: the version they were
+ * shown (`seen`), on the group document under their pseudonymous key. When
+ * the rules changed since and must be accepted again, nothing is recorded.
+ */
+export async function acceptGroupRules(groupId: string, email: string, seen?: number) {
+    const { group } = await requireGroupMember(groupId, email);
+    const state = readGroupRules(group);
+    const version = acceptanceVersion(state, seen);
+    if (rulesGateActive(state) && !hasAcceptedRules(state, version)) {
+        throw new GroupApiError(409, "rules_changed", "Kurallar az önce güncellendi; güncel kuralları okuyup yeniden kabul edin.");
+    }
+    const key = memberKey(groupId, email);
+    if (acceptedRulesVersion(group.rulesAccepted, key) >= version) return { version };
+    await patchServerDocument(`groups/${groupId}`, { rulesAccepted: { [key]: version } }, { updateFields: [`rulesAccepted.${key}`], exists: true });
+    return { version };
+}
+
+/** A save of the Rules section: the new list (null: unchanged), screening (null: unchanged) and "everyone accepts again". */
+export type RulesChange = { list: GroupRule[] | null; screening: boolean | null; reaccept: boolean };
+
+/**
+ * The Rules section fields of a settings save: `rulesList` (the rules),
+ * `rulesScreening` (members accept before talking) and `rulesReaccept`
+ * (everyone accepts again); older clients send `rules` as plain text, which
+ * is read into rules. Null when the request doesn't touch the rules.
+ */
+export function readRulesChange(body: Record<string, unknown>): RulesChange | null {
+    if (body.rulesList === undefined && body.rules === undefined && body.rulesScreening === undefined && body.rulesReaccept === undefined) return null;
+    let list: GroupRule[] | null = null;
+    if (body.rulesList !== undefined) {
+        const result = normalizeRulesInput(body.rulesList);
+        if (!result.ok) {
+            throw result.problem === "rules_limit"
+                ? new GroupApiError(400, "rules_limit", `En fazla ${GROUP_LIMITS.rulesCount} kural eklenebilir.`, { limit: GROUP_LIMITS.rulesCount })
+                : result.problem === "rules_too_long"
+                    ? new GroupApiError(400, "rules_too_long", `Bir kuralın başlığı en fazla ${GROUP_LIMITS.ruleTitleMax}, açıklaması en fazla ${GROUP_LIMITS.ruleDescriptionMax} karakter olabilir.`)
+                    : new GroupApiError(400, "invalid_rules", "Her kuralın bir başlığı olmalı.");
+        }
+        list = result.rules;
+    } else if (body.rules !== undefined) {
+        const text = cleanMultiLine(body.rules, GROUP_LIMITS.rulesMax * 2);
+        if (text.length > GROUP_LIMITS.rulesMax) throw new GroupApiError(400, "rules_too_long", "Kurallar en fazla 4000 karakter olabilir.");
+        list = parseLegacyRules(text);
+    }
+    if (body.rulesScreening !== undefined && typeof body.rulesScreening !== "boolean") throw new GroupApiError(400, "invalid_request", "Geçersiz kural onayı ayarı.");
+    if (body.rulesReaccept !== undefined && typeof body.rulesReaccept !== "boolean") throw new GroupApiError(400, "invalid_request", "Geçersiz kural onayı ayarı.");
+    return { list, screening: typeof body.rulesScreening === "boolean" ? body.rulesScreening : null, reaccept: body.rulesReaccept === true };
+}
+
+const sameRules = (a: readonly GroupRule[], b: readonly GroupRule[]) => a.length === b.length && a.every((rule, index) => rule.title === b[index].title && rule.description === b[index].description);
+
+/**
+ * The fields a save of the rules writes: the list with its plain-text copy
+ * (older readers), the new versions and screening. "Last updated" moves only
+ * when the rules themselves change.
+ */
+export function rulesWrite(group: StoredGroup, change: RulesChange, now = new Date()) {
+    const current = readGroupRules(group);
+    const list = change.list ?? current.list;
+    const screening = change.screening ?? current.screening;
+    const { version, acceptVersion } = nextRulesVersions(current, { screening, reaccept: change.reaccept });
+    return {
+        rulesList: list,
+        rules: rulesText(list),
+        rulesVersion: version,
+        rulesAcceptVersion: acceptVersion,
+        rulesScreening: screening,
+        ...(!sameRules(list, current.list) || !current.updatedAt ? { rulesUpdatedAt: now } : {}),
+    };
+}
+
+/**
+ * The acceptance a join writes with the membership when the person ticked
+ * "I've read and accept the rules" (`acceptRules: true`, with the version
+ * they were shown). Null when they didn't, when the group has no rules, or
+ * when the rules changed since (they accept inside the group then).
+ */
+export function joinRulesAcceptance(groupId: string, group: StoredGroup, email: string, options: { acceptRules?: unknown; rulesVersion?: unknown }) {
+    if (options.acceptRules !== true) return null;
+    const state = readGroupRules(group);
+    if (!state.list.length) return null;
+    const version = acceptanceVersion(state, readSeenRulesVersion(options.rulesVersion));
+    if (rulesGateActive(state) && !hasAcceptedRules(state, version)) return null;
+    return { field: rulesAcceptedField(groupId, email), data: { rulesAccepted: { [memberKey(groupId, email)]: version } }, version };
+}
 
 /** Field paths of typing entries that are older than `maxAgeMs` (or malformed), for clean-up. */
 export function staleTypingFields(group: StoredGroup, now: number, keep: string[] = [], maxAgeMs = 30_000) {
@@ -443,7 +576,8 @@ export async function removeGroupMember(groupId: string, actorEmail: string, tar
                     moderators: groupModerators(group).filter((entry) => entry !== targetEmail),
                     updatedAt: now,
                 },
-                updateFields: ["members", "admins", "moderators", "updatedAt", `typing.${memberKey(groupId, targetEmail)}`],
+                // Their typing state and rules acceptance go with them.
+                updateFields: ["members", "admins", "moderators", "updatedAt", `typing.${memberKey(groupId, targetEmail)}`, rulesAcceptedField(groupId, targetEmail)],
                 updateTime: group._updateTime,
             },
             ...(ban ? [{ path: `group_bans/${banDocumentId(groupId, targetEmail)}`, data: { groupId, email: targetEmail, bannedBy: actorEmail, createdAt: now } }] : []),
@@ -455,6 +589,25 @@ export async function removeGroupMember(groupId: string, actorEmail: string, tar
     await forgetMemberStars(targetEmail, groupId).catch(() => undefined);
     await removeFromVoice(groupId, targetEmail).catch(() => undefined);
     return result;
+}
+
+/**
+ * Takes a member out of the group on their own (owners can't leave): roles,
+ * typing state and rules acceptance go with the membership. Returns the
+ * group as it was, for the notice in its language.
+ */
+export async function leaveGroupMembership(groupId: string, email: string) {
+    return retryOnConflict(async () => {
+        const { group, role } = await requireGroupMember(groupId, email);
+        if (role === "owner") throw new GroupApiError(409, "owner_cannot_leave", "Grup sahibi ayrılmadan önce sahipliği devretmeli veya grubu silmelidir.");
+        await patchServerDocument(`groups/${groupId}`, {
+            members: groupMembers(group).filter((entry) => entry !== email),
+            admins: groupAdmins(group).filter((entry) => entry !== email),
+            moderators: groupModerators(group).filter((entry) => entry !== email),
+            updatedAt: new Date(),
+        }, { updateFields: ["members", "admins", "moderators", "updatedAt", `typing.${memberKey(groupId, email)}`, rulesAcceptedField(groupId, email)], updateTime: group._updateTime });
+        return group;
+    });
 }
 
 /* -------------------------------------------------------------------------- */

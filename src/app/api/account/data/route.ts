@@ -6,6 +6,7 @@ import { stringOr, toIso } from "@/lib/server/admin";
 import { exportApiKeys } from "@/lib/server/ai-api-keys";
 import { exportAiConnections } from "@/lib/server/ai-connections";
 import { getServerDocument, listServerCollection, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
+import { memberKey } from "@/lib/server/group-keys";
 import { voterHash } from "@/lib/server/ai-rankings";
 import { likerHash } from "@/lib/server/arcade";
 import { listGameAudio } from "@/lib/server/game-assets";
@@ -14,6 +15,7 @@ import { enforceRateLimit, enforceRateLimitWithFallback } from "@/lib/server/rat
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { TICKETS_COLLECTION, readTicketMessages, readTicketMeta, ticketCategory, ticketPriority, ticketStatus, type TicketRecord } from "@/lib/server/support";
 import { normalizeEmail } from "@/lib/server/validate";
+import { acceptedRulesVersion } from "@/lib/groups";
 import { readMessageAttachment } from "@/lib/social/attachments";
 import { isRecentAuth } from "@/lib/step-up";
 import { TICKET_LIMITS, ticketReference } from "@/lib/support";
@@ -281,12 +283,15 @@ export async function GET() {
             // Other members' e-mail addresses are their personal data, not the requester's:
             // the export keeps the group's own fields and only says how many members it has.
             groups: groups.map((group) => {
-                // Moderator lists hold e-mail addresses too, and typing marks are other members' live state.
-                const { members, admins, moderators, ownerEmail, ...rest } = publicAccountData(group) as Record<string, unknown>;
+                // Moderator lists hold e-mail addresses too; typing marks and rule acceptances are other members' state.
+                const { members, admins, moderators, ownerEmail, rulesAccepted, ...rest } = publicAccountData(group) as Record<string, unknown>;
                 delete rest.typing;
+                const yourRulesAcceptedVersion = acceptedRulesVersion(rulesAccepted, memberKey(group._id, email));
                 return {
                     ...rest,
                     id: group._id,
+                    // The rules version you accepted in this group (null: never).
+                    yourRulesAcceptedVersion: yourRulesAcceptedVersion || null,
                     memberCount: Array.isArray(members) ? members.length : 0,
                     yourRole: ownerEmail === email ? "owner" : Array.isArray(admins) && admins.includes(email) ? "admin" : Array.isArray(moderators) && moderators.includes(email) ? "moderator" : "member",
                 };

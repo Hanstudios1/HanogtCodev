@@ -1,7 +1,7 @@
 "use client";
 
 import { LayoutGroup, motion } from "framer-motion";
-import { Bot, Check, CircleDashed, Code2, Cpu, FileDiff, KeyRound, ListTodo, Loader2, MessageSquarePlus, MessagesSquare, PanelLeftClose, Pencil, Search, Settings2, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
+import { Bot, Check, CircleDashed, Code2, Cpu, EyeOff, FileDiff, KeyRound, ListTodo, Loader2, MessageSquarePlus, MessagesSquare, PanelLeftClose, Pencil, Search, Settings2, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { CORE_INFO } from "@/lib/ai/local-engine";
@@ -12,6 +12,7 @@ import { AiAvatar, cx, ICON_BUTTON } from "./ui";
 
 const C = {
     newChat: { TR: "Yeni sohbet", EN: "New chat" },
+    privateChat: { TR: "Gizli sohbet (kaydedilmez)", EN: "Private chat (not saved)" },
     search: { TR: "Sohbetlerde ara", EN: "Search chats" },
     chats: { TR: "Sohbetler", EN: "Chats" },
     empty: { TR: "Henüz sohbet yok.", EN: "No chats yet." },
@@ -261,8 +262,9 @@ export default function ChatSidebar({ conversations, activeId, streamingId, onSe
                                                 className="relative min-w-0 flex-1 rounded-md bg-ai-surface px-1.5 py-0.5 outline-none ring-2 ring-ai-ink/30"
                                             />
                                         ) : (
-                                            <button type="button" onClick={() => onSelect(conversation.id)} aria-current={selected ? "page" : undefined} className="relative min-w-0 flex-1 truncate px-1 py-0.5 text-start text-ai-ink/85">
-                                                {conversation.title || tx(C.untitled)}
+                                            <button type="button" onClick={() => onSelect(conversation.id)} aria-current={selected ? "page" : undefined} className="relative flex min-w-0 flex-1 items-center gap-1.5 px-1 py-0.5 text-start text-ai-ink/85">
+                                                {conversation.ephemeral ? <EyeOff className="h-3.5 w-3.5 shrink-0 text-ai-muted" role="img" aria-label={tx(C.privateChat)} /> : null}
+                                                <span className="truncate">{conversation.title || tx(C.untitled)}</span>
                                             </button>
                                         )}
                                         <button type="button" onClick={() => setRenaming({ id: conversation.id, title: conversation.title })} className={cx(ICON_BUTTON, "relative p-1 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100")} title={tx(C.rename)} aria-label={tx(C.rename)}><Pencil className="h-3.5 w-3.5" /></button>

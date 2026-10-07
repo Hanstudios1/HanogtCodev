@@ -196,7 +196,7 @@ export type VoicePhase = "joining" | "connected" | "ended";
 
 /** Why the tab is not (or no longer) in the channel. */
 export type VoiceNotice =
-    | "full" | "muted" | "removed" | "moved" | "mic_denied" | "mic_unavailable" | "unsupported" | "ice"
+    | "full" | "muted" | "rules" | "removed" | "moved" | "mic_denied" | "mic_unavailable" | "unsupported" | "ice"
     | "rate_limited" | "network" | "failed" | "call_started";
 
 export type VoiceSessionState = {
@@ -575,8 +575,8 @@ export class VoiceChannelSession {
                 void this.recover(generation);
                 return;
             }
-            if (code === "muted" || code === "moved" || code === "not_found" || code === "unauthorized") {
-                this.end(code === "muted" ? "muted" : code === "moved" ? "moved" : "removed", false, error);
+            if (code === "muted" || code === "rules_not_accepted" || code === "moved" || code === "not_found" || code === "unauthorized") {
+                this.end(code === "muted" ? "muted" : code === "rules_not_accepted" ? "rules" : code === "moved" ? "moved" : "removed", false, error);
                 return;
             }
         }
@@ -623,10 +623,11 @@ export class VoiceChannelSession {
         const code = codeOf(error);
         const notice: VoiceNotice = code === "voice_full" ? "full"
             : code === "muted" ? "muted"
-                : code === "moved" ? "moved"
-                    : code === "not_found" || code === "unauthorized" ? "removed"
-                        : code === "rate_limited" ? "rate_limited"
-                            : code === "network" ? "network" : "failed";
+                : code === "rules_not_accepted" ? "rules"
+                    : code === "moved" ? "moved"
+                        : code === "not_found" || code === "unauthorized" ? "removed"
+                            : code === "rate_limited" ? "rate_limited"
+                                : code === "network" ? "network" : "failed";
         return this.end(notice, holdsSeat, error);
     }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { KeyRound, Maximize2, Menu as MenuIcon, MessageSquarePlus, PanelLeftOpen, Settings2, X } from "lucide-react";
+import { EyeOff, KeyRound, Maximize2, Menu as MenuIcon, MessageSquarePlus, PanelLeftOpen, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { AiMessage } from "@/lib/ai/conversations";
@@ -20,6 +20,7 @@ import { proposalOf } from "./proposals";
 import RecentChats from "./RecentChats";
 import SignInGate from "./SignInGate";
 import { useHanogtChat, type ChatLaunch } from "./useHanogtChat";
+import { CHAT_COPY } from "./chat-copy";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
 import UsageMeter from "./UsageMeter";
 import { stopSpeaking } from "./voice";
@@ -186,7 +187,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
     const lastUserId = [...messages].reverse().find((message) => message.role === "user")?.id;
     const engineLabel = tx(chat.signedIn ? C.engineSignedIn : C.engineSignedOut);
 
-    const composer = (hero: boolean) => (
+    const composerBox = (hero: boolean) => (
         <ChatComposer
             variant={variant}
             hero={hero}
@@ -222,6 +223,14 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
             } : null}
         />
     );
+    // "Keep new chats" is off: this chat (or the next one) is private and never stored.
+    const privateChat = Boolean(chat.active?.ephemeral || (!chat.active && chat.settings?.saveHistory === false));
+    const composer = (hero: boolean) => privateChat ? (
+        <div>
+            <p className="mb-1.5 flex items-center justify-center gap-1.5 text-[12px] text-ai-muted" data-private-chat><EyeOff className="h-3.5 w-3.5" aria-hidden />{tx(CHAT_COPY.privateChat)}</p>
+            {composerBox(hero)}
+        </div>
+    ) : composerBox(hero);
 
     // Own provider connections (Plus/Pro); a portal, so it covers the page from the panel too.
     const connectionsDialog = connectionsOpen && chat.connections.available

@@ -83,6 +83,8 @@ export interface AiConversation {
     createdAt: number;
     updatedAt: number;
     messages: AiMessage[];
+    /** A private chat (the "keep chats" setting is off): it lives in this tab only and is never stored. */
+    ephemeral?: boolean;
 }
 
 const STORAGE_KEY = "hanogt-ai:conversations:v1";
@@ -180,7 +182,8 @@ function write(conversations: AiConversation[]) {
     while (next.length > 1 && JSON.stringify(next).length > MAX_BYTES) next = next.slice(0, -1);
     cache = next;
     try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        // Private chats stay in memory only.
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next.filter((conversation) => !conversation.ephemeral)));
     } catch {
         // Storage can be full or blocked; the chat still works for this visit.
     }
@@ -190,7 +193,10 @@ function write(conversations: AiConversation[]) {
 function subscribe(listener: () => void) {
     const onStorage = (event: StorageEvent) => {
         if (event.key === STORAGE_KEY || event.key === ACTIVE_KEY) {
+            // Another tab saved: read its chats again but keep this tab's private ones (they were never stored).
+            const kept = (cache ?? []).filter((conversation) => conversation.ephemeral);
             cache = null;
+            if (kept.length) cache = [...kept, ...read()].sort((a, b) => b.updatedAt - a.updatedAt);
             activeCache = undefined;
             listener();
         }
@@ -267,9 +273,9 @@ export function exportConversationsJson() {
 }
 
 export function useConversationActions() {
-    const create = useCallback((mode: AiMode, title = ""): AiConversation => {
+    const create = useCallback((mode: AiMode, title = "", options: { ephemeral?: boolean } = {}): AiConversation => {
         const now = Date.now();
-        const conversation: AiConversation = { id: createId(), title, mode, createdAt: now, updatedAt: now, messages: [] };
+        const conversation: AiConversation = { id: createId(), title, mode, createdAt: now, updatedAt: now, messages: [], ...(options.ephemeral ? { ephemeral: true } : {}) };
         write([conversation, ...read()]);
         setActiveConversation(conversation.id);
         return conversation;

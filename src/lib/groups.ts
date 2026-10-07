@@ -4,8 +4,9 @@
  * Imported by the group API routes (server) and by the group pages (client),
  * so this module must stay free of Node, React and Firebase imports. It holds
  * limits and validators, the color/emoji/reaction palettes, the API contract
- * types, message tokenizing helpers and the starter templates that seed a new
- * group (README, rules, task list, template files and the welcome message).
+ * types, message tokenizing helpers, the group's Rules section (structured
+ * rules and their acceptance) and the starter templates that seed a new
+ * group (README, task list, template files, rules and the welcome message).
  */
 import type { Copy } from "@/lib/i18n";
 import { GROUP_FEATURES_MAX, type GroupPlanLimits } from "@/lib/plans";
@@ -19,7 +20,12 @@ export const GROUP_LIMITS = {
     nameMin: 2,
     nameMax: 60,
     descriptionMax: 500,
+    /** The plain-text rules older clients send (they are turned into rules on the way in). */
     rulesMax: 4000,
+    /** The Rules section: at most 20 rules, each a title and an optional description. */
+    rulesCount: 20,
+    ruleTitleMax: 120,
+    ruleDescriptionMax: 600,
     fileNameMax: 120,
     fileContentMax: 500_000,
     filesMax: 50,
@@ -306,6 +312,300 @@ export function normalizeTopics(value: unknown, language: SeedLanguage = "tr"): 
 }
 
 /* -------------------------------------------------------------------------- */
+/* Rules (the group's Rules section and its acceptance)                       */
+/* -------------------------------------------------------------------------- */
+
+/** One rule of the group's Rules section: a short title and an optional description. */
+export type GroupRule = { id: string; title: string; description: string };
+/** A rule without an id (suggested and template rules, previews). */
+export type GroupRuleDraft = { title: string; description: string };
+
+/** Ids of rules: short, stable strings ("r1" for seeded or older rules, random ones for new rules). */
+export const RULE_ID_PATTERN = /^[A-Za-z0-9_-]{1,24}$/;
+
+export function isRuleId(value: unknown): value is string {
+    return typeof value === "string" && RULE_ID_PATTERN.test(value);
+}
+
+/** A new random rule id ("r" and 10 base-36 characters). */
+export function newRuleId() {
+    const bytes = new Uint8Array(10);
+    globalThis.crypto.getRandomValues(bytes);
+    return `r${Array.from(bytes, (byte) => (byte % 36).toString(36)).join("")}`;
+}
+
+function ruleTitle(value: unknown) {
+    return cleanSingleLine(value, GROUP_LIMITS.ruleTitleMax);
+}
+
+function ruleDescription(value: unknown) {
+    return cleanMultiLine(value, GROUP_LIMITS.ruleDescriptionMax).replace(/\n{3,}/g, "\n\n");
+}
+
+/** An id the list doesn't use yet: the given one when it is valid, else a new one. */
+function uniqueRuleId(candidate: unknown, seen: Set<string>, makeId: () => string) {
+    if (isRuleId(candidate) && !seen.has(candidate)) return candidate;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        const id = makeId();
+        if (isRuleId(id) && !seen.has(id)) return id;
+    }
+    let index = seen.size + 1;
+    while (seen.has(`r${index}`)) index += 1;
+    return `r${index}`;
+}
+
+/** Stored rules, read leniently (a document is never refused): texts clipped, empty titles dropped, unique ids, at most 20. */
+export function sanitizeRulesList(value: unknown): GroupRule[] {
+    if (!Array.isArray(value)) return [];
+    const seen = new Set<string>();
+    const rules: GroupRule[] = [];
+    for (const entry of value) {
+        if (!entry || typeof entry !== "object") continue;
+        const raw = entry as Record<string, unknown>;
+        const title = ruleTitle(raw.title).slice(0, GROUP_LIMITS.ruleTitleMax).trim();
+        if (!title) continue;
+        const id = uniqueRuleId(raw.id, seen, () => `r${rules.length + 1}`);
+        seen.add(id);
+        rules.push({ id, title, description: ruleDescription(raw.description).slice(0, GROUP_LIMITS.ruleDescriptionMax).trim() });
+        if (rules.length >= GROUP_LIMITS.rulesCount) break;
+    }
+    return rules;
+}
+
+export type RulesProblem = "invalid_rules" | "rules_limit" | "rules_too_long";
+
+/**
+ * Rules sent by an owner or admin, checked strictly: a list of at most 20
+ * rules, each with a title (1-120 characters) and an optional description
+ * (at most 600). Valid, unique ids are kept; other rules get a new id.
+ */
+export function normalizeRulesInput(value: unknown, makeId: () => string = newRuleId): { ok: true; rules: GroupRule[] } | { ok: false; problem: RulesProblem } {
+    if (!Array.isArray(value)) return { ok: false, problem: "invalid_rules" };
+    if (value.length > GROUP_LIMITS.rulesCount) return { ok: false, problem: "rules_limit" };
+    const seen = new Set<string>();
+    const rules: GroupRule[] = [];
+    for (const entry of value) {
+        if (!entry || typeof entry !== "object" || Array.isArray(entry)) return { ok: false, problem: "invalid_rules" };
+        const raw = entry as Record<string, unknown>;
+        if (typeof raw.title !== "string" || (raw.description !== undefined && raw.description !== null && typeof raw.description !== "string")) return { ok: false, problem: "invalid_rules" };
+        const title = ruleTitle(raw.title);
+        const description = ruleDescription(raw.description);
+        if (!title) return { ok: false, problem: "invalid_rules" };
+        if (title.length > GROUP_LIMITS.ruleTitleMax || description.length > GROUP_LIMITS.ruleDescriptionMax) return { ok: false, problem: "rules_too_long" };
+        const id = uniqueRuleId(raw.id, seen, makeId);
+        seen.add(id);
+        rules.push({ id, title, description });
+    }
+    return { ok: true, rules };
+}
+
+/** A numbered or bulleted line ("1. …", "2) …", "- …", "• …"): the item's text. */
+const RULE_ITEM = /^(?:\d{1,3}[.)]|[-*•–—])\s+(\S.*)$/u;
+const MARKDOWN_HEADING = /^#{1,6}\s/;
+
+function cutTitle(line: string) {
+    const max = GROUP_LIMITS.ruleTitleMax;
+    if (line.length <= max) return { title: line, overflow: "" };
+    // The first sentence when it fits, else the words that fit (the whole line then opens the description).
+    const sentence = /^(.{8,}?[.!?;])\s/u.exec(line.slice(0, max + 1));
+    if (sentence) return { title: sentence[1], overflow: line.slice(sentence[0].length).trim() };
+    const space = line.lastIndexOf(" ", max - 1);
+    return { title: `${line.slice(0, space > 20 ? space : max - 1).trim()}…`, overflow: line };
+}
+
+function ruleFromLines(lines: readonly string[], id: string): GroupRule | null {
+    const text = lines.map((line) => line.trim());
+    while (text.length && !text[0]) text.shift();
+    if (!text.length) return null;
+    // "**Saygı**" → "Saygı": the title is shown as plain bold text.
+    const first = text[0].replace(/^(\*\*|__)(.+)\1$/u, "$2").trim();
+    const { title, overflow } = cutTitle(first);
+    let description = [overflow, ...text.slice(1)].join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    if (description.length > GROUP_LIMITS.ruleDescriptionMax) description = `${description.slice(0, GROUP_LIMITS.ruleDescriptionMax - 1).trimEnd()}…`;
+    const cleanTitle = ruleTitle(title).slice(0, GROUP_LIMITS.ruleTitleMax);
+    return cleanTitle ? { id, title: cleanTitle, description: ruleDescription(description) } : null;
+}
+
+/**
+ * Rules from the plain text groups kept before the Rules section (and that
+ * older clients still send): numbered or bulleted lines become rules (the
+ * lines under one belong to its description); without them every paragraph
+ * is a rule, and a single paragraph is one rule. Ids are stable ("r1", "r2"…).
+ */
+export function parseLegacyRules(value: unknown): GroupRule[] {
+    const source = cleanMultiLine(value, GROUP_LIMITS.rulesMax * 4);
+    if (!source) return [];
+    const lines = source.split("\n");
+    // Indented lines (two spaces or a tab) belong to the item above, even when they look like list items.
+    const isItem = (line: string) => !/^(?:\s{2,}|\t)/.test(line) && RULE_ITEM.test(line.trim());
+    const firstItem = lines.findIndex(isItem);
+    const blocks: string[][] = [];
+    if (firstItem >= 0) {
+        // Text above the list is kept as a rule unless it is only headings or an intro ("Our rules:").
+        const preamble = lines.slice(0, firstItem).map((line) => line.trim()).filter(Boolean);
+        if (preamble.length && !preamble.every((line) => MARKDOWN_HEADING.test(line) || /[:：]$/.test(line))) blocks.push(preamble);
+        for (const line of lines.slice(firstItem)) {
+            if (isItem(line)) blocks.push([(RULE_ITEM.exec(line.trim()) as RegExpExecArray)[1]]);
+            else if (!MARKDOWN_HEADING.test(line.trim())) blocks[blocks.length - 1].push(line);
+        }
+    } else {
+        for (const paragraph of source.split(/\n\s*\n/)) {
+            const block = paragraph.split("\n").map((line) => line.trim()).filter((line) => line && !MARKDOWN_HEADING.test(line));
+            if (block.length) blocks.push(block);
+        }
+    }
+    const rules: GroupRule[] = [];
+    for (const block of blocks) {
+        const rule = ruleFromLines(block, `r${rules.length + 1}`);
+        if (rule) rules.push(rule);
+        if (rules.length >= GROUP_LIMITS.rulesCount) break;
+    }
+    return rules;
+}
+
+/**
+ * The rules as plain text ("1. Title" with the description indented under
+ * it), stored next to the list for older readers; parseLegacyRules reads it
+ * back into the same rules.
+ */
+export function rulesText(rules: readonly GroupRuleDraft[]) {
+    return rules.map((rule, index) => {
+        const head = `${index + 1}. ${rule.title}`;
+        const body = rule.description ? rule.description.split("\n").map((line) => (line.trim() ? `   ${line.trim()}` : "")).join("\n") : "";
+        return body ? `${head}\n${body}` : head;
+    }).join("\n");
+}
+
+/** The rules part of a group document, as every reader sees it. */
+export type GroupRulesState = {
+    list: GroupRule[];
+    /** Raised by every save of the rules; 0 until they are first saved in the Rules section. */
+    version: number;
+    updatedAt: string | null;
+    /** Members accept the rules before they can write, react or join the voice channel. */
+    screening: boolean;
+    /** The version members must have accepted: set when screening is turned on or everyone is asked again. */
+    acceptVersion: number;
+};
+
+/** The rule fields of a stored (or live) group document. */
+export type StoredGroupRules = {
+    rules?: unknown;
+    rulesList?: unknown;
+    rulesVersion?: unknown;
+    rulesUpdatedAt?: unknown;
+    rulesScreening?: unknown;
+    rulesAcceptVersion?: unknown;
+};
+
+const RULES_VERSION_MAX = 1_000_000_000;
+
+/** A stored or sent rules version: a whole number from 0, anything else is 0. */
+export function readRulesVersion(value: unknown) {
+    return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= RULES_VERSION_MAX ? value : 0;
+}
+
+/**
+ * Reads the rules of a group document. Groups from before the Rules section
+ * only have the `rules` text: their list is made from it on every read (the
+ * text itself stays as it is until the rules are saved again).
+ */
+export function readGroupRules(doc: StoredGroupRules | null | undefined): GroupRulesState {
+    const list = Array.isArray(doc?.rulesList) ? sanitizeRulesList(doc.rulesList) : parseLegacyRules(doc?.rules);
+    const version = readRulesVersion(doc?.rulesVersion);
+    const updated = toMillis(doc?.rulesUpdatedAt);
+    return {
+        list,
+        version,
+        updatedAt: updated > 0 ? new Date(updated).toISOString() : null,
+        screening: doc?.rulesScreening === true,
+        acceptVersion: Math.min(readRulesVersion(doc?.rulesAcceptVersion), Math.max(1, version)),
+    };
+}
+
+/** The rules have to be accepted in this group at all: screening is on and there is at least one rule. */
+export function rulesGateActive(state: Pick<GroupRulesState, "list" | "screening">) {
+    return state.screening && state.list.length > 0;
+}
+
+/** The accepted versions on the group document (`rulesAccepted`), by pseudonymous member key. */
+export function readRulesAccepted(value: unknown): Record<string, number> {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    const accepted: Record<string, number> = {};
+    for (const [key, version] of Object.entries(value as Record<string, unknown>)) {
+        if (isMemberKey(key) && readRulesVersion(version) > 0) accepted[key] = readRulesVersion(version);
+    }
+    return accepted;
+}
+
+/** The version a member accepted (0: never). */
+export function acceptedRulesVersion(accepted: unknown, key: string) {
+    if (!isMemberKey(key) || !accepted || typeof accepted !== "object" || Array.isArray(accepted)) return 0;
+    return readRulesVersion((accepted as Record<string, unknown>)[key]);
+}
+
+/** A member has accepted the rules when their accepted version reaches the one members must accept. */
+export function hasAcceptedRules(state: Pick<GroupRulesState, "acceptVersion">, acceptedVersion: number) {
+    return acceptedVersion >= Math.max(1, state.acceptVersion);
+}
+
+/**
+ * Someone of `role` still has to accept the group's rules before they can
+ * write, react, send files or voice messages and join the voice channel.
+ * Owners, admins and moderators never do; reading is always allowed.
+ */
+export function mustAcceptRules(state: GroupRulesState, role: GroupRole | null | undefined, acceptedVersion: number) {
+    if (!role || canModerate(role)) return false;
+    return rulesGateActive(state) && !hasAcceptedRules(state, acceptedVersion);
+}
+
+/**
+ * The versions after a save of the rules. Every save raises the version;
+ * members are asked to accept when screening is turned on or when the owner
+ * asks everyone again (otherwise fixing a typo doesn't ask anybody again).
+ */
+export function nextRulesVersions(current: Pick<GroupRulesState, "version" | "acceptVersion" | "screening">, next: { screening: boolean; reaccept: boolean }) {
+    const version = Math.min(current.version + 1, RULES_VERSION_MAX);
+    const ask = next.screening && (!current.screening || next.reaccept || current.acceptVersion < 1);
+    return { version, acceptVersion: ask ? version : Math.min(current.acceptVersion, version) };
+}
+
+/** The version recorded when a member accepts: the one they were shown (`seen`), at most the current one. */
+export function acceptanceVersion(state: Pick<GroupRulesState, "version">, seen?: number | null) {
+    const current = Math.max(1, state.version);
+    return typeof seen === "number" && Number.isInteger(seen) && seen >= 1 ? Math.min(seen, current) : current;
+}
+
+/** Rules every group can start from (the "suggested rules" of the Rules editor and of the templates), in the group's language. */
+const SUGGESTED_RULES: Record<SeedLanguage, readonly GroupRuleDraft[]> = {
+    tr: [
+        { title: "Saygılı ve yapıcı ol", description: "Herkese nazik davran; kişiyi değil fikri eleştir." },
+        { title: "Hakaret, taciz ve spam yok", description: "Hakaret, taciz, ayrımcılık ve tekrar eden ya da istenmeyen mesajlar yasaktır." },
+        { title: "Gizli bilgileri paylaşma", description: "Kişisel bilgileri, parolaları ve API anahtarlarını sohbete veya dosyalara yazma." },
+        { title: "Büyük değişiklikleri önceden haber ver", description: "Başkasının dosyasında büyük bir değişiklik yapmadan önce sohbette haber ver." },
+        { title: "Konuları ve bahsetmeleri doğru kullan", description: "Mesajlarını uygun #konu ile etiketle; @herkes bahsini yalnızca önemli duyurular için kullan." },
+    ],
+    en: [
+        { title: "Be respectful and constructive", description: "Be kind to everyone; criticize ideas, not people." },
+        { title: "No insults, harassment or spam", description: "Insults, harassment, discrimination and repeated or unwanted messages are not allowed." },
+        { title: "Keep secrets out", description: "Never post personal data, passwords or API keys in the chat or in files." },
+        { title: "Announce big changes", description: "Tell the chat before making a big change in someone else's file." },
+        { title: "Use topics and mentions well", description: "Tag your messages with the right #topic; use @everyone only for important announcements." },
+    ],
+};
+
+export function suggestedRules(language: SeedLanguage): GroupRuleDraft[] {
+    return SUGGESTED_RULES[language].map((rule) => ({ ...rule }));
+}
+
+/** Rules a list gets from `extra`: those whose title it doesn't have yet, up to the limit. */
+export function mergeRules<T extends GroupRuleDraft>(current: readonly T[], extra: readonly GroupRuleDraft[], make: (rule: GroupRuleDraft) => T): T[] {
+    const titles = new Set(current.map((rule) => rule.title.trim().toLocaleLowerCase("tr")));
+    const added = extra.filter((rule) => !titles.has(rule.title.trim().toLocaleLowerCase("tr"))).map(make);
+    return [...current, ...added].slice(0, Math.max(current.length, GROUP_LIMITS.rulesCount));
+}
+
+/* -------------------------------------------------------------------------- */
 /* Invite links                                                               */
 /* -------------------------------------------------------------------------- */
 
@@ -516,7 +816,8 @@ export type GroupErrorCode =
     | "link_not_found" | "link_expired" | "link_exhausted" | "link_limit" | "invalid_expiry" | "invalid_max_uses"
     | "message_not_found" | "pin_limit" | "invalid_reaction" | "conflict" | "server_error"
     | "muted" | "slowmode" | "automod_blocked" | "cannot_moderate" | "invalid_command"
-    | "commands_limit" | "words_limit";
+    | "commands_limit" | "words_limit"
+    | "invalid_rules" | "rules_limit" | "rules_not_accepted" | "rules_changed";
 
 export type GroupLanguage = "tr" | "en";
 
@@ -558,7 +859,17 @@ export type GroupInfo = {
     description: string;
     emoji: string;
     color: GroupColor;
+    /** The rules as plain text (rulesText of rulesList), kept for older readers. */
     rules: string;
+    /** The Rules section: numbered rules with a title and an optional description. */
+    rulesList: GroupRule[];
+    /** Raised by every save of the rules (0: never saved in the Rules section). */
+    rulesVersion: number;
+    rulesUpdatedAt: string | null;
+    /** Members accept the rules before they can write, react or join the voice channel. */
+    rulesScreening: boolean;
+    /** The version members must have accepted. */
+    rulesAcceptVersion: number;
     topics: string[];
     template: GroupTemplateId | null;
     contentLanguage: GroupLanguage;
@@ -604,7 +915,15 @@ export type GroupMemberInfo = {
 export type GroupDetailResponse = {
     group: GroupInfo;
     members: GroupMemberInfo[];
-    me: { email: string; role: GroupRole; key: string };
+    me: {
+        email: string;
+        role: GroupRole;
+        key: string;
+        /** The rules must be accepted before this person can write, react or join the voice channel. */
+        mustAcceptRules: boolean;
+        /** The rules version this person accepted (0: never). */
+        rulesAcceptedVersion: number;
+    };
     /** Only for owners/admins. */
     stats: { pendingInvites: number; activeLinks: number } | null;
     banned: Array<{ email: string; username: string }>;
@@ -662,6 +981,11 @@ export type GroupJoinPreview = {
     alreadyMember: boolean;
     full: boolean;
     banned: boolean;
+    /** The group's rules, shown before joining. */
+    rules: GroupRuleDraft[];
+    /** Joining needs "I've read and accept the rules" (sent as acceptRules with rulesVersion). */
+    rulesScreening: boolean;
+    rulesVersion: number;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -701,8 +1025,8 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
         color: "emerald",
         name: { TR: "Çalışma grubu", EN: "Study group" },
         description: { TR: "Haftalık plan, ortak notlar, kaynak listesi ve kendini kontrol eden Python alıştırmaları.", EN: "A weekly plan, shared notes, a resource list and self-checking Python exercises." },
-        welcome: { TR: "📚 {group} çalışma grubuna hoş geldiniz! Haftalık plan TODO.md dosyasında. Kuralları okuyun, sorularınızı çekinmeden sorun ve öğrendiklerinizi paylaşın.", EN: "📚 Welcome to the {group} study group! The weekly plan lives in TODO.md. Read the rules, ask questions freely and share what you learn." },
-        files: { tr: ["README.md", "KURALLAR.md", "TODO.md", "notlar.md", "kaynaklar.md", "alistirma.py"], en: ["README.md", "RULES.md", "TODO.md", "notes.md", "resources.md", "practice.py"] },
+        welcome: { TR: "📚 {group} çalışma grubuna hoş geldiniz! Haftalık plan TODO.md dosyasında. Kurallar bölümünü okuyun, sorularınızı çekinmeden sorun ve öğrendiklerinizi paylaşın.", EN: "📚 Welcome to the {group} study group! The weekly plan lives in TODO.md. Read the Rules section, ask questions freely and share what you learn." },
+        files: { tr: ["README.md", "TODO.md", "notlar.md", "kaynaklar.md", "alistirma.py"], en: ["README.md", "TODO.md", "notes.md", "resources.md", "practice.py"] },
         topics: { tr: ["genel", "sorular", "kaynaklar", "sınav"], en: ["general", "questions", "resources", "exams"] },
     },
     {
@@ -712,7 +1036,7 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
         name: { TR: "Oyun geliştirme (Game jam)", EN: "Game dev (Game jam)" },
         description: { TR: "Oyun tasarım belgesi, Hanogt Oyun Motoru için C# oyuncu scripti ve tarayıcıda çalışan prototip.", EN: "A game design document, a C# player script for the Hanogt Engine and a browser prototype." },
         welcome: { TR: "🎮 {group} jam takımına hoş geldiniz! Oyun fikrini game_design.md dosyasında şekillendirin, görevleri TODO.md dosyasından paylaşın. İyi jamler!", EN: "🎮 Welcome to the {group} jam team! Shape the game idea in game_design.md and split the work in TODO.md. Happy jamming!" },
-        files: { tr: ["README.md", "KURALLAR.md", "TODO.md", "game_design.md", "PlayerController.cs", "prototype.html"], en: ["README.md", "RULES.md", "TODO.md", "game_design.md", "PlayerController.cs", "prototype.html"] },
+        files: { tr: ["README.md", "TODO.md", "game_design.md", "PlayerController.cs", "prototype.html"], en: ["README.md", "TODO.md", "game_design.md", "PlayerController.cs", "prototype.html"] },
         topics: { tr: ["genel", "tasarım", "kod", "sanat", "ses"], en: ["general", "design", "code", "art", "audio"] },
     },
     {
@@ -722,7 +1046,7 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
         name: { TR: "Açık kaynak proje", EN: "Open-source project" },
         description: { TR: "Proje README'si, katkı rehberi, davranış kuralları, yol haritası, MIT lisansı ve örnek bir modül.", EN: "A project README, contribution guide, code of conduct, roadmap, MIT license and a sample module." },
         welcome: { TR: "🌍 {group} projesine hoş geldiniz! README.md projeyi, CONTRIBUTING.md katkı sürecini, TODO.md yol haritasını anlatıyor. İlk katkınızı bekliyoruz!", EN: "🌍 Welcome to {group}! README.md describes the project, CONTRIBUTING.md the contribution flow and TODO.md the roadmap. We can't wait for your first contribution!" },
-        files: { tr: ["README.md", "CONTRIBUTING.md", "KURALLAR.md", "TODO.md", "LICENSE", "index.js", "package.json"], en: ["README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "TODO.md", "LICENSE", "index.js", "package.json"] },
+        files: { tr: ["README.md", "CONTRIBUTING.md", "TODO.md", "LICENSE", "index.js", "package.json"], en: ["README.md", "CONTRIBUTING.md", "TODO.md", "LICENSE", "index.js", "package.json"] },
         topics: { tr: ["genel", "hatalar", "özellikler", "inceleme", "sürümler"], en: ["general", "bugs", "features", "reviews", "releases"] },
     },
     {
@@ -732,7 +1056,7 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
         name: { TR: "Sınıf", EN: "Classroom" },
         description: { TR: "Ders planı, ilk ders notları ve otomatik kontrollü ilk ödev ile hazır bir sınıf alanı.", EN: "A ready classroom with a syllabus, first lesson notes and an auto-checked first assignment." },
         welcome: { TR: "🎓 {group} sınıfına hoş geldiniz! Ders planı TODO.md dosyasında; ilk ders notları ve ödev dosyası soldaki listede. Sorularınızı bu sohbette sorabilirsiniz.", EN: "🎓 Welcome to the {group} class! The syllabus is in TODO.md; the first lesson notes and assignment are in the file list. Ask your questions here in the chat." },
-        files: { tr: ["README.md", "KURALLAR.md", "TODO.md", "ders-01.md", "odev-01.py"], en: ["README.md", "RULES.md", "TODO.md", "lesson-01.md", "assignment-01.py"] },
+        files: { tr: ["README.md", "TODO.md", "ders-01.md", "odev-01.py"], en: ["README.md", "TODO.md", "lesson-01.md", "assignment-01.py"] },
         topics: { tr: ["duyurular", "ödevler", "sorular", "kaynaklar"], en: ["announcements", "homework", "questions", "resources"] },
     },
     {
@@ -742,7 +1066,7 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
         name: { TR: "Hackathon takımı", EN: "Hackathon team" },
         description: { TR: "Zaman çizelgesi, rol dağılımı, 3 dakikalık sunum taslağı ve çalışan bir web MVP'si.", EN: "A timeline, role split, a 3-minute pitch outline and a working web MVP." },
         welcome: { TR: "⚡ {group} takımına hoş geldiniz! Zaman çizelgesi TODO.md dosyasında, sunum taslağı pitch.md dosyasında. Hızlı karar verin, sık kaydedin ve eğlenin!", EN: "⚡ Welcome to team {group}! The timeline is in TODO.md and the pitch outline in pitch.md. Decide fast, save often and have fun!" },
-        files: { tr: ["README.md", "KURALLAR.md", "TODO.md", "pitch.md", "index.html", "style.css", "app.js"], en: ["README.md", "RULES.md", "TODO.md", "pitch.md", "index.html", "style.css", "app.js"] },
+        files: { tr: ["README.md", "TODO.md", "pitch.md", "index.html", "style.css", "app.js"], en: ["README.md", "TODO.md", "pitch.md", "index.html", "style.css", "app.js"] },
         topics: { tr: ["genel", "fikirler", "görevler", "sunum", "demo"], en: ["general", "ideas", "tasks", "pitch", "demo"] },
     },
 ];
@@ -769,7 +1093,12 @@ export function seedLanguageFor(language: unknown): SeedLanguage {
 export type GroupSeedContext = { groupName: string; ownerName: string; date: string; year: number };
 export type GroupSeed = {
     files: Array<{ name: string; code: string }>;
+    /** The Rules section the group starts with (no rules file is created). */
+    rulesList: GroupRule[];
+    /** rulesText of rulesList, for the `rules` field older readers use. */
     rules: string;
+    /** Members accept the rules before they can talk (templates that come with rules). */
+    rulesScreening: boolean;
     topics: string[];
     projectName: string;
     welcomeText: string;
@@ -807,6 +1136,7 @@ function guideTable(lang: SeedLanguage) {
     return lang === "tr"
         ? `| Bölüm | Ne işe yarar? |
 | --- | --- |
+| 📜 **Kurallar** | Kanal listesinin en üstündeki Kurallar bölümü grubun kurallarını gösterir; grup isterse sohbete katılmadan önce kabul edilir. |
 | 📁 **Dosyalar** | Soldaki listeden bir dosya seç. Yazdıkların birkaç saniye içinde otomatik kaydedilir ve diğer üyelerin ekranında canlı güncellenir. |
 | 💬 **Sohbet** | Yazılı veya sesli mesaj gönder. Birini anmak için \`@kullanıcıadı\`, mesajını bir konuyla etiketlemek için \`#konu\` yaz. |
 | 📌 **Sabitlenenler** | Yöneticilerin sabitlediği önemli mesajlar tek bir yerde toplanır. |
@@ -815,6 +1145,7 @@ function guideTable(lang: SeedLanguage) {
 | 📦 **İndir ve çalıştır** | Tüm dosyaları ZIP olarak indir ya da bir dosyanın kopyasını Düzenleyici'de açıp çalıştır. |`
         : `| Area | What it's for |
 | --- | --- |
+| 📜 **Rules** | The Rules section at the top of the channel list shows the group's rules; if the group asks for it, you accept them before joining the chat. |
 | 📁 **Files** | Pick a file from the list on the left. Everything you type is saved automatically within seconds and updates live for every member. |
 | 💬 **Chat** | Send text or voice messages. Type \`@username\` to mention someone and \`#topic\` to tag your message. |
 | 📌 **Pinned** | Important messages pinned by admins are collected in one place. |
@@ -851,75 +1182,9 @@ _${tr ? "Bu dosya grup oluşturulurken otomatik hazırlandı; dilediğin gibi d�
 `;
 }
 
-const BASE_RULES: Record<SeedLanguage, string[]> = {
-    tr: [
-        "Herkese saygılı ve yapıcı ol; kişiyi değil fikri eleştir.",
-        "Hakaret, taciz, ayrımcılık ve spam yasaktır.",
-        "Kişisel bilgileri, parolaları ve API anahtarlarını paylaşma.",
-        "Başkasının dosyasında büyük bir değişiklik yapmadan önce sohbette haber ver.",
-        "Mesajlarını uygun #konu ile etiketle; @herkes bahsini yalnızca önemli duyurular için kullan.",
-    ],
-    en: [
-        "Be respectful and constructive; criticize ideas, not people.",
-        "Insults, harassment, discrimination and spam are not allowed.",
-        "Never share personal data, passwords or API keys.",
-        "Tell the chat before making a big change in someone else's file.",
-        "Tag your messages with the right #topic; use @everyone only for important announcements.",
-    ],
-};
-
-function rulesSummary(lang: SeedLanguage, extra: string[]) {
-    return [...BASE_RULES[lang], ...extra].map((rule, index) => `${index + 1}. ${rule}`).join("\n");
-}
-
-function rulesFile(lang: SeedLanguage, ctx: GroupSeedContext, extraTitle: string, extra: string[]) {
-    const tr = lang === "tr";
-    const list = (items: string[], start: number) => items.map((item, index) => `${start + index}. ${item}`).join("\n");
-    return tr
-        ? `# 📜 ${ctx.groupName} · Grup Kuralları
-
-Bu kurallar grubu herkes için güvenli, verimli ve keyifli tutmak için var. Gruba katılan herkes bu kuralları kabul etmiş sayılır.
-
-## 🤝 Saygı
-${list(["Herkese nazik ve yapıcı ol; kişiyi değil fikri eleştir.", "Hakaret, taciz, ayrımcılık ve spam kesinlikle yasaktır.", "Başkalarının kişisel bilgilerini (e-posta, telefon, adres) paylaşma."], 1)}
-
-## 💻 Kod ve dosyalar
-${list(["Başkasının dosyasında büyük bir değişiklik yapmadan önce sohbette haber ver.", "Parola, API anahtarı veya gizli bilgi içeren kod paylaşma.", "Başka bir yerden aldığın kodun kaynağını ve lisansını belirt."], 4)}
-
-## 💬 Sohbet
-${list(["Mesajlarını uygun `#konu` ile etiketle.", "Soru sormadan önce sabitlenen mesajlara ve README.md dosyasına göz at.", "`@herkes` bahsini yalnızca gerçekten önemli duyurular için kullan."], 7)}
-
-## ${extraTitle}
-${list(extra, 10)}
-
-## 🛡️ Yaptırımlar
-Kurallara uymayan üyeler önce uyarılır. Tekrarında yöneticiler üyeyi gruptan çıkarabilir veya gruba yeniden katılmasını engelleyebilir.
-`
-        : `# 📜 ${ctx.groupName} · Group Rules
-
-These rules keep the group safe, productive and fun for everyone. Everyone who joins the group agrees to them.
-
-## 🤝 Respect
-${list(["Be kind and constructive; criticize ideas, not people.", "Insults, harassment, discrimination and spam are strictly forbidden.", "Never share other people's personal data (e-mail, phone, address)."], 1)}
-
-## 💻 Code and files
-${list(["Tell the chat before making a big change in someone else's file.", "Never share code that contains passwords, API keys or other secrets.", "Credit the source and license of code you copy from elsewhere."], 4)}
-
-## 💬 Chat
-${list(["Tag your messages with the right `#topic`.", "Check the pinned messages and README.md before asking a question.", "Use `@everyone` only for truly important announcements."], 7)}
-
-## ${extraTitle}
-${list(extra, 10)}
-
-## 🛡️ Enforcement
-Members who break the rules get a warning first. If it happens again, admins may remove the member and block them from rejoining.
-`;
-}
-
-function blankSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[]; rules: string } {
+function blankSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[] } {
     const tr = lang === "tr";
     return {
-        rules: "",
         files: [
             {
                 name: "README.md",
@@ -960,13 +1225,9 @@ console.log(greet("world"));
     };
 }
 
-function studySeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[]; rules: string } {
+function studySeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[] } {
     const tr = lang === "tr";
-    const extra = tr
-        ? ["Çözümü değil yolu paylaş; ödevleri birbirinizden kopyalamayın.", "Oturumlara zamanında katıl, katılamayacaksan önceden haber ver."]
-        : ["Share the path, not the answer; don't copy each other's homework.", "Join sessions on time and let the group know in advance if you can't make it."];
     return {
-        rules: rulesSummary(lang, extra),
         files: [
             {
                 name: "README.md",
@@ -979,8 +1240,8 @@ function studySeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile
                         ? [{ topic: "genel", about: "Duyurular ve günlük sohbet." }, { topic: "sorular", about: "Takıldığın her şey; soru sormaktan çekinme." }, { topic: "kaynaklar", about: "Faydalı bağlantılar, videolar ve kitaplar." }, { topic: "sınav", about: "Sınav tarihleri, konu listeleri ve deneme soruları." }]
                         : [{ topic: "general", about: "Announcements and everyday chat." }, { topic: "questions", about: "Anything you are stuck on; don't be shy." }, { topic: "resources", about: "Useful links, videos and books." }, { topic: "exams", about: "Exam dates, topic lists and practice questions." }],
                     steps: tr
-                        ? ["Sohbette kendini ve hedefini tanıt.", "KURALLAR.md dosyasını oku.", "TODO.md dosyasından bu haftanın bir görevini üstlen.", "`alistirma.py` dosyasını Düzenleyici'de açıp çalıştır."]
-                        : ["Introduce yourself and your goal in the chat.", "Read RULES.md.", "Pick one of this week's tasks from TODO.md.", "Open `practice.py` in the Editor and run it."],
+                        ? ["Kanal listesinin en üstündeki Kurallar bölümünü oku ve kabul et.", "Sohbette kendini ve hedefini tanıt.", "TODO.md dosyasından bu haftanın bir görevini üstlen.", "`alistirma.py` dosyasını Düzenleyici'de açıp çalıştır."]
+                        : ["Read and accept the rules in the Rules section at the top of the channel list.", "Introduce yourself and your goal in the chat.", "Pick one of this week's tasks from TODO.md.", "Open `practice.py` in the Editor and run it."],
                     extra: tr
                         ? `## 📅 Haftalık ritim
 
@@ -998,7 +1259,6 @@ function studySeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile
 | Friday | Review the week in a short voice call and add summaries to \`notes.md\`. |`,
                 }),
             },
-            { name: tr ? "KURALLAR.md" : "RULES.md", code: rulesFile(lang, ctx, tr ? "📚 Çalışma düzeni" : "📚 Study habits", extra) },
             {
                 name: "TODO.md",
                 code: tr
@@ -1227,14 +1487,10 @@ if __name__ == "__main__":
     };
 }
 
-function gamejamSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[]; rules: string } {
+function gamejamSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[] } {
     const tr = lang === "tr";
-    const extra = tr
-        ? ["Kullandığınız görsel, ses ve fontların lisansını kaynak göstererek not edin.", "Kapsamı küçük tutun: önce oynanabilir bir sürüm, sonra cila."]
-        : ["Write down the license and source of every image, sound and font you use.", "Keep the scope small: first a playable build, then polish."];
     const title = escapeHtml(ctx.groupName);
     return {
-        rules: rulesSummary(lang, extra),
         files: [
             {
                 name: "README.md",
@@ -1247,8 +1503,8 @@ function gamejamSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFi
                         ? [{ topic: "genel", about: "Duyurular ve koordinasyon." }, { topic: "tasarım", about: "Oyun fikri, mekanikler ve seviye tasarımı." }, { topic: "kod", about: "Scriptler, hatalar ve teknik kararlar." }, { topic: "sanat", about: "Karakterler, arka planlar ve arayüz." }, { topic: "ses", about: "Müzik ve ses efektleri." }]
                         : [{ topic: "general", about: "Announcements and coordination." }, { topic: "design", about: "Game idea, mechanics and level design." }, { topic: "code", about: "Scripts, bugs and technical decisions." }, { topic: "art", about: "Characters, backgrounds and UI." }, { topic: "audio", about: "Music and sound effects." }],
                     steps: tr
-                        ? ["Sohbette hangi rolü üstlenmek istediğini yaz.", "`game_design.md` dosyasındaki fikir bölümünü birlikte doldurun.", "`prototype.html` dosyasını Düzenleyici'de açıp çalıştır.", "`PlayerController.cs` dosyasını Hanogt Oyun Motoru'nda dene."]
-                        : ["Tell the chat which role you'd like to take.", "Fill in the idea section of `game_design.md` together.", "Open `prototype.html` in the Editor and run it.", "Try `PlayerController.cs` in the Hanogt Game Engine."],
+                        ? ["Kanal listesinin en üstündeki Kurallar bölümünü oku ve kabul et.", "Sohbette hangi rolü üstlenmek istediğini yaz.", "`game_design.md` dosyasındaki fikir bölümünü birlikte doldurun.", "`prototype.html` dosyasını Düzenleyici'de açıp çalıştır.", "`PlayerController.cs` dosyasını Hanogt Oyun Motoru'nda dene."]
+                        : ["Read and accept the rules in the Rules section at the top of the channel list.", "Tell the chat which role you'd like to take.", "Fill in the idea section of `game_design.md` together.", "Open `prototype.html` in the Editor and run it.", "Try `PlayerController.cs` in the Hanogt Game Engine."],
                     extra: tr
                         ? `## 🎯 Jam bilgileri
 
@@ -1284,7 +1540,6 @@ function gamejamSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFi
 | Audio | … | Music and effects |`,
                 }),
             },
-            { name: tr ? "KURALLAR.md" : "RULES.md", code: rulesFile(lang, ctx, tr ? "🎮 Jam kuralları" : "🎮 Jam rules", extra) },
             {
                 name: "TODO.md",
                 code: tr
@@ -1552,11 +1807,8 @@ public class PlayerController : MonoBehaviour
     };
 }
 
-function opensourceSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[]; rules: string } {
+function opensourceSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[] } {
     const tr = lang === "tr";
-    const extra = tr
-        ? ["Her değişikliği kısa bir açıklamayla duyurun ve CONTRIBUTING.md dosyasındaki akışa uyun.", "İncelemelerde nazik olun; her katkı bir öğrenme fırsatıdır."]
-        : ["Announce every change with a short description and follow the flow in CONTRIBUTING.md.", "Be kind in reviews; every contribution is a chance to learn."];
     const pkg = {
         name: packageName(ctx.groupName),
         version: "0.1.0",
@@ -1567,7 +1819,6 @@ function opensourceSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: See
         license: "MIT",
     };
     return {
-        rules: rulesSummary(lang, extra),
         files: [
             {
                 name: "README.md",
@@ -1597,7 +1848,7 @@ console.log(slugify("Merhaba Dünya")); // "merhaba-dunya"
 \`\`\`
 
 ## 🤝 Katkıda bulunma
-Katkı akışı için \`CONTRIBUTING.md\`, topluluk kuralları için \`KURALLAR.md\`, yol haritası için \`TODO.md\` dosyasına bak.
+Katkı akışı için \`CONTRIBUTING.md\` ve \`TODO.md\` dosyalarına, topluluk kuralları için grubun **Kurallar** bölümüne bak.
 
 ## 📄 Lisans
 MIT — ayrıntılar \`LICENSE\` dosyasında.`
@@ -1617,7 +1868,7 @@ console.log(slugify("Hello World")); // "hello-world"
 \`\`\`
 
 ## 🤝 Contributing
-See \`CONTRIBUTING.md\` for the contribution flow, \`CODE_OF_CONDUCT.md\` for community rules and \`TODO.md\` for the roadmap.
+See \`CONTRIBUTING.md\` for the contribution flow, \`TODO.md\` for the roadmap and the group's **Rules** section for community rules.
 
 ## 📄 License
 MIT — see the \`LICENSE\` file.`,
@@ -1625,8 +1876,8 @@ MIT — see the \`LICENSE\` file.`,
                         ? [{ topic: "genel", about: "Duyurular ve genel tartışma." }, { topic: "hatalar", about: "Hata bildirimleri: adımlar, beklenen ve gerçekleşen davranış." }, { topic: "özellikler", about: "Yeni özellik önerileri ve tasarım tartışmaları." }, { topic: "inceleme", about: "Değişiklikler için kod inceleme istekleri." }, { topic: "sürümler", about: "Sürüm planları ve sürüm notları." }]
                         : [{ topic: "general", about: "Announcements and general discussion." }, { topic: "bugs", about: "Bug reports: steps, expected and actual behavior." }, { topic: "features", about: "Feature proposals and design discussions." }, { topic: "reviews", about: "Code review requests for changes." }, { topic: "releases", about: "Release plans and release notes." }],
                     steps: tr
-                        ? ["Sohbette kendini ve ilgi alanını tanıt.", "`CONTRIBUTING.md` ve `KURALLAR.md` dosyalarını oku.", "`TODO.md` dosyasından \"ilk katkı\" etiketli bir görev seç.", "`index.js` dosyasını Düzenleyici'de açıp çalıştır."]
-                        : ["Introduce yourself and your interests in the chat.", "Read `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.", "Pick a task tagged \"good first issue\" from `TODO.md`.", "Open `index.js` in the Editor and run it."],
+                        ? ["Kanal listesinin en üstündeki Kurallar bölümünü oku ve kabul et.", "Sohbette kendini ve ilgi alanını tanıt.", "`CONTRIBUTING.md` dosyasını oku.", "`TODO.md` dosyasından \"ilk katkı\" etiketli bir görev seç.", "`index.js` dosyasını Düzenleyici'de açıp çalıştır."]
+                        : ["Read and accept the rules in the Rules section at the top of the channel list.", "Introduce yourself and your interests in the chat.", "Read `CONTRIBUTING.md`.", "Pick a task tagged \"good first issue\" from `TODO.md`.", "Open `index.js` in the Editor and run it."],
                 }),
             },
             {
@@ -1687,7 +1938,6 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) to make release
 | \`refactor:\` | A change that keeps behavior the same |
 `,
             },
-            { name: tr ? "KURALLAR.md" : "CODE_OF_CONDUCT.md", code: rulesFile(lang, ctx, tr ? "🌍 Açık kaynak ilkeleri" : "🌍 Open-source principles", extra) },
             {
                 name: "TODO.md",
                 code: tr
@@ -1777,13 +2027,9 @@ console.log(slugify("${tr ? "Merhaba Dünya, Hanogt!" : "Hello World, Hanogt!"}"
     };
 }
 
-function classroomSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[]; rules: string } {
+function classroomSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[] } {
     const tr = lang === "tr";
-    const extra = tr
-        ? ["Ödevler bireyseldir: yardım iste ama kopyalama.", "Teslim tarihlerine uy; gecikecek olursan önceden haber ver."]
-        : ["Assignments are individual: ask for help, but don't copy.", "Respect the deadlines; tell the teacher in advance if you'll be late."];
     return {
-        rules: rulesSummary(lang, extra),
         files: [
             {
                 name: "README.md",
@@ -1796,8 +2042,8 @@ function classroomSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: Seed
                         ? [{ topic: "duyurular", about: "Öğretmenden duyurular ve tarih değişiklikleri." }, { topic: "ödevler", about: "Ödev soruları ve teslim bildirimleri." }, { topic: "sorular", about: "Derse dair her soru." }, { topic: "kaynaklar", about: "Ek okuma ve video önerileri." }]
                         : [{ topic: "announcements", about: "Announcements and schedule changes from the teacher." }, { topic: "homework", about: "Assignment questions and hand-in notes." }, { topic: "questions", about: "Any question about the lessons." }, { topic: "resources", about: "Extra reading and video suggestions." }],
                     steps: tr
-                        ? ["Sohbette adınla kendini tanıt.", "KURALLAR.md dosyasını oku.", "`ders-01.md` notlarını oku ve örnekleri dene.", "`odev-01.py` ödevini yap ve teslim et."]
-                        : ["Introduce yourself with your name in the chat.", "Read RULES.md.", "Read the `lesson-01.md` notes and try the examples.", "Complete and hand in `assignment-01.py`."],
+                        ? ["Kanal listesinin en üstündeki Kurallar bölümünü oku ve kabul et.", "Sohbette adınla kendini tanıt.", "`ders-01.md` notlarını oku ve örnekleri dene.", "`odev-01.py` ödevini yap ve teslim et."]
+                        : ["Read and accept the rules in the Rules section at the top of the channel list.", "Introduce yourself with your name in the chat.", "Read the `lesson-01.md` notes and try the examples.", "Complete and hand in `assignment-01.py`."],
                     extra: tr
                         ? `## 📤 Ödev nasıl teslim edilir?
 
@@ -1813,7 +2059,6 @@ function classroomSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: Seed
 4. Post in the chat under \`#homework\` that you've handed it in.`,
                 }),
             },
-            { name: tr ? "KURALLAR.md" : "RULES.md", code: rulesFile(lang, ctx, tr ? "🎓 Sınıf kuralları" : "🎓 Class rules", extra) },
             {
                 name: "TODO.md",
                 code: tr
@@ -2018,14 +2263,10 @@ if __name__ == "__main__":
     };
 }
 
-function hackathonSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[]; rules: string } {
+function hackathonSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: SeedFile[] } {
     const tr = lang === "tr";
-    const extra = tr
-        ? ["Kararları sohbette birlikte alın; tartışma uzarsa sahibi olan kişi karar verir.", "Takıldığınızda 30 dakikadan fazla beklemeden yardım isteyin."]
-        : ["Make decisions together in the chat; if a debate drags on, the task owner decides.", "Ask for help if you're stuck for more than 30 minutes."];
     const title = escapeHtml(ctx.groupName);
     return {
-        rules: rulesSummary(lang, extra),
         files: [
             {
                 name: "README.md",
@@ -2038,8 +2279,8 @@ function hackathonSeed(lang: SeedLanguage, ctx: GroupSeedContext): { files: Seed
                         ? [{ topic: "genel", about: "Duyurular ve koordinasyon." }, { topic: "fikirler", about: "Fikir havuzu ve oylama." }, { topic: "görevler", about: "Kim neyi yapıyor, nerede takıldı." }, { topic: "sunum", about: "Pitch metni, slaytlar ve prova." }, { topic: "demo", about: "Demo akışı ve son testler." }]
                         : [{ topic: "general", about: "Announcements and coordination." }, { topic: "ideas", about: "Idea pool and voting." }, { topic: "tasks", about: "Who does what and where they're stuck." }, { topic: "pitch", about: "Pitch script, slides and rehearsal." }, { topic: "demo", about: "Demo flow and final testing." }],
                     steps: tr
-                        ? ["Sohbette güçlü yönlerini ve üstlenmek istediğin rolü yaz.", "Problemi ve çözümü `pitch.md` dosyasında tek paragrafa indirin.", "`TODO.md` zaman çizelgesindeki görevleri paylaşın.", "`index.html` dosyasını Düzenleyici'de açıp MVP'yi dene."]
-                        : ["Post your strengths and the role you want in the chat.", "Boil the problem and solution down to one paragraph in `pitch.md`.", "Split the tasks on the `TODO.md` timeline.", "Open `index.html` in the Editor and try the MVP."],
+                        ? ["Kanal listesinin en üstündeki Kurallar bölümünü oku ve kabul et.", "Sohbette güçlü yönlerini ve üstlenmek istediğin rolü yaz.", "Problemi ve çözümü `pitch.md` dosyasında tek paragrafa indirin.", "`TODO.md` zaman çizelgesindeki görevleri paylaşın.", "`index.html` dosyasını Düzenleyici'de açıp MVP'yi dene."]
+                        : ["Read and accept the rules in the Rules section at the top of the channel list.", "Post your strengths and the role you want in the chat.", "Boil the problem and solution down to one paragraph in `pitch.md`.", "Split the tasks on the `TODO.md` timeline.", "Open `index.html` in the Editor and try the MVP."],
                     extra: tr
                         ? `## 👥 Takım
 
@@ -2065,7 +2306,6 @@ _Yarışmanın problem tanımını buraya yapıştırın._`
 _Paste the hackathon's problem statement here._`,
                 }),
             },
-            { name: tr ? "KURALLAR.md" : "RULES.md", code: rulesFile(lang, ctx, tr ? "⚡ Takım anlaşmaları" : "⚡ Team agreements", extra) },
             {
                 name: "TODO.md",
                 code: tr
@@ -2321,7 +2561,7 @@ render();
     };
 }
 
-const SEEDS: Record<GroupTemplateId, (lang: SeedLanguage, ctx: GroupSeedContext) => { files: SeedFile[]; rules: string }> = {
+const SEEDS: Record<GroupTemplateId, (lang: SeedLanguage, ctx: GroupSeedContext) => { files: SeedFile[] }> = {
     blank: blankSeed,
     study: studySeed,
     gamejam: gamejamSeed,
@@ -2330,6 +2570,71 @@ const SEEDS: Record<GroupTemplateId, (lang: SeedLanguage, ctx: GroupSeedContext)
     hackathon: hackathonSeed,
 };
 
+/** Each template's own rules, added after the suggested ones (the blank group starts without rules). */
+const TEMPLATE_RULES: Record<Exclude<GroupTemplateId, "blank">, Record<SeedLanguage, readonly GroupRuleDraft[]>> = {
+    study: {
+        tr: [
+            { title: "Çözümü değil yolu paylaş", description: "Ödevleri birbirinizden kopyalamayın; takıldığınız yeri ve nasıl düşündüğünüzü paylaşın." },
+            { title: "Oturumlara zamanında katıl", description: "Katılamayacaksan grubu önceden haberdar et." },
+        ],
+        en: [
+            { title: "Share the path, not the answer", description: "Don't copy each other's homework; share where you're stuck and how you're thinking about it." },
+            { title: "Join sessions on time", description: "Let the group know in advance if you can't make it." },
+        ],
+    },
+    gamejam: {
+        tr: [
+            { title: "Lisansları not et", description: "Kullandığınız görsel, ses ve fontların lisansını ve kaynağını not edin." },
+            { title: "Kapsamı küçük tut", description: "Önce oynanabilir bir sürüm, sonra cila." },
+        ],
+        en: [
+            { title: "Write down the licenses", description: "Note the license and source of every image, sound and font you use." },
+            { title: "Keep the scope small", description: "First a playable build, then polish." },
+        ],
+    },
+    opensource: {
+        tr: [
+            { title: "Katkı akışına uy", description: "Her değişikliği kısa bir açıklamayla duyurun ve CONTRIBUTING.md dosyasındaki akışı izleyin." },
+            { title: "İncelemelerde nazik ol", description: "Her katkı bir öğrenme fırsatıdır; yorumlarını yapıcı tut." },
+        ],
+        en: [
+            { title: "Follow the contribution flow", description: "Announce every change with a short description and follow the flow in CONTRIBUTING.md." },
+            { title: "Be kind in reviews", description: "Every contribution is a chance to learn; keep your comments constructive." },
+        ],
+    },
+    classroom: {
+        tr: [
+            { title: "Ödevler bireyseldir", description: "Yardım isteyebilirsin ama kopyalama." },
+            { title: "Teslim tarihlerine uy", description: "Gecikeceksen öğretmene önceden haber ver." },
+        ],
+        en: [
+            { title: "Assignments are individual", description: "Ask for help, but don't copy." },
+            { title: "Respect the deadlines", description: "Tell the teacher in advance if you'll be late." },
+        ],
+    },
+    hackathon: {
+        tr: [
+            { title: "Kararları birlikte alın", description: "Kararları sohbette verin; tartışma uzarsa görevin sahibi karar verir." },
+            { title: "Takılınca yardım iste", description: "30 dakikadan fazla takılı kalmadan sohbette yardım iste." },
+        ],
+        en: [
+            { title: "Decide together", description: "Make decisions in the chat; if a debate drags on, the task owner decides." },
+            { title: "Ask for help when stuck", description: "Don't stay stuck for more than 30 minutes; ask in the chat." },
+        ],
+    },
+};
+
+/**
+ * The rules a template starts with (the suggested rules and its own) and
+ * whether members accept them before talking: on for every template that
+ * comes with rules, off for the blank group.
+ */
+export function templateRules(id: GroupTemplateId, lang: SeedLanguage): { rules: GroupRuleDraft[]; screening: boolean } {
+    const template = getGroupTemplate(id);
+    if (template.id === "blank") return { rules: [], screening: false };
+    return { rules: [...suggestedRules(lang), ...TEMPLATE_RULES[template.id][lang].map((rule) => ({ ...rule }))].slice(0, GROUP_LIMITS.rulesCount), screening: true };
+}
+
 /**
  * Starter content for a new group. Used server-side when the group is
  * created; `ctx.groupName`/`ownerName` must already be single-line text.
@@ -2337,9 +2642,14 @@ const SEEDS: Record<GroupTemplateId, (lang: SeedLanguage, ctx: GroupSeedContext)
 export function buildGroupSeed(id: GroupTemplateId, lang: SeedLanguage, ctx: GroupSeedContext): GroupSeed {
     const template = getGroupTemplate(id);
     const seed = SEEDS[template.id](lang, ctx);
+    const starter = templateRules(template.id, lang);
+    // Through the stored-rules check (clipped texts) with stable ids: r1, r2…
+    const rulesList = sanitizeRulesList(starter.rules.map((rule, index) => ({ id: `r${index + 1}`, ...rule })));
     return {
         files: seed.files.map((file) => ({ name: file.name, code: file.code.slice(0, GROUP_LIMITS.fileContentMax) })),
-        rules: seed.rules.slice(0, GROUP_LIMITS.rulesMax),
+        rulesList,
+        rules: rulesText(rulesList),
+        rulesScreening: starter.screening && rulesList.length > 0,
         topics: [...template.topics[lang]],
         projectName: lang === "tr" ? template.name.TR : template.name.EN,
         welcomeText: fillVars(lang === "tr" ? template.welcome.TR : template.welcome.EN, { group: ctx.groupName }).slice(0, GROUP_LIMITS.messageMax),

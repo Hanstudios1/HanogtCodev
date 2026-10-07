@@ -19,6 +19,7 @@ import {
     GROUP_LIMITS,
     SYSTEM_SENDER,
     WELCOME_MESSAGE_ID,
+    acceptedRulesVersion,
     buildGroupSeed,
     cleanFileName,
     cleanMultiLine,
@@ -32,7 +33,9 @@ import {
     isGroupTemplateId,
     isManagerRole,
     languageFromFileName,
+    mustAcceptRules,
     normalizeTopics,
+    readGroupRules,
     sanitizeCustomCommands,
     seedLanguageFor,
     toMillis,
@@ -40,9 +43,10 @@ import {
     type GroupDetailResponse,
     type GroupListResponse,
 } from "@/lib/groups";
-import { postWelcomeMessage } from "./_messages";
+import { acceptFriendInvite } from "./_join";
 import {
     GroupApiError,
+    acceptGroupRules,
     assertRateLimit,
     assertSameOrigin,
     banDocumentId,
@@ -57,6 +61,7 @@ import {
     isBanned,
     isInvitePending,
     isLinkActive,
+    leaveGroupMembership,
     loadGroup,
     loadProfiles,
     mapLimit,
@@ -73,6 +78,8 @@ import {
     readEmail,
     readId,
     readJsonBody,
+    readRulesChange,
+    readSeenRulesVersion,
     removeGroupMember,
     requireGroupMember,
     requireGroupUser,
@@ -80,6 +87,7 @@ import {
     requireOwner,
     retryOnConflict,
     roleOf,
+    rulesWrite,
     strings,
     type BanRecord,
     type GroupUser,
@@ -205,6 +213,8 @@ async function groupDetail(groupId: string, user: GroupUser): Promise<GroupDetai
         groupLimitsFor(group.ownerEmail),
     ]);
     const now = Date.now();
+    const key = memberKey(groupId, email);
+    const rulesAcceptedVersion = acceptedRulesVersion(group.rulesAccepted, key);
     return {
         group: publicGroup(groupId, group),
         members: memberEmails.map((memberEmail) => {
@@ -225,7 +235,7 @@ async function groupDetail(groupId: string, user: GroupUser): Promise<GroupDetai
                 isFriend: friends.has(memberEmail),
             };
         }),
-        me: { email, role, key: memberKey(groupId, email) },
+        me: { email, role, key, mustAcceptRules: mustAcceptRules(readGroupRules(group), role, rulesAcceptedVersion), rulesAcceptedVersion },
         stats,
         banned,
         limits: owner.limits,
@@ -326,7 +336,7 @@ async function createGroup(body: Record<string, unknown>, user: GroupUser) {
     if (projectId) {
         const imported = await importProjectFiles(projectId, email);
         const taken = new Set(imported.files.map((file) => file.name.toLowerCase()));
-        // The project's own files come first; the template only adds its documents (README, rules, tasks).
+        // The project's own files come first; the template only adds its documents (README, tasks).
         files = [...imported.files, ...files.filter((file) => isDocumentFile(file.name) && !taken.has(file.name.toLowerCase()))];
         projectName = imported.name || projectName;
     }
@@ -341,7 +351,13 @@ async function createGroup(body: Record<string, unknown>, user: GroupUser) {
             emoji,
             color,
             template: template.id,
+            // The Rules section (no rules file): the blank group starts without rules.
             rules: seed.rules,
+            rulesList: seed.rulesList,
+            rulesVersion: seed.rulesList.length ? 1 : 0,
+            rulesAcceptVersion: seed.rulesList.length ? 1 : 0,
+            rulesScreening: seed.rulesScreening,
+            ...(seed.rulesList.length ? { rulesUpdatedAt: now } : {}),
             topics: seed.topics,
             contentLanguage: lang,
             ownerEmail: email,
@@ -394,42 +410,10 @@ async function createGroup(body: Record<string, unknown>, user: GroupUser) {
 /* Friend invitations                                                         */
 /* -------------------------------------------------------------------------- */
 
+/** Accepts a friend's invitation; `acceptRules: true` (with the `rulesVersion` shown) also accepts the group's rules. */
 async function acceptInvite(body: Record<string, unknown>, user: GroupUser) {
-    const { email } = user;
     const groupId = readId(body.groupId, "Grup kimliği");
-    const inviteId = inviteDocumentId(groupId, email);
-    const outcome = await retryOnConflict(async () => {
-        const [invite, group] = await Promise.all([getServerDocument<InviteRecord>(`group_invites/${inviteId}`), loadGroup(groupId)]);
-        if (!invite || invite.toEmail !== email || invite.groupId !== groupId || !isInvitePending(invite)) {
-            throw new GroupApiError(404, "invite_not_found", "Geçerli grup daveti bulunamadı.");
-        }
-        const members = group ? groupMembers(group) : [];
-        // A group that is gone, or an inviter who is no longer a member, voids the invitation.
-        if (!group || !members.includes(invite.fromEmail || "")) {
-            await deleteServerDocument(`group_invites/${inviteId}`).catch(() => undefined);
-            throw new GroupApiError(404, "invite_not_found", "Bu davet artık geçerli değil.");
-        }
-        if (await isBanned(groupId, email)) throw new GroupApiError(403, "banned", "Bu gruba katılmanız engellenmiş.");
-        if (members.includes(email)) {
-            await patchServerDocument(`group_invites/${inviteId}`, { status: "accepted", resolvedAt: new Date() }, { updateFields: ["status", "resolvedAt"], exists: true }).catch(() => undefined);
-            return { group, joined: false };
-        }
-        // The group's size is its owner's plan's (Free 25, Plus 100, Pro 250 members).
-        const { limits } = await groupLimitsFor(group.ownerEmail);
-        if (members.length >= limits.members) throw new GroupApiError(409, "group_full", `Grup ${limits.members} üye sınırına ulaştı.`, { limit: limits.members });
-        const now = new Date();
-        await commitServerPatches([
-            { path: `groups/${groupId}`, data: { members: [...members, email], updatedAt: now }, updateFields: ["members", "updatedAt"], updateTime: group._updateTime },
-            { path: `group_invites/${inviteId}`, data: { status: "accepted", resolvedAt: now }, updateFields: ["status", "resolvedAt"], updateTime: invite._updateTime },
-        ]);
-        return { group, joined: true };
-    });
-    if (outcome.joined) {
-        const name = await ownDisplayName(user);
-        await postSystemMessage(groupId, outcome.group, "member_joined", { name });
-        await postWelcomeMessage(groupId, outcome.group, name);
-    }
-    return { success: true, groupId };
+    return acceptFriendInvite(user, groupId, { acceptRules: body.acceptRules, rulesVersion: body.rulesVersion });
 }
 
 async function rejectInvite(body: Record<string, unknown>, user: GroupUser) {
@@ -581,17 +565,8 @@ async function transferOwnership(body: Record<string, unknown>, user: GroupUser)
 async function leaveGroup(body: Record<string, unknown>, user: GroupUser) {
     const { email } = user;
     const groupId = readId(body.groupId, "Grup kimliği");
-    const group = await retryOnConflict(async () => {
-        const { group: current, role } = await requireGroupMember(groupId, email);
-        if (role === "owner") throw new GroupApiError(409, "owner_cannot_leave", "Grup sahibi ayrılmadan önce sahipliği devretmeli veya grubu silmelidir.");
-        await patchServerDocument(`groups/${groupId}`, {
-            members: groupMembers(current).filter((entry) => entry !== email),
-            admins: groupAdmins(current).filter((entry) => entry !== email),
-            moderators: groupModerators(current).filter((entry) => entry !== email),
-            updatedAt: new Date(),
-        }, { updateFields: ["members", "admins", "moderators", "updatedAt", `typing.${memberKey(groupId, email)}`], updateTime: current._updateTime });
-        return current;
-    });
+    // Roles, typing state and the rules acceptance go with the membership.
+    const group = await leaveGroupMembership(groupId, email);
     await postSystemMessage(groupId, group, "member_left", { name: await ownDisplayName(user) });
     // Stars here kept a few words of messages the person can no longer open.
     after(() => forgetMemberStars(email, groupId).catch(() => undefined));
@@ -629,11 +604,8 @@ async function updateSettings(body: Record<string, unknown>, user: GroupUser) {
             if (!isGroupColor(body.color)) throw new GroupApiError(400, "invalid_color", "Geçersiz grup rengi.");
             data.color = body.color;
         }
-        if (body.rules !== undefined) {
-            const rules = cleanMultiLine(body.rules, GROUP_LIMITS.rulesMax * 2);
-            if (rules.length > GROUP_LIMITS.rulesMax) throw new GroupApiError(400, "rules_too_long", "Kurallar en fazla 4000 karakter olabilir.");
-            data.rules = rules;
-        }
+        const rules = readRulesChange(body);
+        if (rules) Object.assign(data, rulesWrite(group, rules));
         if (body.topics !== undefined) {
             const topics = normalizeTopics(body.topics, groupLanguage(group));
             if (!topics) throw new GroupApiError(400, "invalid_topics", "Konular yalnızca harf, rakam, - ve _ içerebilir (en fazla 12 konu, 24 karakter).");
@@ -679,6 +651,12 @@ async function updateOnboarding(body: Record<string, unknown>, user: GroupUser) 
     return { success: true };
 }
 
+/** "I've read and accept the rules": records the version the member was shown (`version`). */
+async function acceptRules(body: Record<string, unknown>, user: GroupUser) {
+    const groupId = readId(body.groupId, "Grup kimliği");
+    return { success: true, ...(await acceptGroupRules(groupId, user.email, readSeenRulesVersion(body.version))) };
+}
+
 async function deleteGroup(body: Record<string, unknown>, user: GroupUser) {
     const groupId = readId(body.groupId, "Grup kimliği");
     const { group, role } = await requireGroupMember(groupId, user.email);
@@ -696,7 +674,8 @@ export async function POST(request: NextRequest) {
         assertSameOrigin(request);
         const user = await requireGroupUser();
         await assertRateLimit(`groups:${user.email}`, 40, 60_000);
-        const body = await readJsonBody(request);
+        // A full Rules section (20 rules of up to 720 characters) is larger than the default body.
+        const body = await readJsonBody(request, 65_536);
         const action = typeof body.action === "string" ? body.action : "";
         switch (action) {
             case "create": return groupJson(await createGroup(body, user), 201);
@@ -715,6 +694,7 @@ export async function POST(request: NextRequest) {
             case "leave": return groupJson(await leaveGroup(body, user));
             case "delete": return groupJson(await deleteGroup(body, user));
             case "onboarding": return groupJson(await updateOnboarding(body, user));
+            case "accept-rules": return groupJson(await acceptRules(body, user));
             default: throw new GroupApiError(400, "invalid_request", "Geçersiz işlem.");
         }
     } catch (error) {

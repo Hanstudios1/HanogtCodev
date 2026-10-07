@@ -20,6 +20,8 @@ export type GroupNavState = {
     fileCount: number;
     filesAvailable: boolean;
     pinnedCount: number;
+    /** The Rules section: how many rules and whether this person still has to accept them. */
+    rules: { count: number; mustAccept: boolean };
     guide: { show: boolean; done: number; total: number; open: boolean };
     /** Unread messages and mentions per channel ("" = the main channel, else a #topic). */
     channelUnread: Record<string, ChannelUnread>;

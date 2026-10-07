@@ -13,6 +13,7 @@ import {
     listServerCollection,
     queryServerCollection,
 } from "./firebase-rest";
+import { memberKey } from "./group-keys";
 import { deleteGroupVoice, removeFromVoice } from "./group-voice";
 import { deleteAccountGameAudio, releaseArcadeAudio } from "./game-assets";
 import { deleteContainerFiles, deleteMessageFiles, deleteSenderFiles } from "./message-files";
@@ -273,9 +274,10 @@ async function deleteWithSubcollections(ctx: Context, step: string, kind: string
 /**
  * Read-modify-write with an updateTime precondition, so a concurrent change
  * (a new like, friend or member) is never overwritten. `change` returns the
- * fields to write, or null when nothing needs to change. True when written.
+ * fields to write, or null when nothing needs to change; `remove` names field
+ * paths (e.g. one entry of a map) deleted in the same write. True when written.
  */
-async function updateWithRetry(document: StoredDocument, change: (current: StoredDocument) => Record<string, unknown> | null) {
+async function updateWithRetry(document: StoredDocument, change: (current: StoredDocument) => Record<string, unknown> | null, remove: readonly string[] = []) {
     let current: StoredDocument | null = document;
     for (let attempt = 1; current; attempt += 1) {
         const data = change(current);
@@ -284,7 +286,7 @@ async function updateWithRetry(document: StoredDocument, change: (current: Store
             await commitServerPatches([{
                 path: current._path,
                 data,
-                updateFields: Object.keys(data),
+                updateFields: [...Object.keys(data), ...remove],
                 ...(current._updateTime ? { updateTime: current._updateTime } : { exists: true }),
             }]);
             return true;
@@ -537,6 +539,8 @@ async function deleteOwnedGroup(ctx: Context, group: StoredDocument) {
 }
 
 async function leaveGroup(ctx: Context, group: StoredDocument) {
+    // The typing state and the rules acceptance are kept by pseudonymous key; they go with the membership.
+    const key = memberKey(group._id, ctx.email);
     const left = await updateWithRetry(group, (current) => {
         const members = list(current.members);
         const admins = list(current.admins);
@@ -544,9 +548,11 @@ async function leaveGroup(ctx: Context, group: StoredDocument) {
         return {
             members: members.filter((entry) => entry !== ctx.email),
             admins: admins.filter((entry) => entry !== ctx.email),
+            // Moderator lists hold e-mail addresses too.
+            ...(Array.isArray(current.moderators) ? { moderators: list(current.moderators).filter((entry) => entry !== ctx.email) } : {}),
             updatedAt: new Date(),
         };
-    });
+    }, [`typing.${key}`, `rulesAccepted.${key}`]);
     if (left) ctx.tally.count("groupMemberships");
     await removeFromVoice(group._id, ctx.email).catch(() => undefined);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowRight, Ban, Clock, Link2Off, LogIn, ShieldCheck, UserPlus, UsersRound } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Clock, Link2Off, LogIn, ScrollText, ShieldCheck, UserPlus, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -11,6 +11,7 @@ import { useI18n, type Copy } from "@/lib/i18n";
 import { GROUP_COLORS, getGroupTemplate, inviteLinkPath, isInviteToken, toMillis, type GroupJoinPreview } from "@/lib/groups";
 import { groupHref } from "@/lib/social/model";
 import { GroupRequestError, groupsApi, useGroupErrorText } from "./api";
+import RulesList from "./RulesList";
 import { Spinner, UserAvatar, cx, relativeTime } from "./ui";
 
 const C = {
@@ -35,6 +36,10 @@ const C = {
     backToGroups: { TR: "Hanogt Social'a dön", EN: "Back to Hanogt Social" },
     loading: { TR: "Davet yükleniyor", EN: "Loading the invitation" },
     joinFailed: { TR: "Gruba katılınamadı.", EN: "Couldn't join the group." },
+    rulesTitle: { TR: "Grubun kuralları", EN: "The group's rules" },
+    rulesRequired: { TR: "Bu grup, sohbete katılmadan önce kurallarını kabul etmeni istiyor.", EN: "This group asks you to accept its rules before you join the chat." },
+    acceptRules: { TR: "Kuralları okudum ve kabul ediyorum", EN: "I've read the rules and accept them" },
+    acceptFirst: { TR: "Katılmak için önce kuralları kabul et.", EN: "Accept the rules first to join." },
 } satisfies Record<string, Copy>;
 
 export default function JoinGroupView({ token }: { token: string }) {
@@ -48,7 +53,11 @@ export default function JoinGroupView({ token }: { token: string }) {
     const [failure, setFailure] = useState<{ code: string; text: string } | null>(null);
     const [busy, setBusy] = useState(false);
     const [joinError, setJoinError] = useState("");
+    const [rulesAccepted, setRulesAccepted] = useState(false);
     const [now] = useState(() => Date.now());
+    // A group that asks for it is joined with "I've read and accept the rules" ticked.
+    const rules = preview?.rules ?? [];
+    const needsRules = Boolean(preview && !preview.alreadyMember && preview.rulesScreening && rules.length > 0);
 
     useEffect(() => {
         if (!signedIn || !validToken) return;
@@ -62,11 +71,11 @@ export default function JoinGroupView({ token }: { token: string }) {
     }, [errorText, signedIn, token, validToken]);
 
     const join = async () => {
-        if (!preview || busy) return;
+        if (!preview || busy || (needsRules && !rulesAccepted)) return;
         setBusy(true);
         setJoinError("");
         try {
-            const result = await groupsApi.join(token);
+            const result = await groupsApi.join(token, needsRules ? { acceptRules: true, rulesVersion: preview.rulesVersion } : undefined);
             router.push(groupHref(result.groupId));
         } catch (error) {
             setJoinError(errorText(error, C.joinFailed));
@@ -117,6 +126,23 @@ export default function JoinGroupView({ token }: { token: string }) {
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-zinc-700 dark:bg-white/10 dark:text-zinc-200"><UsersRound className="h-3.5 w-3.5" aria-hidden />{tx(C.members, { count: preview.memberCount, max: preview.membersMax })}</span>
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-zinc-700 dark:bg-white/10 dark:text-zinc-200"><Clock className="h-3.5 w-3.5" aria-hidden />{preview.expiresAt ? tx(C.expires, { time: relativeTime(toMillis(preview.expiresAt), now, locale) }) : tx(C.noExpiry)}</span>
                     </div>
+                    {!preview.alreadyMember && !blocked && rules.length > 0 && (
+                        <section aria-labelledby="join-rules-title" className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                            <h2 id="join-rules-title" className="flex items-center gap-2 text-sm font-black"><ScrollText className="h-4 w-4 text-indigo-500" aria-hidden />{tx(C.rulesTitle)}</h2>
+                            <div className="mt-3 max-h-64 overflow-y-auto overscroll-contain pe-1">
+                                <RulesList rules={rules} />
+                            </div>
+                            {needsRules && (
+                                <>
+                                    <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.rulesRequired)}</p>
+                                    <label className="mt-2 flex cursor-pointer items-start gap-2.5 rounded-xl border border-zinc-200 bg-white p-3 text-sm font-semibold dark:border-white/10 dark:bg-zinc-950">
+                                        <input type="checkbox" checked={rulesAccepted} onChange={(event) => setRulesAccepted(event.target.checked)} disabled={busy} className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded accent-indigo-600" />
+                                        {tx(C.acceptRules)}
+                                    </label>
+                                </>
+                            )}
+                        </section>
+                    )}
                     {preview.alreadyMember && <p className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-800 dark:text-emerald-300">{tx(C.alreadyMember)}</p>}
                     {preview.banned && <p className="flex items-center justify-center gap-2 rounded-2xl bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-700 dark:text-red-300"><Ban className="h-4 w-4" aria-hidden />{tx(C.banned)}</p>}
                     {!preview.banned && preview.full && !preview.alreadyMember && <p className="flex items-center justify-center gap-2 rounded-2xl bg-amber-500/10 px-4 py-3 text-center text-sm font-semibold text-amber-800 dark:text-amber-300"><AlertTriangle className="h-4 w-4" aria-hidden />{tx(C.full, { max: preview.membersMax })}</p>}
@@ -124,7 +150,7 @@ export default function JoinGroupView({ token }: { token: string }) {
                     {preview.alreadyMember ? (
                         <Link href={groupHref(preview.groupId)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-5 py-3.5 font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">{tx(C.open)}<ArrowRight className="h-5 w-5 rtl:rotate-180" aria-hidden /></Link>
                     ) : (
-                        <button type="button" onClick={() => void join()} disabled={busy || blocked} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3.5 font-bold text-white shadow-lg shadow-indigo-600/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="button" onClick={() => void join()} disabled={busy || blocked || (needsRules && !rulesAccepted)} title={needsRules && !rulesAccepted ? tx(C.acceptFirst) : undefined} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3.5 font-bold text-white shadow-lg shadow-indigo-600/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
                             {busy ? <Spinner className="h-5 w-5" /> : <UserPlus className="h-5 w-5" aria-hidden />}{busy ? tx(C.joining) : tx(C.join)}
                         </button>
                     )}
@@ -138,8 +164,6 @@ export default function JoinGroupView({ token }: { token: string }) {
         <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
             <Header />
             <main id="main-content" className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 pb-16 pt-24">
-                <div className="pointer-events-none absolute -top-32 start-1/4 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl" aria-hidden />
-                <div className="pointer-events-none absolute bottom-0 end-1/4 h-72 w-72 rounded-full bg-fuchsia-500/10 blur-3xl" aria-hidden />
                 <motion.div initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.35, ease: "easeOut" }} className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-white/10 dark:bg-zinc-900">
                     {body}
                 </motion.div>

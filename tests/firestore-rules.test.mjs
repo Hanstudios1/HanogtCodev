@@ -113,6 +113,8 @@ await check("members read the messages", assertSucceeds(getDocs(collection(as(B)
 await check("a member can't post from the browser", assertFails(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "text", text: "yo", createdAt: serverTimestamp() })));
 await check("a member can't delete from the browser", assertFails(deleteDoc(doc(as(B), "groups", "g1", "messages", "m1"))));
 await check("non-member cannot read group", assertFails(getDoc(doc(as(C), "groups", "g1"))));
+// Accepting a group's rules goes through POST /api/groups (accept-rules): the browser can't mark itself.
+await check("a member can't mark the group's rules accepted from the browser", assertFails(updateDoc(doc(as(B), "groups", "g1"), { "rulesAccepted.k0123456789abcdef0123": 99 })));
 await check("non-member cannot read its messages", assertFails(getDocs(collection(as(C), "groups", "g1", "messages"))));
 
 console.log("group_voice/");

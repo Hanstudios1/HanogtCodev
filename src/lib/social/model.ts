@@ -593,13 +593,21 @@ export function dmHref(email: string) {
     return `/social/dm/${encodeURIComponent(email)}`;
 }
 
-export type GroupViewParams = { topic?: string; view?: "files"; file?: string };
+/** A group's screen: a channel (all messages or one #topic), the shared files or the Rules section. */
+export type GroupViewParams = { topic?: string; view?: "files" | "rules"; file?: string };
+
+/** The screen a group address asks for (`?view=`); anything else is the chat. */
+export function groupViewOf(value: string | null | undefined): "chat" | "files" | "rules" {
+    return value === "files" || value === "rules" ? value : "chat";
+}
 
 export function groupHref(groupId: string, params: GroupViewParams = {}) {
     const query = new URLSearchParams();
     if (params.view === "files") {
         query.set("view", "files");
         if (params.file) query.set("file", params.file);
+    } else if (params.view === "rules") {
+        query.set("view", "rules");
     } else if (params.topic) {
         query.set("topic", params.topic);
     }

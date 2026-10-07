@@ -26,6 +26,7 @@ import {
 } from "./firebase-rest";
 import { memberKey } from "./group-keys";
 import { activeMute } from "./group-moderation";
+import { rulesBlock, type RulesGateGroup } from "./group-rules";
 import { normalizeEmail } from "./validate";
 
 /*
@@ -33,12 +34,13 @@ import { normalizeEmail } from "./validate";
  * group's channel (group_voice/{groupId}) and passes WebRTC offers, answers
  * and candidates between them (group_voice/{groupId}/signals); the audio
  * flows between the browsers. Only members take part, at most five at a
- * time, and members on a time-out can't join. Every write is made here with
+ * time; members on a time-out, and members who still have to accept the
+ * group's rules, can't join. Every write is made here with
  * the service account; members' browsers may read the channel and the
  * signals addressed to them (firestore.rules).
  */
 
-export type VoiceErrorCode = "invalid_request" | "not_found" | "voice_full" | "muted" | "not_in_voice" | "moved" | "payload_too_large";
+export type VoiceErrorCode = "invalid_request" | "not_found" | "voice_full" | "muted" | "rules_not_accepted" | "not_in_voice" | "moved" | "payload_too_large";
 
 /** Expected failures: the message is Turkish (primary language), the interface translates the code. */
 export class VoiceApiError extends Error {
@@ -55,7 +57,7 @@ export class VoiceApiError extends Error {
     }
 }
 
-type StoredGroup = { members?: unknown };
+type StoredGroup = RulesGateGroup & { members?: unknown };
 /** `moved`: tabs that left because their person joined from another tab or device (kept a few minutes). */
 type StoredRoom = { participants?: Record<string, unknown>; moved?: Record<string, unknown>; _updateTime?: string };
 type StoredProfile = { username?: unknown; nickname?: unknown; avatarUrl?: unknown };
@@ -68,7 +70,7 @@ async function requireMember(groupId: unknown, email: string) {
     const group = await getServerDocument<StoredGroup>(`groups/${groupId}`);
     const members = Array.isArray(group?.members) ? group.members.map(normalizeEmail) : [];
     if (!group || !members.includes(email)) throw new VoiceApiError(404, "not_found", "Grup bulunamadı.");
-    return groupId;
+    return { id: groupId, group };
 }
 
 function readTab(value: unknown) {
@@ -99,7 +101,7 @@ async function signalsFor(groupId: string, peerId: string): Promise<VoiceSignal[
 
 /** Who is in the channel; a tab that is in it also gets its waiting signals. */
 export async function readVoiceRoom(groupId: unknown, email: string, tab: unknown, now = Date.now()): Promise<VoiceRoomView> {
-    const id = await requireMember(groupId, email);
+    const { id } = await requireMember(groupId, email);
     const room = await getServerDocument<StoredRoom>(voiceRoomPath(id));
     const participants = readParticipants(room?.participants, now);
     let signals: VoiceSignal[] = [];
@@ -185,9 +187,10 @@ async function upsertParticipant(groupId: string, email: string, input: Record<s
 
 /** Joins the group's voice channel from one tab. */
 export async function joinVoice(groupId: unknown, email: string, input: Record<string, unknown>, now = Date.now()) {
-    const id = await requireMember(groupId, email);
+    const { id, group } = await requireMember(groupId, email);
     const mute = await activeMute(id, email, now);
     if (mute) throw new VoiceApiError(403, "muted", "Bu grupta susturuldunuz; süre dolana kadar sesli kanala katılamazsınız.", { until: mute.until });
+    if (rulesBlock(id, group, email)) throw new VoiceApiError(409, "rules_not_accepted", "Sesli kanala katılmadan önce grubun kurallarını kabul etmelisiniz.");
     const { self, participants, replaced } = await upsertParticipant(id, email, input, now, false);
     // The replaced tab's waiting signals go now; the tab learns it moved at its next check-in.
     if (replaced.length) await deleteSignalsFor(id, replaced);
@@ -196,10 +199,15 @@ export async function joinVoice(groupId: unknown, email: string, input: Record<s
 
 /** A tab in the channel checks in (and reports its microphone and sound switches). */
 export async function heartbeatVoice(groupId: unknown, email: string, input: Record<string, unknown>, now = Date.now()) {
-    const id = await requireMember(groupId, email);
+    const { id, group } = await requireMember(groupId, email);
     if (await activeMute(id, email, now)) {
         await leaveVoice(id, email, input).catch(() => undefined);
         throw new VoiceApiError(403, "muted", "Bu grupta susturuldunuz; sesli kanaldan çıkarıldınız.");
+    }
+    // The group asked everyone to accept its (changed) rules: out of the channel until they do.
+    if (rulesBlock(id, group, email)) {
+        await leaveVoice(id, email, input).catch(() => undefined);
+        throw new VoiceApiError(409, "rules_not_accepted", "Grubun kurallarını kabul etmeden sesli kanalda kalamazsınız.");
     }
     const { self, participants } = await upsertParticipant(id, email, input, now, true);
     return { self, participants, now };
@@ -233,7 +241,7 @@ async function deleteSignalsFor(groupId: string, ids: string[]) {
 
 /** Leaves the channel from one tab. */
 export async function leaveVoice(groupId: unknown, email: string, input: Record<string, unknown>) {
-    const id = await requireMember(groupId, email);
+    const { id } = await requireMember(groupId, email);
     const tab = readTab(input.tab);
     await removeParticipants(id, [voicePeerId(memberKey(id, email), tab)]);
     return { success: true };
@@ -245,7 +253,7 @@ export async function leaveVoice(groupId: unknown, email: string, input: Record<
  * who is in the channel right now.
  */
 export async function exchangeVoiceSignals(groupId: unknown, email: string, input: Record<string, unknown>, now = Date.now()) {
-    const id = await requireMember(groupId, email);
+    const { id } = await requireMember(groupId, email);
     const tab = readTab(input.tab);
     const self = voicePeerId(memberKey(id, email), tab);
     const outgoing = input.signals === undefined ? [] : input.signals;

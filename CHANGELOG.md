@@ -1,5 +1,46 @@
 # Değişiklik Günlüğü
 
+## 0.3.31 — 2026-10-06
+
+### Hanogt Social'da Discord'daki gibi kurallar bölümü, yenilenen Hanogt AI ayarları
+
+- **Grup kuralları bölümü (KURALLAR.md yerine):** her grubun kenar
+  çubuğunda en üstte "kurallar" girişi var. Kurallar madde madde yazılır
+  (en çok 20 kural; başlık 120, açıklama 600 karakter; açıklamalar sohbetteki
+  gibi Markdown), sahipler ve yöneticiler Ayarlar → "Kurallar ve konular"da
+  ekler, düzenler, sıralar ve siler; "Önerilen kuralları ekle" düğmesi hazır
+  kurallar ekler. Şablonlar artık KURALLAR.md, RULES.md ya da
+  CODE_OF_CONDUCT.md dosyası oluşturmaz; grubun diline göre 7 kuralla ve
+  kural onayı açık başlar. Eski gruplardaki düz metin kurallar okunurken
+  maddelere ayrılır, kaydedilene kadar değişmez.
+- **Kural onayı:** grup isterse üyeler yazmadan, tepki vermeden, dosya ya da
+  sesli mesaj göndermeden ve sesli kanala katılmadan önce kuralları kabul
+  eder; sunucu her yazma yolunda `rules_not_accepted` ile reddeder (okumak,
+  `/kurallar` ve `/yardim` serbest). Sahip, yöneticiler ve moderatörler
+  kabul etmek zorunda değildir. Davet sayfası kuralları gösterir; katılırken
+  kutu işaretlenerek kurallar aynı anda kabul edilebilir. Kurallar
+  değişince "Herkes kuralları yeniden kabul etsin" ile herkesten yeniden
+  onay istenebilir; yazım düzeltmeleri onayı sıfırlamaz. Kabul, e-posta
+  yerine gruba özel takma anahtarla tutulur; ayrılınca, çıkarılınca, yasaklanınca
+  ve hesap silinince silinir, veri dışa aktarımında yalnızca kendi sürümünüz yer alır.
+- **Hanogt AI ayarları yenilendi:** sayfa geniş ekranda yan menülü, telefonda
+  kaydırılabilir bölüm şeritli yeni bir düzene geçti; ayarlarda arama (sitenin
+  dilinde ve İngilizce), "Hanogt AI seni böyle yanıtlayacak" özeti, her
+  bölümde "Varsayılana döndür", ayarları JSON olarak dışa ve içe aktarma
+  (içe aktarılan dosya plana göre kırpılır, kaydetmeden uygulanmaz) ve "Bu
+  cihazdaki seçimleri sıfırla" (bu cihazda seçilen model ve ajan modu unutulur).
+- **Yaratıcılık:** Hassas, Dengeli ya da Yaratıcı. Yanıtın sıcaklığını
+  değiştirir (sohbette 0,25 / 0,45 / 0,8; kodda 0,05 / 0,25 / 0,6; ajan modu
+  açıkken 0,15 / 0,3 / 0,5, önerilen işlemler doğru kalsın diye); düşünürken
+  modelin önerdiği değerler kullanılır.
+- **Gizli sohbetler:** "Yeni sohbetleri bu tarayıcıda sakla" kapalıyken yeni
+  sohbetler yalnızca sekmenin belleğinde tutulur, hiçbir yerde saklanmaz;
+  kenar çubuğunda göz simgesiyle, yazma kutusunun üstünde "Gizli sohbet"
+  satırıyla görünür. Başka bir sekmenin kaydı bu sohbetleri silmez.
+- **Yanıt hazır bildirimi:** sekme arka plandayken yanıt biterse tarayıcı
+  bildirimi gösterilir (izin, ayar açılınca istenir).
+- Gizlilik Politikası ve Kullanım Şartları 5.7.
+
 ## 0.3.30 — 2026-10-06
 
 ### Hanogt News son 24 saati tutar, üst menüde her zaman Panel, sabitlemeyi yalnızca yöneticiler yapar

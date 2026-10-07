@@ -10,6 +10,7 @@ import { editGroupMessage, sendGroupMessage } from "../_messages";
 import {
     GroupApiError,
     assertRateLimit,
+    assertRulesAccepted,
     assertSameOrigin,
     groupErrorResponse,
     groupJson,
@@ -62,9 +63,11 @@ async function setPinned(groupId: string, messageId: string, email: string, pinn
 /**
  * Toggles the caller's reaction. Messages are read-only for clients, so the
  * server stores pseudonymous member keys (never e-mails) per reaction.
+ * Members who still have to accept the group's rules can't react.
  */
 async function toggleReaction(groupId: string, messageId: string, reaction: string, email: string) {
-    await requireGroupMember(groupId, email);
+    const { group } = await requireGroupMember(groupId, email);
+    assertRulesAccepted(groupId, group, email);
     const key = memberKey(groupId, email);
     const path = messagePath(groupId, messageId);
     const reactions = await retryOnConflict(async () => {

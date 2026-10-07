@@ -24,6 +24,6 @@ export const SOCIAL_GROUP_REPORT: Copy = {
 
 /** Shown in the group creation wizard: what running a group means. */
 export const GROUP_OWNER_NOTE: Copy = {
-    TR: "Grubu oluşturduğunda grubun sahibi olursun: grubu Kullanım Şartları'na uygun yönetmekten ve yöneticileri, moderatörleri ve AutoMod ayarlarını belirlemekten sen sorumlusun. Hanogt Security Bot her grupta bulunur ve kaldırılamaz.",
-    EN: "When you create the group, you become its owner: you're responsible for running it in line with the Terms of Use and for choosing its admins, moderators and AutoMod settings. Hanogt Security Bot is part of every group and can't be removed.",
+    TR: "Grubu oluşturduğunda grubun sahibi olursun: grubu Kullanım Şartları'na uygun yönetmekten ve grubun kurallarını, yöneticileri, moderatörleri ve AutoMod ayarlarını belirlemekten sen sorumlusun. Hanogt Security Bot her grupta bulunur ve kaldırılamaz.",
+    EN: "When you create the group, you become its owner: you're responsible for running it in line with the Terms of Use and for choosing its rules, admins, moderators and AutoMod settings. Hanogt Security Bot is part of every group and can't be removed.",
 };

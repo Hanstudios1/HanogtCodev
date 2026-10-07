@@ -1,7 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { normalizeChatMessages, stripTrailerMark, type WireMessage } from "@/lib/ai/agent-protocol";
 import { agentToolSchemas, detectSensitiveRequest, isHowToQuestion } from "@/lib/ai/agent-tools";
-import { normalizeAiSettings } from "@/lib/ai/ai-settings";
+import { answerTemperature, normalizeAiSettings } from "@/lib/ai/ai-settings";
 import { DEFAULT_CONNECTION, isConnectionId, ownKeyRequestParams, type AiConnectionError } from "@/lib/ai/connections";
 import { WIRE_CONTENT_TYPE, WIRE_HEADER, WIRE_VERSION } from "@/lib/ai/stream-protocol";
 import { reasoningOf, splitThinkingText, stripThinkBlocks, wantsThinking, type ThinkingStep } from "@/lib/ai/thinking";
@@ -198,7 +198,8 @@ export async function POST(request: NextRequest) {
     }, 55_000);
     request.signal.addEventListener("abort", () => upstreamAbort.abort(), { once: true });
 
-    const baseTemperature = agentRequested ? 0.3 : mode === "code" ? 0.25 : 0.45;
+    // The kind of work sets the base and the person's creativity setting moves it (agent actions stay precise).
+    const baseTemperature = answerTemperature(settings.creativity, agentRequested ? "agent" : mode === "code" ? "code" : "chat");
     // Hanogt AI's own model answers at most the plan's length (Free 1,800, Plus 3,000, Pro 4,000 tokens), plus a
     // thinking budget when it thinks; Qwen3's recommended sampling for thinking. Own keys are the person's own.
     const sampling = ownConnection

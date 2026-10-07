@@ -1,12 +1,12 @@
 "use client";
 
-import { Bell, BellOff, BellRing, ChevronDown, FolderOpen, Hash, LogOut, Pin, Rocket, Settings, UserPlus } from "lucide-react";
+import { Bell, BellOff, BellRing, ChevronDown, FolderOpen, Hash, LogOut, Pin, Rocket, ScrollText, Settings, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cx } from "@/components/Groups/ui";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { setGroupNotifyLevel } from "@/lib/social/local-state";
-import { badgeLabel, groupHref, type ChannelUnread, type GroupNotifyLevel } from "@/lib/social/model";
+import { badgeLabel, groupHref, groupViewOf, type ChannelUnread, type GroupNotifyLevel } from "@/lib/social/model";
 import { useSocial } from "./context";
 import { useGroupNav } from "./group/nav";
 import { DropdownMenu, SectionLabel } from "./ui";
@@ -37,6 +37,9 @@ const C = {
     unreadChannel: { TR: "{name}, okunmamış mesajlar var", EN: "{name}, unread messages" },
     mentionChannel: { TR: "{name}, {count} bahsetme", EN: "{name}, {count} mentions" },
     gone: { TR: "Bu gruba artık erişimin yok.", EN: "You no longer have access to this group." },
+    rulesChannel: { TR: "kurallar", EN: "rules" },
+    rulesPending: { TR: "kurallar, kabul etmen gerekiyor", EN: "rules, waiting for you to accept them" },
+    rulesPendingHint: { TR: "Sohbete katılmak için kuralları kabul et", EN: "Accept the rules to join the chat" },
 } satisfies Record<string, Copy>;
 
 const LEVELS: Array<{ id: GroupNotifyLevel; label: Copy; hint: Copy; icon: typeof Bell }> = [
@@ -45,7 +48,7 @@ const LEVELS: Array<{ id: GroupNotifyLevel; label: Copy; hint: Copy; icon: typeo
     { id: "none", label: C.none, hint: C.noneHint, icon: BellOff },
 ];
 
-/** Second column inside a group: the group menu, the channel list (#genel and the group's topics), files and pins. */
+/** Second column inside a group: the group menu, the channel list (the rules, #genel and the group's topics), files and pins. */
 export default function GroupSidebar() {
     const { tx } = useI18n();
     const params = useSearchParams();
@@ -57,7 +60,7 @@ export default function GroupSidebar() {
     const group = current?.group ?? null;
     const name = group?.name ?? summary?.name ?? "";
     const topic = params.get("topic") || "";
-    const view = params.get("view") === "files" ? "files" : "chat";
+    const view = groupViewOf(params.get("view"));
     const level = groups.levels[groupId] ?? "all";
     const mainChannel = group?.contentLanguage === "en" ? "general" : "genel";
     const topics = (group?.topics ?? []).filter((entry) => entry !== "genel" && entry !== "general");
@@ -137,6 +140,7 @@ export default function GroupSidebar() {
                         )}
                         <SectionLabel id="group-channels">{tx(C.textChannels)}</SectionLabel>
                         <ul aria-labelledby="group-channels" className="space-y-0.5">
+                            <li><RulesLink href={groupHref(groupId, { view: "rules" })} active={view === "rules"} pending={Boolean(current?.rules.mustAccept)} onClick={close} /></li>
                             <li><ChannelLink href={groupHref(groupId)} active={view === "chat" && !topic} label={mainChannel} onClick={close} state={markers("", view === "chat" && !topic)} /></li>
                             {topics.map((entry) => (
                                 <li key={entry}><ChannelLink href={groupHref(groupId, { topic: entry })} active={view === "chat" && topic === entry} label={entry} onClick={close} state={markers(entry.toLocaleLowerCase(), view === "chat" && topic === entry)} /></li>
@@ -169,6 +173,30 @@ export default function GroupSidebar() {
                 )}
             </div>
         </>
+    );
+}
+
+/** The read-only Rules section at the top of the channels (a book, not a #); a dot while the rules wait for this person. */
+function RulesLink({ href, active, pending, onClick }: { href: string; active: boolean; pending: boolean; onClick: () => void }) {
+    const { tx } = useI18n();
+    return (
+        <Link
+            href={href}
+            onClick={onClick}
+            aria-current={active ? "page" : undefined}
+            aria-label={pending ? tx(C.rulesPending) : undefined}
+            title={pending ? tx(C.rulesPendingHint) : undefined}
+            className={cx(
+                "relative flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[15px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                active ? "bg-zinc-300/60 font-medium text-zinc-900 dark:bg-white/10 dark:text-white"
+                    : pending ? "font-semibold text-zinc-900 hover:bg-zinc-200/70 dark:text-white dark:hover:bg-white/[0.05]"
+                        : "font-medium text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
+            )}
+        >
+            <ScrollText className="h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
+            <span className="min-w-0 flex-1 truncate">{tx(C.rulesChannel)}</span>
+            {pending && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />}
+        </Link>
     );
 }
 

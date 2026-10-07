@@ -13,7 +13,9 @@ import {
     fillVars,
     isGroupId,
     outranks,
+    readGroupRules,
     readSlowmode,
+    rulesText,
     sanitizeCustomCommands,
     tokenizeMessage,
     type GroupBot,
@@ -40,6 +42,7 @@ import { readMessageGif } from "@/lib/social/gif";
 import { messagePreview } from "@/lib/social/model";
 import {
     GroupApiError,
+    assertRulesAccepted,
     groupMembers,
     loadProfiles,
     ownDisplayName,
@@ -437,8 +440,11 @@ async function runBuiltIn(ctx: Ctx, spec: CommandSpec, rest: string, name: strin
     switch (command.id) {
         case "help":
             return ephemeral({ kind: "help" });
-        case "rules":
-            return ephemeral({ kind: "rules", rules: typeof ctx.group.rules === "string" ? ctx.group.rules.slice(0, GROUP_LIMITS.messageMax) : "" });
+        case "rules": {
+            // The Rules section, numbered (the plain text is for older readers).
+            const { list } = readGroupRules(ctx.group);
+            return ephemeral({ kind: "rules", rules: rulesText(list).slice(0, GROUP_LIMITS.messageMax), items: list.map(({ title, description }) => ({ title, description })) });
+        }
         case "ai":
             return { kind: "ask", question: command.question };
         case "slowmode":
@@ -557,6 +563,14 @@ async function readReply(groupId: string, value: unknown) {
     return { id, text: quoted.type === "voice" ? "🎤" : quoted.type === "gif" ? "GIF" : messagePreview(quoted.text, 100) };
 }
 
+/** /kurallar and /yardim: commands that only show something to the person who runs them. */
+function readOnlyCommand(body: Record<string, unknown>, file: PreparedFile | null) {
+    if (file || body.type === "gif" || body.forwarded === true || typeof body.text !== "string") return false;
+    const line = readCommandLine(body.text);
+    const spec = line ? findCommand(line.name) : null;
+    return spec?.id === "rules" || spec?.id === "help";
+}
+
 /** Sends a group message: text, a GIF or (with `file`) a file and its caption, written in one commit. */
 export async function sendGroupMessage(user: GroupUser, groupId: string, body: Record<string, unknown>, file: PreparedFile | null = null): Promise<GroupSendResult> {
     const { group, role } = await requireGroupMember(groupId, user.email);
@@ -564,6 +578,8 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
     const ctx: Ctx = { groupId, group, role, user, language: body.language === "EN" ? "EN" : groupLanguageOf(group), now };
     const mute = await activeMute(groupId, user.email, now);
     if (mute) throw new GroupApiError(403, "muted", "Bu grupta susturuldunuz.", { minutes: minutesLeft(mute.until, now) });
+    // Until the group's rules are accepted (when the group asks for it) only /kurallar and /yardim answer: reading stays open.
+    if (!readOnlyCommand(body, file)) assertRulesAccepted(groupId, group, user.email);
 
     const gif = !file && body.type === "gif" ? readMessageGif(body.gif) : null;
     if (!file && body.type === "gif" && !gif) throw new GroupApiError(400, "invalid_request", "Geçersiz GIF.");
@@ -656,7 +672,7 @@ function groupLanguageOf(group: GroupDocument): "TR" | "EN" {
     return group.contentLanguage === "en" ? "EN" : "TR";
 }
 
-/** Authors edit their own text messages; muted people can't, and AutoMod checks the new text. */
+/** Authors edit their own text messages; muted people (and members who haven't accepted the rules) can't, and AutoMod checks the new text. */
 export async function editGroupMessage(user: GroupUser, groupId: string, messageId: string, value: unknown) {
     const text = cleanMultiLine(value, GROUP_LIMITS.messageMax * 2);
     if (!text) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
@@ -665,6 +681,7 @@ export async function editGroupMessage(user: GroupUser, groupId: string, message
     const now = Date.now();
     const mute = await activeMute(groupId, user.email, now);
     if (mute) throw new GroupApiError(403, "muted", "Bu grupta susturuldunuz.", { minutes: minutesLeft(mute.until, now) });
+    assertRulesAccepted(groupId, group, user.email);
     const ctx: Ctx = { groupId, group, role, user, language: groupLanguageOf(group), now };
     const automod = await loadAutoMod(groupId);
     if (automod.config.enabled && !automod.config.exempt.includes(role)) {

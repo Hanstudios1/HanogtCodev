@@ -9,7 +9,10 @@ import {
     isMemberKey,
     isSystemEvent,
     languageFromFileName,
+    readGroupRules,
+    readRulesAccepted,
     readSlowmode,
+    rulesText,
     sanitizeCustomCommands,
     toMillis,
     type GroupInfo,
@@ -84,8 +87,10 @@ export type SaveState = "idle" | "saving" | "saved" | "error";
 export type WorkspaceMember = GroupMemberInfo;
 
 /** Live fields of the group document that clients may read directly (members only). */
-export type LiveGroupFields = Partial<Pick<GroupInfo, "name" | "description" | "emoji" | "color" | "rules" | "topics" | "ownerEmail" | "admins" | "members" | "pinnedMessageIds" | "allowMemberInvites" | "onboarding" | "moderators" | "slowmode" | "aiBot" | "welcomeMessage" | "customCommands">> & {
+export type LiveGroupFields = Partial<Pick<GroupInfo, "name" | "description" | "emoji" | "color" | "rules" | "rulesList" | "rulesVersion" | "rulesUpdatedAt" | "rulesScreening" | "rulesAcceptVersion" | "topics" | "ownerEmail" | "admins" | "members" | "pinnedMessageIds" | "allowMemberInvites" | "onboarding" | "moderators" | "slowmode" | "aiBot" | "welcomeMessage" | "customCommands">> & {
     typing: Record<string, number>;
+    /** Accepted rule versions by member key (undefined when the snapshot isn't a whole group document). */
+    rulesAccepted?: Record<string, number>;
 };
 
 const text = (value: unknown, fallback = "") => (typeof value === "string" ? value : fallback);
@@ -155,12 +160,21 @@ export function liveGroupFromData(data: DocumentData): LiveGroupFields {
         }
     }
     const onboarding = data.onboarding && typeof data.onboarding === "object" ? data.onboarding as Record<string, unknown> : null;
+    // The Rules section, read like the server does (older groups' plain-text rules become a list).
+    const whole = Boolean(data.members);
+    const rules = whole ? readGroupRules(data) : null;
     return {
         name: typeof data.name === "string" ? data.name : undefined,
         description: typeof data.description === "string" ? data.description : undefined,
         emoji: typeof data.emoji === "string" ? data.emoji : undefined,
         color: typeof data.color === "string" ? data.color as GroupInfo["color"] : undefined,
-        rules: typeof data.rules === "string" ? data.rules : undefined,
+        rules: typeof data.rules === "string" ? data.rules : rules ? rulesText(rules.list) : undefined,
+        rulesList: rules?.list,
+        rulesVersion: rules?.version,
+        rulesUpdatedAt: rules ? rules.updatedAt : undefined,
+        rulesScreening: rules?.screening,
+        rulesAcceptVersion: rules?.acceptVersion,
+        rulesAccepted: whole ? readRulesAccepted(data.rulesAccepted) : undefined,
         topics: stringList(data.topics),
         ownerEmail: typeof data.ownerEmail === "string" ? data.ownerEmail : undefined,
         admins: stringList(data.admins),
