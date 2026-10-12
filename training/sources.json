@@ -1760,7 +1760,7 @@
       "id": "hf-nemotron-code",
       "kind": "hf",
       "repo": "nvidia/Nemotron-Post-Training-Dataset-v1",
-      "status": "allowed",
+      "status": "review",
       "license": "CC-BY-4.0",
       "family": [
         "code-solve"
@@ -1769,7 +1769,7 @@
         "EN"
       ],
       "cap": 15000,
-      "provenance": "Programming problems with answers by DeepSeek-R1-0528 (some by Qwen3-235B-A22B), as released by NVIDIA; one answer per problem, rows whose prompt was left out of the release are skipped.",
+      "provenance": "Programming problems with answers by DeepSeek-R1-0528 (some by Qwen3-235B-A22B), as released by NVIDIA. On review: the release leaves every prompt of the code split out (the user message is \"-\"); the import of 6 October 2026 read 800,001 rows and kept none. It can come back once the problem statements are joined from the source datasets named in each row's metadata (TACO, APPS, CodeContests…), under their own licenses.",
       "attribution": "Nemotron-Post-Training-Dataset-v1 (NVIDIA, 2025), https://huggingface.co/datasets/nvidia/Nemotron-Post-Training-Dataset-v1 (CC BY 4.0)",
       "hf": {
         "split": "code",
