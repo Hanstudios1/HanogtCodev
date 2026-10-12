@@ -56,7 +56,6 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 | Kod | TheAlgorithms/Python | — | MIT | Doctest'leri geçen algoritmalar |
 | Kod | self-oss-instruct-sc2 | EN | ODC-BY | Çalıştırılarak elenmiş Python |
 | Kod | OpenCodeInstruct | EN | CC BY 4.0 | Qwen2.5-Coder ile üretilmiş, testten ≥ 0,9 almış kod |
-| Kod | Nemotron Post-Training v1 (`code`) | EN | CC BY 4.0 | DeepSeek-R1-0528 çözümleri, problem başına bir |
 | Kod | CodeForces-CoTs | EN | CC BY 4.0 | Python ve C++ yarışma çözümleri (temizlenmiş bölümler) |
 | Kod | SQaLe | EN | MIT | Gerçek şemalarda SQL, çalıştırılarak doğrulanmış |
 | Kod | Bash Instruct III | EN | MIT | Linux'ta çalıştırılarak doğrulanmış Bash |
@@ -69,7 +68,7 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 | Puanlama | HelpSteer2 | EN, TR | CC BY 4.0 | İnsan puanları: yardımseverlik, doğruluk, tutarlılık, karmaşıklık, ayrıntı |
 | Sıralama | HelpSteer3 (`preference`) | EN (DE/RU bağlamlar dahil) | CC BY 4.0 | İki yanıt arasında insan tercihi ve gerekçesi |
 
-- **İncelemede (review):** T-Wix (RU), GrandMaster-Qwen3 (RU), resh.edu.ru dersleri (RU, dönüştürücü bekliyor), SYNTHETIC-1, Dolci-Think, Nemotron v2 (kapılı), gpt-oss ile üretilmiş setler, Türkçe ve Azerbaycanca bilgi setleri (üretici belirtilmemiş), Arena tercihleri, Türkçe Atlas, smoltalk2. Her birinin eksiği `sources.json`'da yazılıdır.
+- **İncelemede (review):** Nemotron Post-Training v1 `code` bölümü (NVIDIA bu bölümde soruları yayımlamamış, kullanıcı mesajı yalnızca "-"; 6 Ekim'deki içe aktarmada 800 bin satırdan hiçbiri alınamadı, sorular kaynak veri setlerinden eklenince açılır), T-Wix (RU), GrandMaster-Qwen3 (RU), resh.edu.ru dersleri (RU, dönüştürücü bekliyor), SYNTHETIC-1, Dolci-Think, Nemotron v2 (kapılı), gpt-oss ile üretilmiş setler, Türkçe ve Azerbaycanca bilgi setleri (üretici belirtilmemiş), Arena tercihleri, Türkçe Atlas, smoltalk2. Her birinin eksiği `sources.json`'da yazılıdır.
 - **Dışlananlar:** gerekçeleriyle kayıtta (`excluded`); örneğin OpenThoughts3 (Llama/Gemini/GPT kaynaklı sorular), WildChat (GPT yanıtları), MetaMathQA, Magicoder, UltraFeedback, InstrucTurca (SA), Aya Collection çevirileri (NC çeviri modeli), Wikipedia (SA).
 - **Azerbaycanca:** kuralların tümünü geçen bir veri seti bulunamadı (Aya'da da yok). Şimdilik model Azerbaycancayı Türkçe ve kendi bilgisinden öğrenir; sonraki adım izinli Türkçe/İngilizce verinin açık bir modelle çevrilmesi.
 - **Görsel:** varsayılan taban Qwen3.5-4B görsel ve video anlar; eğitim yalnızca metinle yapılır ve görme kısmına dokunmaz. Yedek Qwen3-8B ise yalnızca metin anlar.
