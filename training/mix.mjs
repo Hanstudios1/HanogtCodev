@@ -19,9 +19,11 @@
 //
 // Writes train.jsonl, eval.jsonl, manifest.json, ATTRIBUTION.md and README.md
 // (the dataset card) into --out.
-import { existsSync } from "node:fs";
+import { createReadStream, createWriteStream, existsSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { once } from "node:events";
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import {
@@ -58,11 +60,32 @@ export const IDENTITY_PROMPT = {
 /** A benchmark's function name counts only when it's distinctive enough not to hit ordinary code (is_prime, add…). */
 export const distinctiveName = (name) => name.length >= 10 && (/_/.test(name) || /[a-z][A-Z]/.test(name));
 
-async function readJsonl(file) {
-    const text = await readFile(file, "utf8");
+/**
+ * Reads a JSONL file line by line. A whole file read into one string would
+ * stop at V8's string limit (about 537 million characters, ~1 GB of text).
+ */
+export async function readJsonl(file) {
     const samples = [];
-    for (const line of text.split("\n")) if (line.trim()) samples.push(JSON.parse(line));
+    const lines = createInterface({ input: createReadStream(file, { encoding: "utf8" }), crlfDelay: Infinity });
+    for await (const line of lines) if (line.trim()) samples.push(JSON.parse(line));
     return samples;
+}
+
+/**
+ * Writes one JSON line per item through a stream. Joining every line first
+ * built a single string, and a pool of a few hundred thousand long samples
+ * (reasoning traces) is far over V8's string limit: "RangeError: Invalid
+ * string length", so the pool was never written.
+ */
+export async function writeJsonl(file, items, toLine = (item) => JSON.stringify(item)) {
+    const stream = createWriteStream(file, { encoding: "utf8" });
+    const failed = new Promise((_, reject) => stream.once("error", reject));
+    failed.catch(() => {});
+    for (const item of items) {
+        if (!stream.write(`${toLine(item)}\n`)) await Promise.race([once(stream, "drain"), failed]);
+    }
+    stream.end();
+    await Promise.race([once(stream, "finish"), failed]);
 }
 
 async function jsonlFiles(dir) {
@@ -419,8 +442,8 @@ export async function main(argv = process.argv.slice(2)) {
     const { train, evaluation } = splitByGroup(samples);
     const out = path.resolve(ROOT, values.out);
     await mkdir(out, { recursive: true });
-    await writeFile(path.join(out, "train.jsonl"), `${train.map(sampleLine).join("\n")}\n`);
-    await writeFile(path.join(out, "eval.jsonl"), `${evaluation.map(sampleLine).join("\n")}\n`);
+    await writeJsonl(path.join(out, "train.jsonl"), train, sampleLine);
+    await writeJsonl(path.join(out, "eval.jsonl"), evaluation, sampleLine);
     const summary = { all: describe(samples), train: describe(train), eval: describe(evaluation) };
     const githubManifest = existsSync(path.join(githubDir, "manifest.json")) ? JSON.parse(await readFile(path.join(githubDir, "manifest.json"), "utf8")) : null;
     const hfManifest = existsSync(path.join(hfDir, "manifest.json")) ? JSON.parse(await readFile(path.join(hfDir, "manifest.json"), "utf8")) : null;

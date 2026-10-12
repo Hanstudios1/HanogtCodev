@@ -1,0 +1,37 @@
+# Apptainer container for training Hanogt AI on an HPC cluster with NVIDIA GPUs
+# (for example EVREN: Slurm + Apptainer on H200 nodes). See training/evren/README.md.
+#
+#   apptainer build hanogt-train.sif training/evren/hanogt-train.def
+#
+# If the cluster offers a ready PyTorch (CUDA 12) container, that one works too:
+# install training/requirements.txt in it and skip this file.
+Bootstrap: docker
+From: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+
+%files
+    training/requirements.txt /opt/hanogt/requirements.txt
+
+%post
+    set -e
+    apt-get update
+    apt-get install -y --no-install-recommends git ca-certificates curl xz-utils
+    rm -rf /var/lib/apt/lists/*
+    pip install --no-cache-dir --upgrade pip
+    pip install --no-cache-dir -r /opt/hanogt/requirements.txt datasets
+    # Faster Gated DeltaNet layers for Qwen3.5/3.6 (training falls back without them).
+    pip install --no-cache-dir flash-linear-attention || true
+    # Node.js 22 for the data step (training/mix.mjs); kaggle_run.py also downloads it when missing.
+    curl -fsSL https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt -o /tmp/node-sums.txt
+    NODE_TAR=$(grep -- '-linux-x64.tar.xz$' /tmp/node-sums.txt | awk '{print $2}')
+    curl -fsSL "https://nodejs.org/dist/latest-v22.x/${NODE_TAR}" -o "/tmp/${NODE_TAR}"
+    (cd /tmp && grep -- "${NODE_TAR}\$" node-sums.txt | sha256sum -c -)
+    tar -xJf "/tmp/${NODE_TAR}" -C /opt
+    ln -s "/opt/${NODE_TAR%.tar.xz}/bin/node" /usr/local/bin/node
+    rm -f "/tmp/${NODE_TAR}" /tmp/node-sums.txt
+
+%environment
+    export PYTHONUNBUFFERED=1
+    export HF_HUB_ENABLE_HF_TRANSFER=0
+
+%labels
+    org.hanogt.purpose Hanogt AI LoRA training (training/kaggle_run.py)
