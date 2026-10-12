@@ -1,6 +1,20 @@
 import type { Copy } from "@/lib/i18n";
 import { GROUP_LIMITS } from "@/lib/groups";
-import { LIST_PRICES, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_FEATURES, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
+import {
+    LIST_PRICES,
+    PLAN_AI_CONNECTIONS,
+    PLAN_AI_FEATURES,
+    PLAN_AI_LIMITS,
+    PLAN_ATTACHMENT_LIMITS,
+    PLAN_COLLAB_LIMITS,
+    PLAN_GROUP_AI,
+    PLAN_GROUP_FEATURES,
+    PLAN_GROUP_LIMITS,
+    PLAN_MESSAGE_CHARS,
+    PLAN_PROJECT_LIMITS,
+    PLAN_RUN_SIZES,
+    PLAN_STAR_LIMITS,
+} from "@/lib/plans";
 import { STATUS_PREFERENCE_COPY } from "@/lib/presence";
 import { BROWSER_LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
@@ -63,6 +77,9 @@ const RUN = {
     server: LANGUAGE_STATS.runnable - BROWSER_LANGUAGES.size,
     preview: LANGUAGE_STATS.preview,
 };
+
+const MB = (bytes: number) => Math.round(bytes / (1024 * 1024));
+const GB = (bytes: number) => Math.round(bytes / (1024 * 1024 * 1024));
 
 export const PAGES: BookPage[] = [
     // ------------------------------------------------------------------ Başlangıç
@@ -149,6 +166,26 @@ export const PAGES: BookPage[] = [
                 ],
             },
             { type: "keys", items: [{ keys: "Ctrl + S", text: { TR: "Kaydet", EN: "Save" } }, { keys: "Ctrl + Enter", text: { TR: "Çalıştır", EN: "Run" } }, { keys: "Ctrl + K", text: { TR: "Komut paleti", EN: "Command palette" } }] },
+        ],
+    },
+    {
+        chapter: "editor",
+        title: { TR: "Atölye araçları", EN: "Workbench tools" },
+        blocks: [
+            { type: "item", icon: "🩺", name: { TR: "Sorunlar paneli", EN: "Problems panel" }, text: { TR: "Açık dosyaların bütün hata ve uyarıları tek listede; birine tıkla, satırına git. Durum çubuğundaki sayaç da paneli açar.", EN: "Every error and warning in your open files in one list; click one to jump to its line. The counter in the status bar opens it too." } },
+            { type: "item", icon: "🔎", name: { TR: "Dosyalarda ara", EN: "Search in all files" }, text: { TR: "Büyük/küçük harf, tam kelime ve düzenli ifadeyle bütün dosyalarda ara. \"Tümünü değiştir\" önce sorar; her dosyada tek adımda geri alınır.", EN: "Search every file with match case, whole word and regular expressions. \"Replace all\" asks first and undoes in one step per file." } },
+            { type: "item", icon: "🕰️", name: { TR: "Yerel geçmiş", EN: "Local history" }, text: { TR: "Kaydettiğinde, çalıştırdığında ve dosya değişiyorsa 3 dakikada bir anlık görüntü alınır. Bugünkü hâliyle karşılaştır, tek adımda geri yükle. Yalnızca bu tarayıcıda saklanır.", EN: "A snapshot is taken when you save, when you run and every 3 minutes while a file changes. Compare it with the file as it is now and restore it in one step. It stays in this browser only." } },
+            { type: "item", icon: "🧘", name: { TR: "Zen modu", EN: "Zen mode" }, text: { TR: "Kenar panelleri, konsol, araç çubuğu ve site menüsü gizlenir; yalnızca kodun kalır. Esc ile çıkarsın.", EN: "Side panels, console, toolbar and the site menu hide away; only your code stays. Press Esc to leave." } },
+            {
+                type: "keys",
+                items: [
+                    { keys: "Ctrl + Shift + M", text: { TR: "Sorunlar paneli", EN: "Problems panel" } },
+                    { keys: "Ctrl + Shift + F", text: { TR: "Dosyalarda ara ve değiştir", EN: "Search and replace in files" } },
+                    { keys: "Alt + Z", text: { TR: "Satır kaydırma", EN: "Word wrap" } },
+                    { keys: "Ctrl + K, Z", text: { TR: "Zen modu", EN: "Zen mode" } },
+                ],
+            },
+            { type: "tip", title: { TR: "Usta işi", EN: "Master's touch" }, text: { TR: "HTML, CSS, SCSS, Less ve JSX'te Emmet kısaltmaları çalışır; Vim tuşlarını Editör ayarlarından açarsın. Konsol ANSI renklerini de gösterir.", EN: "Emmet abbreviations work in HTML, CSS, SCSS, Less and JSX; turn on Vim keys in the Editor settings. The console shows ANSI colors too." } },
         ],
     },
     {
@@ -458,6 +495,36 @@ export const PAGES: BookPage[] = [
     },
     {
         chapter: "ai",
+        title: { TR: "Düşünme ve ayarlar", EN: "Thinking & settings" },
+        blocks: [
+            { type: "p", text: { TR: "Zor sorularda Hanogt AI yanıtlamadan önce düşünür. Düşüncesi, okuduğu bilgi kaynakları ve çalışan denetimler yanıtın üstündeki \"N sn düşündü\" panelinde görünür. Düşünme yalnızca bu tarayıcıda kalır, sonraki mesajlarla geri gönderilmez.", EN: "On hard questions Hanogt AI thinks before it answers. Its thinking, the knowledge sources it read and the checks that ran show in the \"Thought for N s\" panel above the answer. Thinking stays in this browser and is never sent back with later messages." } },
+            {
+                type: "list",
+                items: [
+                    { TR: "Düşünme: Otomatik (kodda, güvenlikte ve uzun sorularda), Açık ya da Kapalı; paneli gizleyebilirsin.", EN: "Thinking: Auto (for code, security and long questions), On or Off; you can hide the panel." },
+                    { TR: "Kişisel talimatlar, üslup, uzunluk, yanıt dili ve uzmanlık düzeyi.", EN: "Personal instructions, tone, length, answer language and expertise level." },
+                    { TR: "Yaratıcılık: Hassas, Dengeli ya da Yaratıcı.", EN: "Creativity: Precise, Balanced or Creative." },
+                    { TR: "Kod: yorum dili, kod stili, tercih ettiğin diller; değişiklikler tam dosya ya da fark olarak.", EN: "Code: comment language, code style and your preferred languages; changes as the whole file or a diff." },
+                    { TR: "Gizli sohbet: sohbetleri saklama kapalıyken yeni sohbetler hiç kaydedilmez.", EN: "Private chats: with keeping chats off, new chats are never stored." },
+                    { TR: "Ayarları dışa aktar, başka bir cihazda içe aktar ya da bölüm bölüm sıfırla.", EN: "Export your settings, import them on another device or reset them section by section." },
+                ],
+            },
+            { type: "link", href: "/ai/settings", label: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" } },
+        ],
+    },
+    {
+        chapter: "ai",
+        title: { TR: "Kendi anahtarın ve API", EN: "Your own keys & the API" },
+        blocks: [
+            { type: "item", icon: "🔌", name: { TR: "Kendi anahtarınla bağlantılar", EN: "Connections with your own keys" }, text: { TR: "Plus'ta {plus}, Pro'da {pro} yapay zekâ sağlayıcısını kendi API anahtarınla bağla ve sohbette modeli seç. Bu mesajlar da Hanogt AI hakkından düşer.", EN: "Connect {plus} AI providers with your own API keys on Plus and {pro} on Pro, then pick the model in the chat. These messages count in your Hanogt AI allowance too.", vars: { plus: PLAN_AI_CONNECTIONS.plus, pro: PLAN_AI_CONNECTIONS.pro } } },
+            { type: "item", icon: "🔑", name: { TR: "Geliştirici API'si", EN: "Developer API" }, text: { TR: "Plus'ta {plus}, Pro'da {pro} API anahtarı oluştur; Hanogt AI'ı OpenAI uyumlu uç noktayla kendi uygulamandan çağır. Her istek sohbetle aynı haktan düşer.", EN: "Create {plus} API keys on Plus and {pro} on Pro and call Hanogt AI from your own app through an OpenAI-compatible endpoint. Every request uses the same allowance as the chat.", vars: { plus: PLAN_AI_FEATURES.plus.api?.keys ?? 0, pro: PLAN_AI_FEATURES.pro.api?.keys ?? 0 } } },
+            { type: "item", icon: "👥", name: { TR: "Gruplarda Hanogt AI", EN: "Hanogt AI in groups" }, text: { TR: "Hanogt Social gruplarında /ai yaz ya da @Hanogt AI'dan bahset. Yanıt soranın hakkından düşer; uzunluğu soranın planına göredir.", EN: "Type /ai or mention @Hanogt AI in a Hanogt Social group. The answer counts against the asker's allowance, and its length follows the asker's plan." } },
+            { type: "tip", title: { TR: "Anahtar sandığı", EN: "Key chest" }, text: { TR: "API anahtarı yalnızca oluşturduğun anda bir kez görünür. Kimseyle paylaşma, tarayıcı koduna koyma; kaybedersen iptal edip yenisini oluştur.", EN: "An API key is shown only once, when you create it. Never share it or put it in browser code; if you lose it, revoke it and create a new one." } },
+            { type: "link", href: "/ai/api", label: { TR: "API ve bağlantılar", EN: "API and connections" } },
+        ],
+    },
+    {
+        chapter: "ai",
         title: { TR: "Sınırlar", EN: "Limits" },
         blocks: [
             {
@@ -490,6 +557,23 @@ export const PAGES: BookPage[] = [
     },
     {
         chapter: "social",
+        title: { TR: "Mesaj yazmak", EN: "Writing messages" },
+        blocks: [
+            {
+                type: "list",
+                items: [
+                    { TR: "@ ile birinden bahset, # ile kanala bağlantı ver, / ile komutları gör.", EN: "Mention someone with @, link a channel with # and see the commands with /." },
+                    { TR: "Emoji ve GIF seçici; Markdown ve renkli kod blokları.", EN: "Emoji and GIF pickers; Markdown and highlighted code blocks." },
+                    { TR: "Yanıtla, tepki ver, ilet, yıldızla ya da sabitle. Ücretsiz planda {free}, Plus'ta {plus}, Pro'da {pro} mesaj yıldızlanır.", EN: "Reply, react, forward, star or pin. You can star {free} messages on Free, {plus} on Plus and {pro} on Pro.", vars: { free: PLAN_STAR_LIMITS.free, plus: PLAN_STAR_LIMITS.plus, pro: PLAN_STAR_LIMITS.pro } },
+                    { TR: "Bir mesaj Ücretsiz planda {free}, Plus'ta {plus}, Pro'da {pro} karakter olabilir.", EN: "A message can be {free} characters long on Free, {plus} on Plus and {pro} on Pro.", vars: { free: PLAN_MESSAGE_CHARS.free, plus: PLAN_MESSAGE_CHARS.plus, pro: PLAN_MESSAGE_CHARS.pro } },
+                ],
+            },
+            { type: "item", icon: "📎", name: { TR: "Dosyalar", EN: "Files" }, text: { TR: "Resim, video, ses, PDF, arşiv ya da kod dosyası gönder: Ücretsiz planda dosya başına {freeFile} MB ve toplam {freeAll} MB, Plus'ta {plusFile} MB ve {plusAll} MB, Pro'da {proFile} MB ve {proAll} GB. Mesajı silince yer geri gelir.", EN: "Send pictures, video, sound, PDFs, archives or code files: {freeFile} MB a file and {freeAll} MB in all on Free, {plusFile} MB and {plusAll} MB on Plus, {proFile} MB and {proAll} GB on Pro. Deleting the message gives the space back.", vars: { freeFile: MB(PLAN_ATTACHMENT_LIMITS.free.fileBytes), freeAll: MB(PLAN_ATTACHMENT_LIMITS.free.storageBytes), plusFile: MB(PLAN_ATTACHMENT_LIMITS.plus.fileBytes), plusAll: MB(PLAN_ATTACHMENT_LIMITS.plus.storageBytes), proFile: MB(PLAN_ATTACHMENT_LIMITS.pro.fileBytes), proAll: GB(PLAN_ATTACHMENT_LIMITS.pro.storageBytes) } } },
+            { type: "tip", title: { TR: "Ayar sandığı", EN: "Settings chest" }, text: { TR: "Social ayarlarından okundu bilgisini, yazıyor göstergesini, Enter ile göndermeyi, yazı boyutunu ve bildirimleri değiştir.", EN: "Change read receipts, the typing indicator, Enter to send, text size and notifications in the Social settings." } },
+        ],
+    },
+    {
+        chapter: "social",
         title: { TR: "Gruplar", EN: "Groups" },
         blocks: [
             {
@@ -505,6 +589,39 @@ export const PAGES: BookPage[] = [
     },
     {
         chapter: "social",
+        title: { TR: "Grup kuralları", EN: "Group rules" },
+        blocks: [
+            { type: "p", text: { TR: "Her grubun Discord'daki gibi bir Kurallar bölümü var: kenar çubuğunun en üstünde, madde madde en fazla {count} kural. Her kuralın bir başlığı ve isteğe bağlı bir açıklaması olur.", EN: "Every group has a Discord-like Rules section: at the top of the sidebar, up to {count} rules, point by point. Each rule has a title and an optional description.", vars: { count: GROUP_LIMITS.rulesCount } } },
+            {
+                type: "steps",
+                items: [
+                    { TR: "Grup ayarlarında \"Grup kuralları\"nı aç; önerilen kuralları ekle ya da kendin yaz, oklarla sırala.", EN: "Open \"Group rules\" in the group settings; add the suggested rules or write your own and order them with the arrows." },
+                    { TR: "\"Üyeler sohbet etmeden önce kuralları kabul etsin\" açıksa üyeler kuralları kabul etmeden yazamaz, tepki veremez, dosya gönderemez ve sesli kanala katılamaz.", EN: "With \"Members accept the rules before they chat\" on, members can't post, react, send files or join the voice channel until they accept the rules." },
+                    { TR: "Kuralları değiştirince \"Herkes kuralları yeniden kabul etsin\" diyebilirsin. Davet sayfası da kuralları gösterir.", EN: "After changing the rules you can choose \"Ask everyone to accept the rules again\". The invite page shows the rules too." },
+                ],
+            },
+            { type: "tip", title: { TR: "Hazır kurallar", EN: "Ready-made rules" }, text: { TR: "Şablonla kurulan gruplar grubun dilinde yedi kuralla ve kural onayı açık başlar.", EN: "Groups made from a template start with seven rules in the group's language and rule screening on." } },
+        ],
+    },
+    {
+        chapter: "social",
+        title: { TR: "Botlar ve AutoMod", EN: "Bots & AutoMod" },
+        blocks: [
+            { type: "p", text: { TR: "Hanogt Security Bot her grupta vardır ve çıkarılamaz. Komutlarını / ile yaz; /yardim kullanabileceklerini listeler.", EN: "The Hanogt Security Bot is in every group and can't be removed. Type its commands with /; /help lists the ones you can use." } },
+            {
+                type: "list",
+                items: [
+                    { TR: "Herkes: /kurallar, /rapor, /uyarilar, /ai.", EN: "Everyone: /rules, /report, /warnings, /ai." },
+                    { TR: "Moderatörler: /uyar, /sustur, /sesiac, /at, /temizle, /yavasmod.", EN: "Moderators: /warn, /mute, /unmute, /kick, /purge, /slowmode." },
+                    { TR: "Yöneticiler ve sahip: /yasakla. Grup ayarlarından özel komutlar ve bir karşılama mesajı da eklerler.", EN: "Admins and the owner: /ban. They can also add custom commands and a welcome message in the group settings." },
+                ],
+            },
+            { type: "item", icon: "🛡️", name: { TR: "AutoMod", EN: "AutoMod" }, text: { TR: "Mesajı gönderilmeden önce durdurur: küfür (s1kt1r gibi yazımlar dahil), argo, grubun yasaklı kelimeleri, tekrar ve spam, toplu bahsetme, bağlantılar, büyük harf ve kişisel veriler. İstersen uyarı verir; belli sayıda uyarıdan sonra süreli susturur.", EN: "Stops a message before it is sent: swearing (spellings like s1kt1r too), slang, the group's banned words, repeats and spam, mass mentions, links, capitals and personal data. It can also warn, and mute for a while after a set number of warnings." } },
+            { type: "tip", title: { TR: "Bekçinin sözü", EN: "The guard's word" }, text: { TR: "Sahip AutoMod'dan her zaman muaftır; hangi rollerin muaf olacağını ve hangi kuralların açık olacağını grup ayarlarından seçersin.", EN: "The owner is always exempt from AutoMod; choose which roles are exempt and which checks are on in the group settings." } },
+        ],
+    },
+    {
+        chapter: "social",
         title: { TR: "Durum noktaları", EN: "Status dots" },
         blocks: [
             { type: "item", icon: "🟢", name: STATUS_PREFERENCE_COPY.auto.label, text: STATUS_PREFERENCE_COPY.auto.hint },
@@ -516,16 +633,18 @@ export const PAGES: BookPage[] = [
     },
     {
         chapter: "social",
-        title: { TR: "Sesli arama", EN: "Voice calls" },
+        title: { TR: "Aramalar ve sesli kanallar", EN: "Calls & voice channels" },
         blocks: [
             {
                 type: "list",
                 items: [
-                    { TR: "Arkadaşını direkt mesaj ekranından, grup üyelerini grup sohbetinden ara.", EN: "Call a friend from the direct message screen and group members from the group chat." },
-                    { TR: "Tarayıcı mikrofon izni ister; adres çubuğundaki kilit simgesinden kontrol edebilirsin.", EN: "The browser asks for microphone access; you can check it from the lock icon in the address bar." },
+                    { TR: "Arkadaşını direkt mesaj ekranından ara. Tarayıcı mikrofon izni ister; adres çubuğundaki kilit simgesinden kontrol edebilirsin.", EN: "Call a friend from the direct message screen. The browser asks for microphone access; you can check it from the lock icon in the address bar." },
+                    { TR: "Tam görünümde iki kişi de konuşma halkalarıyla görünür; Esc ya da Küçült ile çubuğa dönersin, arama sürer.", EN: "The full view shows both of you with speaking rings; Esc or Minimize goes back to the bar and the call carries on." },
+                    { TR: "Bilgisayarda ekranını paylaş; karşı taraf \"İzle\" ile açar. Telefonlarda ekran paylaşımı yok.", EN: "Share your screen from a computer; the other side opens it with \"Watch\". Phones can't share their screen." },
+                    { TR: "Her grubun en fazla 5 kişilik bir sesli kanalı var; katıl, mikrofonunu ve sesini panelden yönet.", EN: "Every group has a voice channel for up to 5 people; join it and control your microphone and sound from the panel." },
                 ],
             },
-            { type: "item", icon: "📞", name: { TR: "Sesli arama", EN: "Voice calls" }, text: { TR: "WebRTC ile eşten eşe; Hanogt tarafından kaydedilmez.", EN: "Peer-to-peer via WebRTC; never recorded by Hanogt." } },
+            { type: "item", icon: "📞", name: { TR: "Eşten eşe", EN: "Peer to peer" }, text: { TR: "Ses ve ekran WebRTC ile tarayıcılar arasında gider (ağ gerektirirse bir aktarma sunucusundan geçerek); Hanogt hiçbirini kaydetmez.", EN: "Sound and screen travel between the browsers over WebRTC (through a relay server when a network needs one); Hanogt records none of it." } },
         ],
     },
     {
@@ -581,13 +700,28 @@ export const PAGES: BookPage[] = [
             { type: "tip", title: { TR: "Çift kilit", EN: "Double lock" }, text: { TR: "E-posta ve parolayla giriş yapan hesaplar içindir. Google ile giriyorsan Google hesabının iki adımlı doğrulamasını aç.", EN: "This is for accounts that sign in with an e-mail and password. If you sign in with Google, turn on two-step verification for your Google account." } },
         ],
     },
+    {
+        chapter: "security",
+        title: { TR: "Giriş kontrolleri", EN: "Sign-in checks" },
+        blocks: [
+            { type: "p", text: { TR: "Hesabına bir parola eklediysen Google ile her girişten sonra bu parola da sorulur; iki adımlı doğrulama açıksa kodu da. Google hesabını ele geçiren biri tek başına hesabına giremez.", EN: "If you added a password to your account, it is asked for after every Google sign-in, and so is your code when two-step verification is on. Someone who takes over your Google account still can't get into yours alone." } },
+            {
+                type: "list",
+                items: [
+                    { TR: "İlk parolanı koymak ya da hesabını silmek gibi hassas işlemler son 30 dakika içinde giriş yapmış olmanı ister.", EN: "Sensitive actions such as setting your first password or deleting your account need a sign-in within the last 30 minutes." },
+                    { TR: "Hesap Ayarları → Gizlilik ve Güvenlik → Oturumlar: \"Diğer tüm oturumları kapat\" öbür cihazlardaki oturumları kapatır. Parolanı değiştirince de kapanırlar.", EN: "Account Settings → Privacy & Security → Sessions: \"Sign out all other sessions\" ends your sessions on other devices. Changing your password ends them too." },
+                ],
+            },
+            { type: "tip", title: { TR: "Kayıp anahtar", EN: "Lost key" }, text: { TR: "Parolanı unuttuysan doğrulama sayfasından bir istek gönder. Ekip hesabın sana ait olduğundan emin olunca parola şartını kaldırır; Google ile giriş yeniden yeter.", EN: "Forgot the password? Send a request from the verification page. Once the team is sure the account is yours, they remove the password step and signing in with Google is enough again." } },
+        ],
+    },
 
     // ------------------------------------------------------------------ Hesap & Gizlilik
     {
         chapter: "account",
         title: { TR: "Hesabın senin", EN: "Your account is yours" },
         blocks: [
-            { type: "item", icon: "⚙️", name: { TR: "Hesap Ayarları", EN: "Account Settings" }, text: { TR: "Hesabım, Profil, Durum, Gizlilik ve Güvenlik, Bildirimler, Mesajlaşma, Görünüm, Editör ve Veri bölümleri.", EN: "My Account, Profile, Status, Privacy & Security, Notifications, Messaging, Appearance, Editor and Data sections." } },
+            { type: "item", icon: "⚙️", name: { TR: "Hesap Ayarları", EN: "Account Settings" }, text: { TR: "Hesabım, Profil, Durum, Gizlilik ve Güvenlik, Bildirimler, Mesajlaşma, Görünüm, Editör, Hanogt AI ve Veri bölümleri. Soldaki menüde ara; değişiklikleri alttaki çubuktan ya da Ctrl+S ile kaydet.", EN: "My Account, Profile, Status, Privacy & Security, Notifications, Messaging, Appearance, Editor, Hanogt AI and Data sections. Search the menu on the left; save changes from the bar at the bottom or with Ctrl+S." } },
             { type: "item", icon: "📥", name: { TR: "Verilerimi indir", EN: "Download my data" }, text: { TR: "Hesabına bağlı verilerin bir kopyası.", EN: "A copy of the data tied to your account." } },
             { type: "item", icon: "🗑️", name: { TR: "Hesabı sil", EN: "Delete account" }, text: { TR: "Projeler, oyunlar, yorumlar ve mesajlar kalıcı olarak silinir.", EN: "Projects, games, comments and messages are deleted permanently." } },
             { type: "p", text: { TR: "Ayrıntılar Gizlilik Politikası, Kullanım Şartları ve KVKK Aydınlatma Metni'nde.", EN: "Details are in the Privacy Policy, Terms of Use and KVKK Notice." } },
@@ -620,6 +754,24 @@ export const PAGES: BookPage[] = [
             { type: "p", text: { TR: "Yıllık ödemede 10 ayın ücreti alınır. Aboneliğini Planlar sayfasındaki \"Aboneliği yönet\"ten değiştirebilir ya da iptal edebilirsin; ilk ödemeden sonraki 14 gün içinde iade isteyebilirsin.", EN: "Yearly billing costs 10 months. Change or cancel your subscription with \"Manage subscription\" on the Plans page; you can ask for a refund within 14 days of the first payment." } },
             { type: "link", href: "/plans", label: { TR: "Fiyatlandırma", EN: "Pricing" } },
             { type: "link", href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
+        ],
+    },
+    {
+        chapter: "account",
+        title: { TR: "Plus ve Pro ayrıcalıkları", EN: "Plus & Pro extras" },
+        blocks: [
+            { type: "p", text: { TR: "Ücretsiz plandan hiçbir şey kısılmadı. Plus ve Pro bunların üstüne şunları ekler:", EN: "Nothing was taken away from the Free plan. Plus and Pro add these on top:" } },
+            {
+                type: "list",
+                items: [
+                    { TR: "Sunucuda daha büyük çalıştırmalar: dosya başına Ücretsiz {free}, Plus {plus}, Pro {pro} karakter; girdi ve çıktı da büyür.", EN: "Bigger runs on the server: {free} characters a file on Free, {plus} on Plus, {pro} on Pro; input and output grow too.", vars: { free: PLAN_RUN_SIZES.free.fileChars, plus: PLAN_RUN_SIZES.plus.fileChars, pro: PLAN_RUN_SIZES.pro.fileChars } },
+                    { TR: "Gruplarda daha uzun Hanogt AI yanıtları: soranın planına göre {free}, {plus} ya da {pro} karaktere kadar.", EN: "Longer Hanogt AI answers in groups: up to {free}, {plus} or {pro} characters by the asker's plan.", vars: { free: PLAN_GROUP_AI.free.answerChars, plus: PLAN_GROUP_AI.plus.answerChars, pro: PLAN_GROUP_AI.pro.answerChars } },
+                    { TR: "Ekiple düzenleme oturumları Plus'ta {plusHours} saat ve {plusFiles} dosya, Pro'da {proHours} saat ve {proFiles} dosya.", EN: "Team editing sessions of {plusHours} hours and {plusFiles} files on Plus, {proHours} hours and {proFiles} files on Pro.", vars: { plusHours: PLAN_COLLAB_LIMITS.plus.hours, plusFiles: PLAN_COLLAB_LIMITS.plus.files, proHours: PLAN_COLLAB_LIMITS.pro.hours, proFiles: PLAN_COLLAB_LIMITS.pro.files } },
+                    { TR: "Hanogt Engine'den rozetsiz oyun dışa aktarma (HTML ve web paketi).", EN: "Badge-free game exports from Hanogt Engine (HTML and web package)." },
+                    { TR: "Daha uzun mesajlar, daha çok dosya alanı ve yıldız, daha büyük gruplar; Hanogt AI'da daha uzun yanıtlar ve daha çok düşünme payı.", EN: "Longer messages, more file space and stars, bigger groups; longer answers and more room to think in Hanogt AI." },
+                ],
+            },
+            { type: "tip", title: { TR: "Plan düşerse", EN: "If your plan goes down" }, text: { TR: "Hiçbir şey silinmez: yeni sınırın üstünde kalanlar saklanır (fazla yapay zekâ bağlantıları kapanır); sınırın altına inene kadar yenisi eklenmez.", EN: "Nothing is deleted: what is over the new limit is kept (extra AI connections are switched off), and you can't add more until you're back under it." } },
         ],
     },
 

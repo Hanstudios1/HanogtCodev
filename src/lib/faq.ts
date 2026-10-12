@@ -154,6 +154,15 @@ export const FAQS: Faq[] = [
         },
     },
     {
+        id: "google-password",
+        category: CATEGORY.account,
+        question: { TR: "Google ile giriş yaptıktan sonra neden şifrem soruluyor?", EN: "Why am I asked for my password after signing in with Google?" },
+        answer: {
+            TR: "Hesabınıza bir şifre eklediyseniz Google ile her girişten sonra bu şifre de istenir; iki adımlı doğrulama açıksa doğrulama kodunuz da. Böylece Google hesabınızı ele geçiren biri tek başına Hanogt hesabınıza giremez. Şifrenizi unuttuysanız doğrulama sayfasından bir istek gönderin; ekip hesabın size ait olduğundan emin olunca şifre şartını kaldırır ve Google ile giriş yeniden yeterli olur. Yanıtı Geri Bildirim sayfasındaki Taleplerim bölümünde görürsünüz.",
+            EN: "If you added a password to your account, it is asked for after every Google sign-in, and so is your verification code when two-step verification is on. That way someone who takes over your Google account still can't get into your Hanogt account alone. If you forgot the password, send a request from the verification page; once the team is sure the account is yours, they remove the password requirement and signing in with Google is enough again. You'll find the reply under My tickets on the Feedback page.",
+        },
+    },
+    {
         id: "bot",
         category: CATEGORY.account,
         question: { TR: "Security Bot hesabımı otomatik olarak kalıcı engeller mi?", EN: "Will Security Bot ban my account automatically?" },
@@ -282,6 +291,15 @@ export const FAQS: Faq[] = [
         },
     },
     {
+        id: "local-history",
+        category: CATEGORY.code,
+        question: { TR: "Bir dosyanın önceki hâline dönebilir miyim?", EN: "Can I go back to an earlier version of a file?" },
+        answer: {
+            TR: "Evet. Kod Editörü kaydettiğinizde, çalıştırdığınızda ve dosya değişiyorsa 3 dakikada bir dosyanın anlık görüntüsünü alır (dosya başına en fazla 30). Geçmiş panelinden bir görüntüyü bugünkü dosyayla karşılaştırıp tek adımda geri yükleyebilirsiniz; geri yükleme Ctrl+Z ile geri alınır. Bu geçmiş yalnızca kullandığınız tarayıcıda saklanır, buluta gönderilmez; Editör ayarlarından kapatabilir ya da temizleyebilirsiniz.",
+            EN: "Yes. The Code Editor takes a snapshot of a file when you save, when you run and every 3 minutes while it changes (up to 30 per file). From the history panel you can compare a snapshot with the file as it is now and restore it in one step; Ctrl+Z undoes the restore. This history is kept only in the browser you use and is never sent to the cloud; you can turn it off or clear it in the Editor settings.",
+        },
+    },
+    {
         id: "media-publish",
         category: CATEGORY.code,
         question: { TR: "Kodumu editörden Hanogt Media'da nasıl yayınlarım?", EN: "How do I publish my code to Hanogt Media from the editor?" },
@@ -306,6 +324,15 @@ export const FAQS: Faq[] = [
         answer: {
             TR: "Ajan modunda Hanogt AI yalnızca yanıt vermekle kalmaz, sizin için adım atabilir: sitede arama yapar, sayfaları açar, yazdığı kodu Kod Editörü'nde açar, izin verirseniz profil bilgilerinizi okur ve onayladığınızda yeni bir grup ya da oyun projesi oluşturur. Hesabınızda bir şey oluşturan her işlemden önce bir onay kartı gösterilir ve işlemler tarayıcınızda kendi oturumunuzla çalışır. Silme, şifre ya da iki adımlı doğrulama değişikliği, yönetici işleri ve başkalarına mesaj gönderme gibi işlemleri ajan hiçbir zaman yapmaz.",
             EN: "In agent mode Hanogt AI doesn't just answer, it can take steps for you: it searches the site, opens pages, opens the code it wrote in the Code Editor, reads your profile if you allow it and creates a new group or game project once you approve. Every action that creates something on your account shows a confirmation card first, and actions run in your browser with your own session. The agent never deletes anything, changes passwords or two-step verification, does admin work or messages other people.",
+        },
+    },
+    {
+        id: "ai-thinking",
+        category: CATEGORY.ai,
+        question: { TR: "Yanıtın üstündeki \"N sn düşündü\" paneli nedir?", EN: "What is the \"Thought for N s\" panel above an answer?" },
+        answer: {
+            TR: "Zor sorularda Hanogt AI yanıtlamadan önce düşünür. Panel modelin düşünmesini, okuduğu bilgi kaynaklarını ve çalışan denetimleri gösterir. Hanogt AI ayarlarında düşünmeyi Otomatik (kod, güvenlik ve uzun sorularda), Açık ya da Kapalı yapabilir, paneli gizleyebilirsiniz. Düşünme yanıtı biraz geciktirir ama kodda daha isabetli sonuç verir. Yalnızca tarayıcınızda saklanır ve sonraki mesajlarla modele geri gönderilmez.",
+            EN: "On hard questions Hanogt AI thinks before it answers. The panel shows the model's thinking, the knowledge sources it read and the checks that ran. In the Hanogt AI settings you can set thinking to Auto (for code, security and long questions), On or Off, and hide the panel. Thinking makes an answer a little slower but more accurate in code. It is kept only in your browser and never sent back to the model with later messages.",
         },
     },
     {
@@ -360,6 +387,15 @@ export const FAQS: Faq[] = [
         answer: {
             TR: "Gruplar sayfasında Yeni grup'a basın ve üç adımlı sihirbazda bir şablon seçin (boş, çalışma grubu, oyun geliştirme, açık kaynak, sınıf, hackathon). Grup başlangıç dosyaları, kanal listesinin en üstünde hazır bir Kurallar bölümü ve sabitlenmiş bir karşılama mesajıyla açılır; grup isterse üyeler sohbete katılmadan önce kuralları kabul eder. Arkadaşlarınızı doğrudan davet edebilir ya da süreli, kullanım sınırlı ve istediğiniz an iptal edebileceğiniz bir davet bağlantısı paylaşabilirsiniz. Grup sohbetinde sabitleme, tepkiler, @bahsetme ve arama; dosyalarda yeniden adlandırma, ZIP indirme ve editörde açma vardır.",
             EN: "Press New group on the Groups page and pick a template in the three-step wizard (blank, study group, game dev, open source, classroom, hackathon). The group opens with starter files, a ready Rules section at the top of the channel list and a pinned welcome message; if the group asks for it, members accept the rules before they join the chat. Invite friends directly or share an invite link that expires, has a usage limit and can be revoked any time. Group chat has pins, reactions, @mentions and search; files can be renamed, downloaded as a ZIP and opened in the editor.",
+        },
+    },
+    {
+        id: "automod",
+        category: CATEGORY.community,
+        question: { TR: "Gruplarda AutoMod ve Security Bot ne yapar?", EN: "What do AutoMod and the Security Bot do in groups?" },
+        answer: {
+            TR: "Hanogt Security Bot her grupta bulunur ve çıkarılamaz. /kurallar, /rapor ve /uyarilar herkese; /uyar, /sustur, /at, /temizle ve /yavasmod moderatörlere; /yasakla yöneticilere ve sahibe açıktır. Yöneticiler grup ayarlarından özel komutlar ve bir karşılama mesajı ekler. AutoMod mesajı gönderilmeden önce denetler: küfür, argo, grubun yasaklı kelimeleri, tekrar ve spam, toplu bahsetme, bağlantılar, büyük harf ve kişisel veriler. Hangi denetimlerin açık olacağını, uyarı verilip verilmeyeceğini, kaç uyarıdan sonra süreli susturulacağını ve hangi rollerin muaf olduğunu grup ayarlarından seçersiniz; grup sahibi her zaman muaftır.",
+            EN: "The Hanogt Security Bot is in every group and can't be removed. /rules, /report and /warnings are open to everyone; /warn, /mute, /kick, /purge and /slowmode to moderators; /ban to admins and the owner. Admins add custom commands and a welcome message in the group settings. AutoMod checks a message before it is sent: swearing, slang, the group's banned words, repeats and spam, mass mentions, links, capitals and personal data. In the group settings you choose which checks are on, whether a warning is given, after how many warnings someone is muted for a while and which roles are exempt; the group owner always is.",
         },
     },
     {
