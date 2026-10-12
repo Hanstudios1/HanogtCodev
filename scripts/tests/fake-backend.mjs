@@ -218,7 +218,7 @@ export function createBackend(seed, options = {}) {
 
     function runQuery(parent, query) {
         const { collectionId, allDescendants } = query.from[0];
-        const status = options.failQuery?.({ collectionId, allDescendants: Boolean(allDescendants), parent });
+        const status = options.failQuery?.({ collectionId, allDescendants: Boolean(allDescendants), parent, query });
         if (status) return failure(status, "FAILED_PRECONDITION");
         const prefix = parent ? `${parent}/` : "";
         let found = [...docs.keys()].filter((path) => {

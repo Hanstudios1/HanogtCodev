@@ -286,8 +286,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.code,
         question: { TR: "Kodumu editörden Hanogt Media'da nasıl yayınlarım?", EN: "How do I publish my code to Hanogt Media from the editor?" },
         answer: {
-            TR: "Kod Editörü'nde projeniz açıkken yayınlama penceresini açın (Hanogt Media'da yayınla). Paylaşmak istediğiniz dosyaları (en fazla 50) seçin; başlık, açıklama, en fazla 6 etiket ve lisans (Tüm hakları saklıdır, MIT, Apache-2.0 veya GPL-3.0) belirleyin. Kod yayınlanmadan önce Hanogt Security taramasından geçer; tehlikeli bulunan kod yayınlanmaz. Yayınlanan projeler herkese açıktır ve indirilebilir; dilediğiniz zaman güncelleyebilir ya da kaldırabilirsiniz.",
-            EN: "With your project open in the Code Editor, open the publish dialog (Publish to Hanogt Media). Pick the files to share (up to 50) and set a title, a description, up to 6 tags and a license (All rights reserved, MIT, Apache-2.0 or GPL-3.0). The code goes through a Hanogt Security scan first; code found to be dangerous isn't published. Published projects are public and can be downloaded; you can update or remove them whenever you like.",
+            TR: "Kod Editörü'nde projeniz açıkken yayınlama penceresini açın (Hanogt Media'da yayınla). Paylaşmak istediğiniz dosyaları (en fazla 50) seçin; başlık, açıklama, en fazla 5 etiket ve lisans (Tüm hakları saklıdır, MIT, Apache-2.0 veya GPL-3.0) belirleyin. Kod yayınlanmadan önce Hanogt Security taramasından geçer; tehlikeli bulunan kod yayınlanmaz. Yayınlanan projeler herkese açıktır ve indirilebilir; dilediğiniz zaman güncelleyebilir ya da kaldırabilirsiniz.",
+            EN: "With your project open in the Code Editor, open the publish dialog (Publish to Hanogt Media). Pick the files to share (up to 50) and set a title, a description, up to 5 tags and a license (All rights reserved, MIT, Apache-2.0 or GPL-3.0). The code goes through a Hanogt Security scan first; code found to be dangerous isn't published. Published projects are public and can be downloaded; you can update or remove them whenever you like.",
         },
     },
     {
@@ -349,8 +349,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.engine,
         question: { TR: "Oyunumu Arcade'de nasıl yayınlarım?", EN: "How do I publish my game on the Arcade?" },
         answer: {
-            TR: "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar Arcade'de herkese açıktır, oynanabilir ve beğenilebilir; yayınlarken “Remikslemelere izin ver” seçeneğini açarsanız başkaları da kopyasını düzenleyebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
-            EN: "Press Publish in the game engine. The game is compiled and goes through a security scan; published games are public on the Arcade, where people can play and like them; if you turn on “Allow remixes” when publishing, others can edit a copy too. You can take your game down any time.",
+            TR: "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlarken oyunun türünü seçersiniz. Yayınlanan oyunlar Arcade'de herkese açıktır; oynanabilir, beğenilebilir ve 1–5 yıldızla puanlanabilir, yapımcı sayfanızda listelenir; yayınlarken “Remikslemelere izin ver” seçeneğini açarsanız başkaları da kopyasını düzenleyebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
+            EN: "Press Publish in the game engine. The game is compiled and goes through a security scan; you pick the game's genre when publishing. Published games are public on the Arcade, where people can play, like and rate them with 1–5 stars, and they are listed on your creator page; if you turn on “Allow remixes” when publishing, others can edit a copy too. You can take your game down any time.",
         },
     },
     {

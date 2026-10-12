@@ -48,6 +48,7 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 - En çok beğenilen projeler için sıralama görünümü vardır.
 - Görünen ad paylaşımı kullanıcının tercihine bağlıdır.
 - İndirme ve etkileşim işlemleri yetkili API uçlarından geçer; sayaçlar istemci tarafından keyfi yazılamaz.
+- Media ve Arcade (0.3.34): listeler `src/lib/server/feed-pages.ts` ile indeksli sorgulardan 24'er kayıt okur (opak imleç: son satırın sıralı değerleri ve yolu; eşit değerlerde atlama/tekrar yok). Bileşik indeks yüklenmemişse Firestore 400 döner ve liste, yalnızca filtreyle en fazla 500 kaydı okuyup sunucuda sıralayan yedek yola düşer. Arcade puanları `arcade_ratings/{gameId}_{likerHash}` (oyunda `ratingCount`, `ratingSum`, ağırlıklı `ratingScore`; önsel 3 yıldız, ağırlık 3); yapımcı kimliği `creatorId` = sha256(tuz:arcade-creator:e-posta) ilk 24 hex; oyun bildirimleri `media_reports` içinde `kind: "arcade"`; tek seferlik tamamlamalar `site_config/backfills`. Media yorumları `moderateText`'ten geçer; indirme sayısı bellekte 6 saatlik tekilleştirmeyle sayılır.
 
 ## Kod editörü
 

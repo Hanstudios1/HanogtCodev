@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.9";
+export const LEGAL_VERSION = "5.10";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "7 Ekim 2026", EN: "7 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.9-2026-10-07";
+export const LEGAL_NOTICE_ID = "5.10-2026-10-07";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,14 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.10",
+        date: { TR: "7 Ekim 2026", EN: "7 October 2026" },
+        items: [
+            { TR: "Arcade puanları ve yapımcı sayfaları: Giriş yapmış olarak oyunlara 1–5 yıldız verebilirsiniz. Puanınız gizli bir tuzla türetilen takma kimliğinizle saklanır; oyun sayfasında yalnızca puan sayısı ve ortalaması görünür, kimin hangi puanı verdiği görünmez. Puanınızı değiştirebilir veya kaldırabilirsiniz; oyun yayından kalkınca veya hesabınızı silince silinir ve “Verilerimi İndir” dosyasına dahildir. Yayımladığınız oyunlar, adresi e-posta adresinizden türetilen geri çevrilemeyen bir kimlik olan herkese açık bir yapımcı sayfasında listelenir; sayfada takma adınız, profil resminiz ve oyunlarınız görünür, e-posta adresiniz görünmez.", EN: "Arcade ratings and creator pages: while signed in you can give games 1–5 stars. Your rating is stored with your pseudonymous ID derived with a secret salt; a game's page shows only the number of ratings and their average, never who gave which rating. You can change or remove your rating; it is deleted when the game is unpublished or your account is deleted, and it is included in “Download my data”. Games you publish are listed on a public creator page whose address is a non-reversible ID derived from your e-mail address; it shows your nickname, picture and games, never your e-mail address." },
+            { TR: "Arcade oyunlarını bildirme ve Media yorumları: Arcade oyunlarını da bildirebilirsiniz; bildiriminiz Media bildirimleriyle aynı moderasyon kuyruğunda saklanır ve yalnızca yetkili ekip tarafından görülür. Media yorumları kaydedilmeden önce otomatik olarak denetlenir; yorumunuzu siz veya yayının sahibi silebilirsiniz. Media'da indirme sayısı yalnızca toplam olarak tutulur, kimin indirdiği kaydedilmez. Gizlilik Politikası'ndaki ilgili bölümler, otomatik kararlar ve saklama süreleri tablosu buna göre güncellendi.", EN: "Reporting Arcade games and Media comments: you can now report Arcade games too; your report is kept in the same moderation queue as Media reports and is seen only by authorised staff. Media comments are checked automatically before they are saved; your comment can be deleted by you or by the post's owner. On Media, downloads are kept only as a total; who downloaded is not recorded. The related sections of the Privacy Policy, the automated decisions and the retention table were updated accordingly." },
+        ],
+    },
     {
         version: "5.9",
         date: { TR: "7 Ekim 2026", EN: "7 October 2026" },

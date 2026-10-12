@@ -320,11 +320,10 @@
     "tr": "Yeni",
     "files": [
       "src/app/about/page.tsx",
-      "src/app/media/page.tsx",
       "src/components/Admin/TicketsSection.tsx",
-      "src/components/Arcade/ArcadeGallery.tsx",
       "src/components/GameEngine/EngineHub.tsx",
       "src/components/GameEngine/hub/TemplateBadges.tsx",
+      "src/components/Media/PostCard.tsx",
       "src/components/News/NewsPage.tsx"
     ]
   },
@@ -726,7 +725,6 @@
     "files": [
       "src/app/dashboard/page.tsx",
       "src/app/editor/page.tsx",
-      "src/app/media/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
       "src/components/Editor/CollabDialogs.tsx",
@@ -743,6 +741,7 @@
       "src/components/HanogtAI/ConnectionsDialog.tsx",
       "src/components/HanogtAI/HanogtAIChat.tsx",
       "src/components/Landing/DownloadMenu.tsx",
+      "src/components/Media/copy.ts",
       "src/components/News/CommentsDrawer.tsx",
       "src/components/NotificationCenter.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
@@ -834,7 +833,6 @@
     "files": [
       "src/app/dashboard/page.tsx",
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
@@ -851,6 +849,7 @@
       "src/components/HanogtAI/ChangesCard.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
+      "src/components/Media/copy.ts",
       "src/components/Plans/ChangePlanDialog.tsx",
       "src/components/Plans/plans-copy.ts",
       "src/components/Social/dm/DmMessages.tsx"
@@ -2733,12 +2732,12 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx",
       "src/components/Admin/AnnouncementsSection.tsx",
       "src/components/ChangelogModal.tsx",
       "src/components/Groups/workspace/GettingStarted.tsx",
       "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
+      "src/components/Media/copy.ts",
       "src/components/Social/dm/DmMessages.tsx",
       "src/components/Social/group/RulesView.tsx"
     ]
@@ -3396,6 +3395,7 @@
       "src/app/feedback/page.tsx",
       "src/app/settings/page.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadeGallery.tsx",
       "src/components/Editor/Console.tsx",
       "src/components/Editor/NewFileDialog.tsx",
       "src/components/GameEngine/EngineHub.tsx",
@@ -3573,11 +3573,11 @@
     "tr": "Başlık",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Editor/PublishDialog.tsx",
       "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/RulesEditor.tsx"
+      "src/components/Groups/workspace/RulesEditor.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "222chvj7zln": {
@@ -3599,11 +3599,11 @@
     "tr": "Açıklama",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx",
       "src/components/Editor/PublishDialog.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/CreateGroupWizard.tsx",
-      "src/components/Groups/workspace/SettingsDialog.tsx"
+      "src/components/Groups/workspace/SettingsDialog.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "2cxy5fhk542": {
@@ -3690,6 +3690,8 @@
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/AccountSettings/copy.ts",
       "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadeCreatorView.tsx",
+      "src/components/Arcade/ArcadeGallery.tsx",
       "src/components/Arcade/ArcadeProgress.tsx",
       "src/components/CloudStatusBanner.tsx",
       "src/components/Editor/CollabFriendPicker.tsx",
@@ -3701,6 +3703,7 @@
       "src/components/HanogtAI/ApiKeysPanel.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
       "src/components/HanogtAI/UsageMeter.tsx",
+      "src/components/Media/MediaGallery.tsx",
       "src/components/News/MarketsStrip.tsx",
       "src/components/NotificationCenter.tsx",
       "src/components/Security/AccountSecurityCard.tsx",
@@ -4069,7 +4072,8 @@
     "tr": "Yorumu sil",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/components/Admin/NewsCommentsPanel.tsx"
+      "src/components/Admin/NewsCommentsPanel.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "1cen5mjir88": {
@@ -4087,6 +4091,7 @@
       "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/HanogtAI/ChatSidebar.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
+      "src/components/Media/copy.ts",
       "src/components/News/CommentsDrawer.tsx",
       "src/components/Social/dm/DmMessages.tsx"
     ]
@@ -4116,7 +4121,7 @@
     "tr": "Beğeniyi geri al",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx"
+      "src/components/Media/copy.ts"
     ]
   },
   "10ep57seb47": {
@@ -4124,7 +4129,7 @@
     "tr": "Beğen",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx",
+      "src/components/Media/copy.ts",
       "src/lib/groups.ts"
     ]
   },
@@ -4140,9 +4145,9 @@
     "tr": "Yorumlar ({count})",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx",
       "src/components/Admin/FeedbackSection.tsx",
       "src/components/ChangelogModal.tsx",
+      "src/components/Media/copy.ts",
       "src/components/News/NewsPage.tsx"
     ]
   },
@@ -4198,7 +4203,7 @@
     "tr": "Yorumu gönder",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx"
+      "src/components/Media/copy.ts"
     ]
   },
   "1qy04td7yro": {
@@ -4351,7 +4356,8 @@
     "tr": "En yeniler",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/media/page.tsx"
+      "src/components/Arcade/ArcadeGallery.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "zy5lyh4o9g": {
@@ -5117,700 +5123,6 @@
       "src/app/login/verify/page.tsx"
     ]
   },
-  "1vtt3d7nce8": {
-    "en": "Media couldn't be loaded.",
-    "tr": "Media yüklenemedi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "sycczt7gcp": {
-    "en": "Your projects couldn't be loaded.",
-    "tr": "Projeleriniz yüklenemedi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "21cdh7lmx44": {
-    "en": "Sign in to publish a project.",
-    "tr": "Proje yayımlamak için giriş yapın.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1g8eoqun7gg": {
-    "en": "The action couldn't be completed.",
-    "tr": "İşlem tamamlanamadı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "2c6pfwqhj6p": {
-    "en": "The project couldn't be opened.",
-    "tr": "Proje açılamadı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "qib9oxkdnt": {
-    "en": "Sign in to like projects.",
-    "tr": "Beğenmek için giriş yapın.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "qq7t2l6tkl": {
-    "en": "Your like couldn't be saved.",
-    "tr": "Beğeni kaydedilemedi.",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Arcade/ArcadePlayerView.tsx"
-    ]
-  },
-  "1no2lwm3dwr": {
-    "en": "The project couldn't be published.",
-    "tr": "Proje yayımlanamadı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "19mz362dt83": {
-    "en": "Sign in to change your contribution preference.",
-    "tr": "Katkı tercihini değiştirmek için giriş yapın.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "287eqwcyxfs": {
-    "en": "Your preference couldn't be saved.",
-    "tr": "Tercih kaydedilemedi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "3rnj2f28zt": {
-    "en": "The comment couldn't be sent.",
-    "tr": "Yorum gönderilemedi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1ijkrqn87dq": {
-    "en": "Your report was added to the security and moderation queue.",
-    "tr": "Bildiriminiz güvenlik ve moderasyon kuyruğuna alındı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "fxkwt2wb8b": {
-    "en": "The report couldn't be sent.",
-    "tr": "Bildirim gönderilemedi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "175bxeehjj5": {
-    "en": "The post couldn't be deleted.",
-    "tr": "Yayın silinemedi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "2681n8l5f5y": {
-    "en": "No description yet.",
-    "tr": "Açıklama eklenmemiş.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "koktq9yat6": {
-    "en": "files",
-    "tr": "dosya",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "sjh9luvp98": {
-    "en": "Delete post",
-    "tr": "Yayını sil",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "17rz2x12g9d": {
-    "en": "Download",
-    "tr": "İndir",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/ReportsPanel.tsx",
-      "src/components/Groups/workspace/FilesPanel.tsx",
-      "src/components/Social/chat/AttachmentView.tsx"
-    ]
-  },
-  "1dkepq6fukd": {
-    "en": "Delete “{title}” and its comments and likes?",
-    "tr": "“{title}” yayını ve ilişkili yorum/beğeniler silinsin mi?",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "oy0l4z31sv": {
-    "en": "Working…",
-    "tr": "İşlem sürüyor",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/HanogtAI/AgentCard.tsx"
-    ]
-  },
-  "tojp74bi7x": {
-    "en": "Report",
-    "tr": "Bildir",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/Security/SecurityChecklist.tsx"
-    ]
-  },
-  "28h686do1fi": {
-    "en": "Edit the post",
-    "tr": "Yayını düzenle",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "2228t2v0m0s": {
-    "en": "Save changes",
-    "tr": "Değişiklikleri kaydet",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/AccountSettings/copy.ts",
-      "src/components/Groups/workspace/SettingsDialog.tsx"
-    ]
-  },
-  "1m6l446y02v": {
-    "en": "The post was updated.",
-    "tr": "Yayın güncellendi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "mmzfh4qj3c": {
-    "en": "The post couldn't be updated.",
-    "tr": "Yayın güncellenemedi.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "yfm6vxv0sj": {
-    "en": "To change the code, open the post in the editor, edit it and send it with “Update the post”.",
-    "tr": "Kodu değiştirmek için yayını editörde açın, düzenleyin ve “Yayını güncelle” ile gönderin.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "9cdwz8isqm": {
-    "en": "Open in the editor",
-    "tr": "Editörde aç",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "tp9nwvt444": {
-    "en": "A copy of the files opens in the code editor.",
-    "tr": "Dosyaların bir kopyası kod editöründe açılır.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "ywt56tr7zn": {
-    "en": "Copy link",
-    "tr": "Bağlantıyı kopyala",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/MediaPublishButton.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "1gxdwon6afh": {
-    "en": "Link copied.",
-    "tr": "Bağlantı kopyalandı.",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Arcade/ArcadePlayerView.tsx",
-      "src/components/Groups/workspace/InviteDialog.tsx"
-    ]
-  },
-  "12ru7cxd23u": {
-    "en": "The link couldn't be copied.",
-    "tr": "Bağlantı kopyalanamadı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "8j03mpaqhj": {
-    "en": "You can also publish your open files straight from the code editor with “Publish on Media”, without saving a project.",
-    "tr": "Kod editöründeki “Media'da yayınla” düğmesiyle açık dosyalarınızı, projeyi kaydetmeden de yayınlayabilirsiniz.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "29l10dc1wu0": {
-    "en": "Open the code editor",
-    "tr": "Kod editörünü aç",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1qj3444gef9": {
-    "en": "Tags",
-    "tr": "Etiketler",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "nq9yn7b2vo": {
-    "en": "(comma separated, up to 6)",
-    "tr": "(virgülle, en fazla 6)",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "1pwhpcnrmdo": {
-    "en": "web, tool, education",
-    "tr": "web, araç, eğitim",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "4yefdl49y1": {
-    "en": "Sharing license",
-    "tr": "Paylaşım lisansı",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "vc12n9caak": {
-    "en": "Choosing an open-source license lets others reuse the code under that license's terms.",
-    "tr": "Bir açık kaynak lisansı seçmek, alıcılara o lisansın koşullarıyla yeniden kullanım hakkı verir.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1eh4avlipdr": {
-    "en": "Show my profile name",
-    "tr": "Profil adımı göster",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "4rh8mxet0u": {
-    "en": "When off, the post appears as “Anonymous developer”. Your e-mail is never published.",
-    "tr": "Kapalıysa yayın “Anonim geliştirici” adıyla görünür. E-posta hiçbir durumda yayınlanmaz.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1hfdamelg2v": {
-    "en": "No license",
-    "tr": "Lisans belirtilmedi",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "grtzkuywhq": {
-    "en": "likes",
-    "tr": "beğeni",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Arcade/ArcadeGallery.tsx"
-    ]
-  },
-  "b7b8tb291q": {
-    "en": "Project files",
-    "tr": "Proje dosyaları",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/UsersSection.tsx"
-    ]
-  },
-  "dfy4pmv6jn": {
-    "en": "{name} · {language}",
-    "tr": "{name} · {language}",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/ShareDialog.tsx"
-    ]
-  },
-  "490nmd4ppu": {
-    "en": "{name} · {language} · {count} files",
-    "tr": "{name} · {language} · {count} dosya",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "x1xorge0aq": {
-    "en": "No license · all rights reserved",
-    "tr": "Lisans belirtilmedi · tüm haklar saklı",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "1jvwh9wu27m": {
-    "en": "MIT",
-    "tr": "MIT",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "25e4wh7w00x": {
-    "en": "Apache 2.0",
-    "tr": "Apache 2.0",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "1dgxnkcm0qy": {
-    "en": "GPL 3.0",
-    "tr": "GPL 3.0",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "1zt1hhan72l": {
-    "en": "The files couldn't be handed to the editor.",
-    "tr": "Dosyalar editöre aktarılamadı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "254dnjo6xg0": {
-    "en": "There are no files to open.",
-    "tr": "Açılacak dosya yok.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "29kkzfm8fzs": {
-    "en": "The files are too large to open in the editor.",
-    "tr": "Dosyalar editörde açmak için çok büyük.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "2ds7txfzrzp": {
-    "en": "The files' language isn't supported.",
-    "tr": "Dosyaların dili tanınmadı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1cplo7epu6g": {
-    "en": "The files couldn't be opened because browser storage is unavailable.",
-    "tr": "Tarayıcı depolaması kullanılamadığı için dosyalar editörde açılamadı.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "268evi87twt": {
-    "en": "Part of the security contribution program",
-    "tr": "Güvenlik katkı programına dahil",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "202u1cyzsph": {
-    "en": "Download project",
-    "tr": "Projeyi indir",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "guqn4e1frb": {
-    "en": "Publish a project on Media",
-    "tr": "Projeyi Media’da yayımla",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1wroicw8z8": {
-    "en": "A snapshot of the source files is shared.",
-    "tr": "Kaynak dosyalarının anlık bir kopyası paylaşılır.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "dxg45mebvs": {
-    "en": "Project",
-    "tr": "Proje",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/CloudHealthSection.tsx",
-      "src/components/CloudStatusBanner.tsx",
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "1t2tu5fmrzl": {
-    "en": "Loading projects…",
-    "tr": "Projeler yükleniyor…",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Groups/CreateGroupWizard.tsx"
-    ]
-  },
-  "7p3rq3jpyc": {
-    "en": "Choose a project",
-    "tr": "Proje seçin",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1du5h0sx03d": {
-    "en": "You have no saved code projects",
-    "tr": "Kayıtlı kod projeniz yok",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "46yo25k2rn": {
-    "en": "Save a project in the code editor first; saved projects are listed here.",
-    "tr": "Önce kod editöründe bir projeyi kaydedin; kaydedilen projeler burada listelenir.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1j6a0bzhq88": {
-    "en": "Include this project in the security contribution",
-    "tr": "Bu projeyi güvenlik katkısına dahil et",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "ixns60v3xn": {
-    "en": "There is no automatic training; eligibility and purpose limits are reviewed by people.",
-    "tr": "Otomatik eğitim yapılmaz; uygunluk ve amaç sınırı insan denetimiyle değerlendirilir.",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "h2a6e7s9zw": {
-    "en": "If you think this is a false match, you can request a review from the Feedback page.",
-    "tr": "Yanlış bir eşleşme olduğunu düşünüyorsanız Geri Bildirim sayfasından inceleme isteyebilirsiniz.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1743tprlx1f": {
-    "en": "Publish with a security check",
-    "tr": "Güvenlik kontrolüyle yayımla",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Editor/PublishDialog.tsx"
-    ]
-  },
-  "1nj5g1ji5pu": {
-    "en": "Project details",
-    "tr": "Proje ayrıntıları",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "zwwtdfgl8y": {
-    "en": "Malicious code",
-    "tr": "Zararlı kod",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "ioslrsmlkf": {
-    "en": "Copyright",
-    "tr": "Telif",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/copy.ts"
-    ]
-  },
-  "1ycpax4pngf": {
-    "en": "Personal data",
-    "tr": "Kişisel veri",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/copy.ts"
-    ]
-  },
-  "28wwq8sbxyp": {
-    "en": "Other",
-    "tr": "Diğer",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/copy.ts",
-      "src/lib/runtimes/languages.ts",
-      "src/lib/support.ts"
-    ]
-  },
-  "tk2haorv78": {
-    "en": "What should we review?",
-    "tr": "Neyi incelemeliyiz?",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "ck347oi0l2": {
-    "en": "Send report",
-    "tr": "Bildirimi gönder",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "2c5d9apb96i": {
-    "en": "Comments",
-    "tr": "Yorumlar",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/Guide/book-content.ts",
-      "src/components/News/CommentsDrawer.tsx"
-    ]
-  },
-  "t7xuvn9rij": {
-    "en": "Write the first constructive comment.",
-    "tr": "İlk yapıcı yorumu siz yazın.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "97an0lexvg": {
-    "en": "Write a constructive comment…",
-    "tr": "Yapıcı bir yorum yazın…",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "10rumb43a19": {
-    "en": "Sign in to comment",
-    "tr": "Yorum için giriş yapın",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/News/CommentsDrawer.tsx"
-    ]
-  },
-  "2acqjuvmdkq": {
-    "en": "Community code showcase",
-    "tr": "Topluluk kod vitrini",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "17jcgbc0wm1": {
-    "en": "Discover projects, read their source files, download them and give developers feedback. Posts go through a security check, and owners' e-mail addresses are never shown.",
-    "tr": "Projeleri keşfedin, kaynak dosyalarını inceleyin, indirin ve geliştiricilere geri bildirim verin. Yayınlar güvenlik kontrolünden geçirilir; sahip e-postaları herkese açılmaz.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "xo1xksxb44": {
-    "en": "Hanogt Security contribution program",
-    "tr": "Hanogt Security katkı programı",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "pzwleitbq": {
-    "en": "Would you like the code you share to help human-reviewed security improvements? It's off by default, and pending contributions are deleted when you withdraw.",
-    "tr": "Paylaştığınız kodların, insan denetimli güvenlik iyileştirmelerinde kullanılmasına izin vermek ister misiniz? Tercih varsayılan kapalıdır ve geri çekildiğinde bekleyen katkı kayıtları silinir.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "184sqczzwsh": {
-    "en": "Contribution on · Turn off",
-    "tr": "Katkı izni açık · Kapat",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1ji8yl6raew": {
-    "en": "Turn on optional contribution",
-    "tr": "İsteğe bağlı katkı iznini aç",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1rvqix45h52": {
-    "en": "Search projects, developers or tags",
-    "tr": "Proje, geliştirici veya etiket ara",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1wixp89xcl5": {
-    "en": "All languages",
-    "tr": "Tüm diller",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "21gjm2qvkxx": {
-    "en": "Change sorting",
-    "tr": "Sıralamayı değiştir",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1dj1j43zho6": {
-    "en": "Popular",
-    "tr": "Popüler",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/Arcade/ArcadeGallery.tsx",
-      "src/components/Editor/NewFileDialog.tsx"
-    ]
-  },
-  "xc3fqzc26t": {
-    "en": "Publish",
-    "tr": "Yayımla",
-    "files": [
-      "src/app/media/page.tsx",
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "3wp5etd4k": {
-    "en": "Most liked projects",
-    "tr": "En çok beğenilen projeler",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1hqhctr36dc": {
-    "en": "An open-source community project",
-    "tr": "Topluluğa açık kaynak proje",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "1twqhn4vqku": {
-    "en": "No matching projects yet",
-    "tr": "Henüz eşleşen proje yok",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
-  "axky4n4qew": {
-    "en": "Be the first to share a great project.",
-    "tr": "İlk kaliteli projeyi siz paylaşabilirsiniz.",
-    "files": [
-      "src/app/media/page.tsx"
-    ]
-  },
   "3qcli74vte": {
     "en": "Hanogt AI: Free {free} a week, Plus {plus} every 2 weeks, Pro {pro} a week; the developer API uses the same messages.",
     "tr": "Hanogt AI: Ücretsiz haftada {free}, Plus 2 haftada {plus}, Pro haftada {pro} mesaj; geliştirici API'si aynı haktan düşer.",
@@ -5961,9 +5273,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "28rb1lggx1t": {
-    "en": "Pseudonymisation: arena votes, Arcade likes, leaderboard entries, unlocked achievements and rate-limit records use non-reversible keys derived with a secret salt instead of your e-mail or IP address.",
-    "tr": "Takma adlandırma: Arena oyları, Arcade beğenileri, skor tablosu kayıtları, açılan başarımlar ve hız sınırı kayıtlarında e-posta veya IP adresi yerine, gizli bir tuzla türetilen ve geri çevrilemeyen anahtarlar kullanılır.",
+  "1tm9c63uw5n": {
+    "en": "Pseudonymisation: arena votes, Arcade likes and ratings, leaderboard entries, unlocked achievements and rate-limit records use non-reversible keys derived with a secret salt instead of your e-mail or IP address.",
+    "tr": "Takma adlandırma: Arena oyları, Arcade beğenileri ve puanları, skor tablosu kayıtları, açılan başarımlar ve hız sınırı kayıtlarında e-posta veya IP adresi yerine, gizli bir tuzla türetilen ve geri çevrilemeyen anahtarlar kullanılır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6096,9 +5408,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "w45s25pezh": {
-    "en": "Media comments, likes and content reports; news comments; Arcade likes, leaderboard entries, unlocked achievements and arena votes (pseudonymous); feedback board posts, comments and likes",
-    "tr": "Media yorumları, beğenileri ve içerik bildirimleri; haber yorumları; Arcade beğenileri, skor tablosu kayıtları, açılan başarımlar ve arena oyları (takma kimlikle); geri bildirim panosu gönderileri, yorumları ve beğenileri",
+  "n5ufgiw9wn": {
+    "en": "Media comments, likes and content reports; news comments; Arcade likes, star ratings, game reports, leaderboard entries, unlocked achievements and arena votes (pseudonymous); feedback board posts, comments and likes",
+    "tr": "Media yorumları, beğenileri ve içerik bildirimleri; haber yorumları; Arcade beğenileri, yıldız puanları, oyun bildirimleri, skor tablosu kayıtları, açılan başarımlar ve arena oyları (takma kimlikle); geri bildirim panosu gönderileri, yorumları ve beğenileri",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6580,9 +5892,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "13xgxydwjng": {
-    "en": "Your profile name and avatar are shown on your comments. For likes and content reports, your account is stored on the server to prevent abuse and is not shown to other users. Content reports (malicious code, copyright, personal data, spam and other) are reviewed by authorised staff.",
-    "tr": "Yorumlarda profil adınız ve avatarınız görünür. Beğeni ve içerik bildirimi kayıtlarında, kötüye kullanımı önlemek için hesabınız sunucuda tutulur ve diğer kullanıcılara gösterilmez. İçerik bildirimleri (zararlı kod, telif, kişisel veri, spam ve diğer) yetkili ekip tarafından incelenir.",
+  "1btt31d5grv": {
+    "en": "Your profile name and avatar are shown on your comments. For likes and content reports, your account is stored on the server to prevent abuse and is not shown to other users. Content reports (malicious code, copyright, personal data, inappropriate content, spam and other) are reviewed by authorised staff. Comments are checked automatically before they are saved (2–500 characters, at most 2 links; comments with profanity, spam or personal data are not saved). Your comment can be deleted by you or by the owner of the post you commented on. Downloads are kept only as a total; who downloaded is not recorded.",
+    "tr": "Yorumlarda profil adınız ve avatarınız görünür. Beğeni ve içerik bildirimi kayıtlarında, kötüye kullanımı önlemek için hesabınız sunucuda tutulur ve diğer kullanıcılara gösterilmez. İçerik bildirimleri (zararlı kod, telif, kişisel veri, uygunsuz içerik, spam ve diğer) yetkili ekip tarafından incelenir. Yorumlar kaydedilmeden önce otomatik olarak denetlenir (2–500 karakter, en fazla 2 bağlantı; küfür, spam veya kişisel veri içeren yorumlar kaydedilmez). Yorumunuzu siz veya yorum yaptığınız yayının sahibi silebilir. İndirme sayısı yalnızca toplam olarak tutulur; kimin indirdiği kaydedilmez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6665,9 +5977,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1glu68s5plp": {
-    "en": "Publishing on the Arcade is a separate, explicit action of yours. A published game's title, description, cover image, displayed author name and avatar, the languages used, and its play and like counts are public; others can play the game and, if you turned on “Allow remixes”, remix it; a remix carries the original game's title and your displayed author name as attribution. Your e-mail address is not published.",
-    "tr": "Arcade'de yayımlamak sizin açık ve ayrı eyleminizle olur. Yayımlanan oyunun başlığı, açıklaması, kapak görseli, görünen yazar adı ve avatarı, kullanılan diller, oynanma ve beğeni sayıları herkese açıktır; oyun başkaları tarafından oynanabilir; “Remikslemelere izin ver” seçeneğini açtıysanız remikslenebilir ve remiks, orijinal oyunun adını ve görünen yazar adınızı atıf olarak taşır. E-posta adresiniz yayımlanmaz.",
+  "8legnizl2r": {
+    "en": "Publishing on the Arcade is a separate, explicit action of yours. A published game's title, description, cover image, displayed author name and avatar, the languages used, its genre, its play and like counts, and the number and average of its star ratings are public; others can play the game and, if you turned on “Allow remixes”, remix it; a remix carries the original game's title and your displayed author name as attribution. Your e-mail address is not published.",
+    "tr": "Arcade'de yayımlamak sizin açık ve ayrı eyleminizle olur. Yayımlanan oyunun başlığı, açıklaması, kapak görseli, görünen yazar adı ve avatarı, kullanılan diller, türü, oynanma ve beğeni sayıları ile yıldız puanlarının sayısı ve ortalaması herkese açıktır; oyun başkaları tarafından oynanabilir; “Remikslemelere izin ver” seçeneğini açtıysanız remikslenebilir ve remiks, orijinal oyunun adını ve görünen yazar adınızı atıf olarak taşır. E-posta adresiniz yayımlanmaz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6682,6 +5994,27 @@
   "2oanmaz3ft": {
     "en": "You can turn off sharing your scores on the game's page (the choice is kept in your browser) and remove your own entry from a leaderboard at any time. The game's author and the Hanogt team can delete entries that break the rules. When you play without signing in, your best scores and achievements are kept only in this browser.",
     "tr": "Skorlarınızı tabloda paylaşmayı oyun sayfasından kapatabilir (bu seçim tarayıcınızda tutulur) ve kendi kaydınızı istediğiniz zaman tablodan kaldırabilirsiniz. Oyunun yapımcısı ve Hanogt ekibi kuralları çiğneyen kayıtları silebilir. Giriş yapmadan oynadığınızda en iyi skorlarınız ve başarımlarınız yalnızca bu tarayıcıda tutulur.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "3n1ifbj6ie": {
+    "en": "Arcade ratings: when you give a game 1–5 stars while signed in, your rating is stored with your pseudonymous ID (derived with a secret salt, non-reversible), the game's ID and the date it last changed. The game's page shows only the number of ratings and their average, never who gave which rating. You can't rate your own game. You can change or remove your rating at any time; it is deleted when the game is unpublished or your account is deleted, and it is included in “Download my data”.",
+    "tr": "Arcade puanları: Giriş yapmış olarak bir oyuna 1–5 yıldız verdiğinizde puanınız; gizli bir tuzla türetilen, geri çevrilemeyen takma kimliğiniz, oyunun kimliği ve son değişiklik tarihiyle saklanır. Oyun sayfasında yalnızca puan sayısı ve ortalaması gösterilir; kimin hangi puanı verdiği gösterilmez. Kendi oyununuzu puanlayamazsınız. Puanınızı istediğiniz zaman değiştirebilir veya kaldırabilirsiniz; oyun yayından kalkınca veya hesabınızı silince silinir ve “Verilerimi İndir” dosyasına dahildir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1pj42m2gx6r": {
+    "en": "Creator pages: games you publish on the Arcade are listed on a public creator page. Its address is an ID derived from your e-mail address with a secret salt and can't be reversed; it shows your public profile's nickname (or username), picture and your games, never your e-mail address. The preview images shown when links to games and Media posts are shared (already public details such as the title, cover, creator name, genre, rating and plays) are drawn when requested and are not stored.",
+    "tr": "Yapımcı sayfaları: Arcade'de yayımladığınız oyunlar herkese açık bir yapımcı sayfasında listelenir. Sayfanın adresi e-posta adresinizden gizli bir tuzla türetilen, geri çevrilemeyen bir kimliktir; sayfada genel profilinizdeki takma adınız (yoksa kullanıcı adınız), profil resminiz ve oyunlarınız görünür, e-posta adresiniz görünmez. Oyunların ve Media yayınlarının bağlantıları paylaşıldığında gösterilen önizleme görselleri (başlık, kapak, yapımcı adı, tür, puan ve oynanma gibi zaten herkese açık bilgiler) istek anında çizilir ve saklanmaz.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "twhc5dkwm9": {
+    "en": "Game reports: you can also report Arcade games. The game's ID, the reason you choose, your description, the date and your e-mail address are kept in the same moderation queue as Media reports and are seen only by authorised staff; a report stays as a moderation record after staff close it and is deleted when you delete your account. You can't report your own game.",
+    "tr": "Oyun bildirimleri: Arcade oyunlarını da bildirebilirsiniz. Oyunun kimliği, seçtiğiniz neden, açıklamanız, tarih ve e-posta adresiniz Media bildirimleriyle aynı moderasyon kuyruğunda saklanır ve yalnızca yetkili ekip tarafından görülür; ekip kapattıktan sonra moderasyon kaydı olarak kalır, hesabınızı sildiğinizde silinir. Kendi oyununuzu bildiremezsiniz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6707,9 +6040,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "2c0uro4sphs": {
-    "en": "You can unpublish a game at any time; its likes, leaderboard entries and unlocked achievements are deleted with it. Copies others have already exported or remixed can't be deleted remotely.",
-    "tr": "Yayını istediğiniz zaman kaldırabilirsiniz; oyunla birlikte beğenileri, skor tablosu kayıtları ve açılan başarımları da silinir. Başkalarının daha önce dışa aktardığı veya remikslediği kopyaların uzaktan silinmesi mümkün değildir.",
+  "17k8i1fkzez": {
+    "en": "You can unpublish a game at any time; its likes, ratings, leaderboard entries and unlocked achievements are deleted with it. Copies others have already exported or remixed can't be deleted remotely.",
+    "tr": "Yayını istediğiniz zaman kaldırabilirsiniz; oyunla birlikte beğenileri, puanları, skor tablosu kayıtları ve açılan başarımları da silinir. Başkalarının daha önce dışa aktardığı veya remikslediği kopyaların uzaktan silinmesi mümkün değildir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7985,9 +7318,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "ssu3jp3yi": {
-    "en": "Media posts and Arcade games, with their likes, comments and reports",
-    "tr": "Media yayınları ve Arcade oyunları ile bunlara bağlı beğeni, yorum ve bildirimler",
+  "14ncauf9k7t": {
+    "en": "Media posts and Arcade games, with their likes, ratings, comments and reports",
+    "tr": "Media yayınları ve Arcade oyunları ile bunlara bağlı beğeni, puan, yorum ve bildirimler",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8024,9 +7357,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "qmm1pl5q8c": {
-    "en": "Arena votes and Arcade likes (pseudonymous)",
-    "tr": "Arena oyları ve Arcade beğenileri (takma kimlikle)",
+  "eohfgjb4la": {
+    "en": "Arena votes, and Arcade likes and ratings (pseudonymous)",
+    "tr": "Arena oyları ile Arcade beğenileri ve puanları (takma kimlikle)",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9023,9 +8356,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "odjs932ggv": {
-    "en": "Some decisions are made automatically: Security Bot may block high-risk code from being run or published; the comment filter may reject news comments containing profanity, spam, lots of links or personal data without saving them; in Hanogt Social groups, AutoMod may stop messages that break the group's rules without saving them and, if the group chose this, give an automatic warning and mute the person for a while after a set number of warnings; and rate limits may temporarily stop an action.",
-    "tr": "Bazı kararlar otomatik olarak verilir: Security Bot yüksek riskli kodun çalıştırılmasını veya yayımlanmasını engelleyebilir; yorum filtresi küfür, spam, çok sayıda bağlantı veya kişisel veri içeren haber yorumlarını kaydetmeden reddedebilir; Hanogt Social gruplarında AutoMod, grubun kurallarına takılan mesajları kaydetmeden durdurabilir ve grup bunu seçtiyse otomatik uyarı verip belirlenen sayıda uyarıdan sonra bir süre susturabilir; hız sınırları bir işlemi geçici olarak durdurabilir.",
+  "1ocryh11o4l": {
+    "en": "Some decisions are made automatically: Security Bot may block high-risk code from being run or published; the comment filter may reject news and Media comments containing profanity, spam, lots of links or personal data without saving them; in Hanogt Social groups, AutoMod may stop messages that break the group's rules without saving them and, if the group chose this, give an automatic warning and mute the person for a while after a set number of warnings; and rate limits may temporarily stop an action.",
+    "tr": "Bazı kararlar otomatik olarak verilir: Security Bot yüksek riskli kodun çalıştırılmasını veya yayımlanmasını engelleyebilir; yorum filtresi küfür, spam, çok sayıda bağlantı veya kişisel veri içeren haber ve Media yorumlarını kaydetmeden reddedebilir; Hanogt Social gruplarında AutoMod, grubun kurallarına takılan mesajları kaydetmeden durdurabilir ve grup bunu seçtiyse otomatik uyarı verip belirlenen sayıda uyarıdan sonra bir süre susturabilir; hız sınırları bir işlemi geçici olarak durdurabilir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -13555,6 +12888,15 @@
       "src/components/AccountSettings/copy.ts"
     ]
   },
+  "2228t2v0m0s": {
+    "en": "Save changes",
+    "tr": "Değişiklikleri kaydet",
+    "files": [
+      "src/components/AccountSettings/copy.ts",
+      "src/components/Groups/workspace/SettingsDialog.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "19gybtkafs4": {
     "en": "Saving…",
     "tr": "Kaydediliyor…",
@@ -15634,7 +14976,9 @@
     "en": "Featured",
     "tr": "Öne çıkanlar",
     "files": [
-      "src/components/Admin/ArcadePanel.tsx"
+      "src/components/Admin/ArcadePanel.tsx",
+      "src/components/Arcade/ArcadeGallery.tsx",
+      "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
   "1va3h2xl6p8": {
@@ -15662,7 +15006,8 @@
     "en": "Untitled game",
     "tr": "Adsız oyun",
     "files": [
-      "src/components/Admin/ArcadePanel.tsx"
+      "src/components/Admin/ArcadePanel.tsx",
+      "src/components/Admin/ReportsPanel.tsx"
     ]
   },
   "23hen07k0s": {
@@ -17395,6 +16740,16 @@
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
+  "dxg45mebvs": {
+    "en": "Project",
+    "tr": "Proje",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx",
+      "src/components/CloudStatusBanner.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
   "c7vi5smbls": {
     "en": "API key",
     "tr": "API anahtarı",
@@ -18063,6 +17418,7 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/Admin/ui.tsx",
+      "src/components/Media/copy.ts",
       "src/components/Social/chat/ExpressionPicker.tsx"
     ]
   },
@@ -18095,7 +17451,8 @@
     "tr": "Filtreleri temizle",
     "files": [
       "src/components/Admin/copy.ts",
-      "src/components/GameEngine/EngineHub.tsx"
+      "src/components/GameEngine/EngineHub.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "1phm8lkb2qs": {
@@ -18229,11 +17586,50 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "ioslrsmlkf": {
+    "en": "Copyright",
+    "tr": "Telif hakkı",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1ycpax4pngf": {
+    "en": "Personal data",
+    "tr": "Kişisel veri",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "ilef94p2k6": {
+    "en": "Inappropriate content",
+    "tr": "Uygunsuz içerik",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "a96qwyck5s": {
     "en": "Spam",
     "tr": "Spam",
     "files": [
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "28wwq8sbxyp": {
+    "en": "Other",
+    "tr": "Diğer",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/copy.ts",
+      "src/lib/arcade-genres.ts",
+      "src/lib/runtimes/languages.ts",
+      "src/lib/support.ts"
     ]
   },
   "om1cpgg7ds": {
@@ -18373,6 +17769,13 @@
   "2cew0iduyso": {
     "en": "Report reopened",
     "tr": "Bildirim yeniden açıldı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1ubbmx3it9h": {
+    "en": "Reported game removed",
+    "tr": "Bildirilen oyun kaldırıldı",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -18743,6 +18146,15 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "tojp74bi7x": {
+    "en": "Report",
+    "tr": "Bildirim",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/Media/copy.ts",
+      "src/components/Security/SecurityChecklist.tsx"
+    ]
+  },
   "wcn8hfgw2x": {
     "en": "Reports closed",
     "tr": "Kapatılan bildirim",
@@ -18753,6 +18165,22 @@
   "1dmawaxy83l": {
     "en": "Post already gone",
     "tr": "Gönderi zaten yoktu",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1wmkekv4x5h": {
+    "en": "Game",
+    "tr": "Oyun",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "pbbvzh30ko": {
+    "en": "Game already gone",
+    "tr": "Oyun zaten yoktu",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -18969,6 +18397,16 @@
     "tr": "Eski arşiv",
     "files": [
       "src/components/Admin/copy.ts"
+    ]
+  },
+  "2c5d9apb96i": {
+    "en": "Comments",
+    "tr": "Yorum",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/Guide/book-content.ts",
+      "src/components/Media/copy.ts",
+      "src/components/News/CommentsDrawer.tsx"
     ]
   },
   "1szr0xfcrhy": {
@@ -22617,6 +22055,27 @@
       "src/components/Admin/ReportsPanel.tsx"
     ]
   },
+  "kh7mux9yms": {
+    "en": "Open the game",
+    "tr": "Oyunu aç",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "17ejsmzwnmm": {
+    "en": "{count} reports on this game in all",
+    "tr": "Bu oyuna toplam {count} bildirim",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "n2qseks0hj": {
+    "en": "{count} open reports on this game",
+    "tr": "Bu oyuna {count} açık bildirim",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
   "2a8m766j2wl": {
     "en": "{count} reports on this post in all",
     "tr": "Bu gönderiye toplam {count} bildirim",
@@ -22627,6 +22086,20 @@
   "211rr1kygof": {
     "en": "{count} open reports on this post",
     "tr": "Bu gönderiye {count} açık bildirim",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "zj9exgtu5q": {
+    "en": "Reported Arcade game",
+    "tr": "Bildirilen Arcade oyunu",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "215wofa8b92": {
+    "en": "The game is no longer on the Arcade.",
+    "tr": "Oyun artık Arcade'de değil.",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
     ]
@@ -22670,9 +22143,26 @@
       "src/components/Admin/ReportsPanel.tsx"
     ]
   },
+  "17rz2x12g9d": {
+    "en": "Download",
+    "tr": "İndir",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Media/copy.ts",
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
   "1gnh8e3yqlw": {
     "en": "Resolve",
     "tr": "Çözüldü",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "26zjaqwfvsj": {
+    "en": "Remove game",
+    "tr": "Oyunu kaldır",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
     ]
@@ -22719,6 +22209,13 @@
       "src/components/Admin/ReportsPanel.tsx"
     ]
   },
+  "uo5yc7of2i": {
+    "en": "Game removed from the Arcade and {count} reports closed.",
+    "tr": "Oyun Arcade'den kaldırıldı ve {count} bildirim kapatıldı.",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
   "25sx7fi9tnp": {
     "en": "Post removed and {count} reports closed.",
     "tr": "Gönderi kaldırıldı ve {count} bildirim kapatıldı.",
@@ -22754,9 +22251,9 @@
       "src/components/Admin/ReportsPanel.tsx"
     ]
   },
-  "zo4r04wj83": {
-    "en": "There are no open Media reports. New ones will appear here.",
-    "tr": "Açık Media bildirimi yok. Yeni bildirimler burada görünür.",
+  "290w09u2469": {
+    "en": "There are no open Media or Arcade reports. New ones will appear here.",
+    "tr": "Açık Media veya Arcade bildirimi yok. Yeni bildirimler burada görünür.",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
     ]
@@ -22764,6 +22261,20 @@
   "1su9nxzotoj": {
     "en": "Remove this content?",
     "tr": "İçerik kaldırılsın mı?",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "163t2teddgu": {
+    "en": "The game \"{title}\" is removed from the Arcade with its likes, ratings, scores and achievements. The developer's engine project is kept. All open reports on it are closed.",
+    "tr": "\"{title}\" oyunu Arcade'den kaldırılır; beğenileri, puanları, skorları ve başarımları silinir. Geliştiricinin motor projesi kalır. Bu oyuna ait tüm açık bildirimler kapatılır.",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "262evp9yvln": {
+    "en": "The game is already gone; its open reports will be closed.",
+    "tr": "Oyun zaten Arcade'de değil; açık bildirimleri kapatılır.",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
     ]
@@ -23184,6 +22695,13 @@
   "1rfdav9iy1e": {
     "en": "Game sounds and models",
     "tr": "Oyun sesleri ve modelleri",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "ah5po7jtia": {
+    "en": "Arcade ratings",
+    "tr": "Arcade puanları",
     "files": [
       "src/components/Admin/StoragePanel.tsx"
     ]
@@ -23880,6 +23398,14 @@
       "src/components/Admin/UsersSection.tsx"
     ]
   },
+  "b7b8tb291q": {
+    "en": "Project files",
+    "tr": "Proje dosyaları",
+    "files": [
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "wawiqdajgs": {
     "en": "Game scripts",
     "tr": "Oyun scriptleri",
@@ -24416,18 +23942,56 @@
       "src/components/AnnouncementBanner.tsx"
     ]
   },
-  "uo5d5l03ae": {
-    "en": "Remixable",
-    "tr": "Remikslenebilir",
+  "1r2h92zp2zm": {
+    "en": "Back to the Arcade",
+    "tr": "Arcade'e dön",
     "files": [
-      "src/components/Arcade/ArcadeGallery.tsx"
+      "src/components/Arcade/ArcadeCreatorView.tsx",
+      "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
-  "1awtccs0ko": {
-    "en": "A game made with Hanogt Engine.",
-    "tr": "Hanogt Engine ile yapılmış bir oyun.",
+  "l2opob68ed": {
+    "en": "Creator",
+    "tr": "Yapımcı",
     "files": [
-      "src/components/Arcade/ArcadeGallery.tsx"
+      "src/components/Arcade/ArcadeCreatorView.tsx"
+    ]
+  },
+  "2cs6srqzugu": {
+    "en": "{count} published games",
+    "tr": "{count} yayında oyun",
+    "files": [
+      "src/components/Arcade/ArcadeCreatorView.tsx"
+    ]
+  },
+  "wnnv94vwbe": {
+    "en": "Games they made with Hanogt Engine and published on the Arcade.",
+    "tr": "Hanogt Engine ile yapıp Arcade'de yayımladığı oyunlar.",
+    "files": [
+      "src/components/Arcade/ArcadeCreatorView.tsx"
+    ]
+  },
+  "1vowy1edze6": {
+    "en": "This creator has no published games",
+    "tr": "Bu yapımcının yayında oyunu yok",
+    "files": [
+      "src/components/Arcade/ArcadeCreatorView.tsx"
+    ]
+  },
+  "1618vq3w867": {
+    "en": "The games may have been unpublished.",
+    "tr": "Oyunlar yayından kaldırılmış olabilir.",
+    "files": [
+      "src/components/Arcade/ArcadeCreatorView.tsx"
+    ]
+  },
+  "fnlohi6jqd": {
+    "en": "Loading",
+    "tr": "Yükleniyor",
+    "files": [
+      "src/components/Arcade/ArcadeCreatorView.tsx",
+      "src/components/Arcade/ArcadeGallery.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "9ubsntijn9": {
@@ -24451,26 +24015,35 @@
       "src/components/Arcade/ArcadeGallery.tsx"
     ]
   },
-  "1yqt91c8xl5": {
-    "en": "games",
-    "tr": "oyun",
+  "1oryizz7c6l": {
+    "en": "Most played",
+    "tr": "En çok oynanan",
     "files": [
       "src/components/Arcade/ArcadeGallery.tsx"
     ]
   },
-  "53b0rkv1qa": {
-    "en": "plays",
-    "tr": "oynanma",
+  "1vml6sfewqt": {
+    "en": "Top rated",
+    "tr": "En yüksek puanlı",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "mwjxjvzia1": {
+    "en": "Sort by",
+    "tr": "Sıralama",
     "files": [
       "src/components/Arcade/ArcadeGallery.tsx",
-      "src/components/Arcade/ArcadePlayerView.tsx"
+      "src/components/Media/copy.ts"
     ]
   },
-  "hyktqww0q2": {
-    "en": "Most liked",
-    "tr": "En beğenilen",
+  "1xbudecbl42": {
+    "en": "Genre",
+    "tr": "Oyun türü",
     "files": [
-      "src/components/Arcade/ArcadeGallery.tsx"
+      "src/components/Arcade/ArcadeGallery.tsx",
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/GameEngine/editor/Dialogs.tsx"
     ]
   },
   "1pm26br8axk": {
@@ -24501,6 +24074,27 @@
       "src/components/Arcade/ArcadeGallery.tsx"
     ]
   },
+  "1vu36gtkn47": {
+    "en": "Games picked by the Hanogt team",
+    "tr": "Hanogt ekibinin seçtiği oyunlar",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "2dh9ctew13r": {
+    "en": "More games",
+    "tr": "Daha fazla oyun",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "2g4brns3txm": {
+    "en": "Showing {count} games",
+    "tr": "{count} oyun gösteriliyor",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
   "1nk5ceexy9r": {
     "en": "The Arcade couldn't be loaded.",
     "tr": "Arcade yüklenemedi.",
@@ -24516,16 +24110,16 @@
       "src/components/News/NewsPage.tsx"
     ]
   },
-  "zdqpbzhd92": {
-    "en": "The Arcade is waiting for you",
-    "tr": "Arcade seni bekliyor",
+  "9lp9l4i1kz": {
+    "en": "Try a different search or genre.",
+    "tr": "Farklı bir arama ya da tür deneyin.",
     "files": [
       "src/components/Arcade/ArcadeGallery.tsx"
     ]
   },
-  "1dr63yjym13": {
-    "en": "Try a different search.",
-    "tr": "Farklı bir arama deneyin.",
+  "zdqpbzhd92": {
+    "en": "The Arcade is waiting for you",
+    "tr": "Arcade seni bekliyor",
     "files": [
       "src/components/Arcade/ArcadeGallery.tsx"
     ]
@@ -24545,9 +24139,51 @@
       "src/components/Landing/AllInOne.tsx"
     ]
   },
-  "fnlohi6jqd": {
-    "en": "Loading",
-    "tr": "Yükleniyor",
+  "uo5d5l03ae": {
+    "en": "Remixable",
+    "tr": "Remikslenebilir",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "1awtccs0ko": {
+    "en": "A game made with Hanogt Engine.",
+    "tr": "Hanogt Engine ile yapılmış bir oyun.",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "1o36z0i0lfc": {
+    "en": "{average} stars, {count} ratings",
+    "tr": "{average} yıldız, {count} oy",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "11l9f8h9qj9": {
+    "en": "No ratings yet",
+    "tr": "Henüz puan yok",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "7wo0f3cnus": {
+    "en": "{count} plays",
+    "tr": "{count} oynanma",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "m73zggx53h": {
+    "en": "{count} likes",
+    "tr": "{count} beğeni",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
+    ]
+  },
+  "1qnzexnh9tj": {
+    "en": "Games by {name}",
+    "tr": "{name} adlı yapımcının oyunları",
     "files": [
       "src/components/Arcade/ArcadeGallery.tsx"
     ]
@@ -24557,6 +24193,14 @@
     "tr": "Oyun yüklenemedi.",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "qq7t2l6tkl": {
+    "en": "Your like couldn't be saved.",
+    "tr": "Beğeni kaydedilemedi.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "13do55qpaxf": {
@@ -24594,6 +24238,15 @@
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
+  "1gxdwon6afh": {
+    "en": "Link copied.",
+    "tr": "Bağlantı kopyalandı.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "17a1yrah39d": {
     "en": "Score not saved",
     "tr": "Skor kaydedilemedi",
@@ -24624,16 +24277,181 @@
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
-  "by63y63lnb": {
-    "en": "Couldn't open the game",
-    "tr": "Oyun açılamadı",
+  "1op0hoaalue": {
+    "en": "The genre was updated.",
+    "tr": "Oyun türü güncellendi.",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
-  "1r2h92zp2zm": {
-    "en": "Back to the Arcade",
-    "tr": "Arcade'e dön",
+  "1yzcw5tjpyb": {
+    "en": "The genre couldn't be saved.",
+    "tr": "Oyun türü kaydedilemedi.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "wzp7g7ooos": {
+    "en": "Ratings",
+    "tr": "Puanlar",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "18s840jo311": {
+    "en": "No ratings yet.",
+    "tr": "Henüz puan verilmedi.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "8n0ph728x1": {
+    "en": "Your rating",
+    "tr": "Senin puanın",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "jo2dthktj8": {
+    "en": "Give {count} stars",
+    "tr": "{count} yıldız ver",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "8jo1to853a": {
+    "en": "Give 1 star",
+    "tr": "1 yıldız ver",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "1hnpo349u4a": {
+    "en": "Remove my rating",
+    "tr": "Puanımı kaldır",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "mx37lva7z5": {
+    "en": "Your rating was saved.",
+    "tr": "Puanın kaydedildi.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "1kl40xlvz90": {
+    "en": "Your rating was removed.",
+    "tr": "Puanın kaldırıldı.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "1mjojr8k3hv": {
+    "en": "Your rating couldn't be saved.",
+    "tr": "Puan kaydedilemedi.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "4ewo3cdvvi": {
+    "en": "You can't rate your own game.",
+    "tr": "Kendi oyununu puanlayamazsın.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "ipjiljqjlv": {
+    "en": "Sign in to rate",
+    "tr": "Puan vermek için giriş yap",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "2fv71y7x4hf": {
+    "en": "Report the game",
+    "tr": "Oyunu bildir",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "27f5wlvfo0u": {
+    "en": "Reason for the report",
+    "tr": "Bildirim nedeni",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/PostModal.tsx"
+    ]
+  },
+  "tk2haorv78": {
+    "en": "What should we review?",
+    "tr": "Neyi incelemeliyiz?",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/PostModal.tsx"
+    ]
+  },
+  "ck347oi0l2": {
+    "en": "Send report",
+    "tr": "Bildirimi gönder",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/PostModal.tsx"
+    ]
+  },
+  "1drdswmh4xj": {
+    "en": "Your report was sent to the moderation team. Thank you!",
+    "tr": "Bildirimin moderasyon ekibine iletildi. Teşekkürler!",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "fxkwt2wb8b": {
+    "en": "The report couldn't be sent.",
+    "tr": "Bildirim gönderilemedi.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "bk8r43dg4o": {
+    "en": "Sign in to report",
+    "tr": "Bildirmek için giriş yap",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "ybdmovpfxm": {
+    "en": "All games by {name}",
+    "tr": "{name} adlı yapımcının tüm oyunları",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "27xxj8dkj95": {
+    "en": "Harmful behaviour or code",
+    "tr": "Zararlı davranış veya kod",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "1hrdfb3h8a": {
+    "en": "Copyright infringement",
+    "tr": "Telif hakkı ihlali",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "2cinq94k84d": {
+    "en": "Spam or misleading",
+    "tr": "Spam veya yanıltıcı",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "by63y63lnb": {
+    "en": "Couldn't open the game",
+    "tr": "Oyun açılamadı",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
@@ -24700,6 +24518,13 @@
   "13dr3zju3ou": {
     "en": "Keyboard · mouse · touch",
     "tr": "Klavye · fare · dokunmatik",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "53b0rkv1qa": {
+    "en": "plays",
+    "tr": "oynanma",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
@@ -24921,6 +24746,55 @@
       "src/components/Arcade/ArcadeProgress.tsx"
     ]
   },
+  "11k4vgs4gwx": {
+    "en": "Too many requests. Please try again in a moment.",
+    "tr": "Çok fazla istek gönderildi. Biraz sonra tekrar deneyin.",
+    "files": [
+      "src/components/Arcade/useArcadeFeed.ts"
+    ]
+  },
+  "hy94artzqj": {
+    "en": "This filter can't be used.",
+    "tr": "Bu filtre kullanılamıyor.",
+    "files": [
+      "src/components/Arcade/useArcadeFeed.ts",
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "209q9gza6xc": {
+    "en": "The list has changed; reload the page to see more.",
+    "tr": "Liste değişti; devamını görmek için sayfayı yenileyin.",
+    "files": [
+      "src/components/Arcade/useArcadeFeed.ts",
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "1bwbe3ucxph": {
+    "en": "This creator has no published games.",
+    "tr": "Bu yapımcının yayında oyunu yok.",
+    "files": [
+      "src/components/Arcade/useArcadeFeed.ts"
+    ]
+  },
+  "2dryt6wal02": {
+    "en": "The Arcade couldn't be loaded right now.",
+    "tr": "Arcade şu anda yüklenemiyor.",
+    "files": [
+      "src/components/Arcade/useArcadeFeed.ts"
+    ]
+  },
+  "ipj5r8beo0": {
+    "en": "Couldn't reach the server. Check your connection.",
+    "tr": "Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.",
+    "files": [
+      "src/components/Arcade/useArcadeFeed.ts",
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/Groups/api.ts",
+      "src/components/VoiceCallProvider.tsx",
+      "src/lib/collab/copy.ts",
+      "src/lib/social/api.ts"
+    ]
+  },
   "mqwmyzmeuf": {
     "en": "Code editor, Hanogt Engine V5, Hanogt AI and the community: all in one account, nothing to install.",
     "tr": "Kod editörü, Hanogt Engine V5, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
@@ -24982,6 +24856,55 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "1cfru6lraw0": {
+    "en": "Arcade and Media renewed",
+    "tr": "Arcade ve Media yenilendi",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1b4znxupfj5": {
+    "en": "Media and Arcade load page by page; the Arcade has genres, star ratings, a featured row and creator pages, and Media has a tag filter and a most-downloaded sort.",
+    "tr": "Media ve Arcade sayfa sayfa yükleniyor; Arcade'de oyun türleri, yıldız puanları, öne çıkanlar ve yapımcı sayfaları var, Media'da etiket filtresi ve en çok indirilenler.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "18x5m3a26ig": {
+    "en": "Media: “Load more”, a most-downloaded sort, a tag filter and comment deletion.",
+    "tr": "Media: “Daha fazla yükle”, en çok indirilen sıralaması, etiket filtresi ve yorum silme.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "dchyoznrd4": {
+    "en": "Arcade: 10 genres, 1–5 star ratings and a top-rated sort.",
+    "tr": "Arcade: 10 oyun türü, 1–5 yıldız puan ve en yüksek puanlılar sıralaması.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1n9tc0pie98": {
+    "en": "A featured games row and creator pages that show all of a maker's games.",
+    "tr": "Öne çıkan oyunlar satırı ve her yapımcının bütün oyunlarını gösteren yapımcı sayfaları.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2ayao4kwabp": {
+    "en": "Reporting inappropriate games, and preview images for shared links to games and posts.",
+    "tr": "Uygunsuz oyunları bildirme ve paylaşılan bağlantılarda oyun ve yayın önizleme görselleri.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "hv2ygyh41t": {
+    "en": "Privacy Policy 5.10.",
+    "tr": "Gizlilik Politikası 5.10.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "2531dq09bsr": {
@@ -29034,9 +28957,100 @@
       "src/components/Editor/media-api.ts"
     ]
   },
+  "vox1s9e2u4": {
+    "en": "A post can have at most 5 tags.",
+    "tr": "Bir yayında en fazla 5 etiket olabilir.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "181nwbtvnsj": {
+    "en": "The tag “{tag}” can't be used. Use lowercase letters, digits and hyphens (up to 24 characters).",
+    "tr": "“{tag}” etiketi kullanılamaz. Küçük harf, rakam ve kısa çizgi kullanın (en fazla 24 karakter).",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "1ir2so8e0ne": {
+    "en": "The comment is too short.",
+    "tr": "Yorum çok kısa.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "15jen663iqa": {
+    "en": "The comment doesn't follow the community rules.",
+    "tr": "Yorum topluluk kurallarına uymuyor.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "1gn05cs3scf": {
+    "en": "This post has reached its comment limit.",
+    "tr": "Bu yayın yorum sınırına ulaştı.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "1vhmpt1m1kn": {
+    "en": "The comment wasn't found; it may have been deleted.",
+    "tr": "Yorum bulunamadı; silinmiş olabilir.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "kabmtyt00w": {
+    "en": "Only the comment's author or the post's owner can delete it.",
+    "tr": "Bu yorumu yalnızca yazarı veya yayının sahibi silebilir.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "958j0o37ea": {
+    "en": "Write a short description for the report.",
+    "tr": "Bildirim için kısa bir açıklama yazın.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
   "1vb0tuftpiv": {
     "en": "The Media action couldn't be completed.",
     "tr": "Media işlemi tamamlanamadı.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "qa2340iuyx": {
+    "en": "A comment can be at most 500 characters.",
+    "tr": "Yorum en fazla 500 karakter olabilir.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "127mlzreqot": {
+    "en": "A comment can contain at most 2 links.",
+    "tr": "Bir yorumda en fazla 2 bağlantı olabilir.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "169mzst03xj": {
+    "en": "The comment contains language that breaks the community rules.",
+    "tr": "Yorum, topluluk kurallarına aykırı ifadeler içeriyor.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "ws8sawxzbx": {
+    "en": "For your safety, don't share e-mail addresses, phone, ID or card numbers in comments.",
+    "tr": "Güvenliğin için yorumlarda e-posta, telefon, kimlik veya kart numarası paylaşma.",
+    "files": [
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "1rg1vpofb5e": {
+    "en": "The comment looks like spam.",
+    "tr": "Yorum spam gibi görünüyor.",
     "files": [
       "src/components/Editor/media-api.ts"
     ]
@@ -29072,6 +29086,15 @@
       "src/components/Editor/PublishDialog.tsx"
     ]
   },
+  "ywt56tr7zn": {
+    "en": "Copy link",
+    "tr": "Bağlantıyı kopyala",
+    "files": [
+      "src/components/Editor/MediaPublishButton.tsx",
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "qz6m6rpjz2": {
     "en": "Media post",
     "tr": "Media yayını",
@@ -29096,6 +29119,13 @@
   "1rmylllbcl1": {
     "en": "Search languages or templates…",
     "tr": "Dil veya şablon ara…",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1dj1j43zho6": {
+    "en": "Popular",
+    "tr": "Popüler",
     "files": [
       "src/components/Editor/NewFileDialog.tsx"
     ]
@@ -29365,11 +29395,20 @@
       "src/components/Editor/PublishDialog.tsx"
     ]
   },
-  "157akyc7w0r": {
-    "en": "Only the first 6 tags are used.",
-    "tr": "Yalnızca ilk 6 etiket kullanılır.",
+  "1qj3444gef9": {
+    "en": "Tags",
+    "tr": "Etiketler",
     "files": [
-      "src/components/Editor/PublishDialog.tsx"
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "4yefdl49y1": {
+    "en": "Sharing license",
+    "tr": "Paylaşım lisansı",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "dgfshvj3ow": {
@@ -29550,6 +29589,30 @@
       "src/components/Editor/PublishDialog.tsx"
     ]
   },
+  "1j6a0bzhq88": {
+    "en": "Include this project in the security contribution",
+    "tr": "Bu projeyi güvenlik katkısına dahil et",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
+  "ixns60v3xn": {
+    "en": "There is no automatic training; eligibility and purpose limits are reviewed by people.",
+    "tr": "Otomatik eğitim yapılmaz; uygunluk ve amaç sınırı insan denetimiyle değerlendirilir.",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
+  "1743tprlx1f": {
+    "en": "Publish with a security check",
+    "tr": "Güvenlik kontrolüyle yayınla",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
   "yd2flaki4i": {
     "en": "Loading the post…",
     "tr": "Yayın bilgileri yükleniyor…",
@@ -29629,11 +29692,27 @@
       "src/components/Editor/PublishDialog.tsx"
     ]
   },
+  "x1xorge0aq": {
+    "en": "No license · all rights reserved",
+    "tr": "Lisans belirtilmedi · tüm haklar saklı",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "frbe9he0lx": {
     "en": "Anyone can read and download the code, but no right to reuse it is granted.",
     "tr": "Kodu herkes okuyabilir ve indirebilir, ancak yeniden kullanma izni verilmez.",
     "files": [
       "src/components/Editor/PublishDialog.tsx"
+    ]
+  },
+  "1jvwh9wu27m": {
+    "en": "MIT",
+    "tr": "MIT",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "1h7p4c0wmo2": {
@@ -29643,11 +29722,27 @@
       "src/components/Editor/PublishDialog.tsx"
     ]
   },
+  "25e4wh7w00x": {
+    "en": "Apache 2.0",
+    "tr": "Apache 2.0",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "96p53zd5vn": {
     "en": "Like MIT, plus an explicit patent grant; changes must be stated.",
     "tr": "MIT'e benzer; ayrıca açık bir patent izni verir ve değişikliklerin belirtilmesini ister.",
     "files": [
       "src/components/Editor/PublishDialog.tsx"
+    ]
+  },
+  "1dgxnkcm0qy": {
+    "en": "GPL 3.0",
+    "tr": "GPL 3.0",
+    "files": [
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "17twn47vnca": {
@@ -29810,6 +29905,14 @@
     "tr": "{files} dosyadaki {count} eşleşme silinecek. Her dosyadaki değişikliği o dosyada {undo} ile geri alabilirsiniz.",
     "files": [
       "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "dfy4pmv6jn": {
+    "en": "{name} · {language}",
+    "tr": "{name} · {language}",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "ayeghpa99m": {
@@ -30964,6 +31067,14 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "xc3fqzc26t": {
+    "en": "Publish",
+    "tr": "Yayınla",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Media/copy.ts"
+    ]
+  },
   "17immpb92wr": {
     "en": "Docs",
     "tr": "Belgeler",
@@ -30974,14 +31085,6 @@
   "ahv3908mcn": {
     "en": "Scene",
     "tr": "Sahne",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Guide/book-content.ts"
-    ]
-  },
-  "1wmkekv4x5h": {
-    "en": "Game",
-    "tr": "Oyun",
     "files": [
       "src/components/GameEngine/editor/text.ts",
       "src/components/Guide/book-content.ts"
@@ -31660,6 +31763,7 @@
       "src/components/Guide/book-content.ts",
       "src/lib/ai/agent-tools.ts",
       "src/lib/ai/knowledge.ts",
+      "src/lib/arcade-genres.ts",
       "src/lib/nav.ts"
     ]
   },
@@ -36122,6 +36226,14 @@
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
+  "1t2tu5fmrzl": {
+    "en": "Loading projects…",
+    "tr": "Projeler yükleniyor…",
+    "files": [
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
   "154lbd6d2tk": {
     "en": "Your group name",
     "tr": "Grup adın",
@@ -36240,6 +36352,7 @@
       "src/components/Groups/workspace/RulesEditor.tsx",
       "src/components/Groups/workspace/SettingsDialog.tsx",
       "src/components/HanogtAI/ChatComposer.tsx",
+      "src/components/Media/copy.ts",
       "src/components/Social/chat/Composer.tsx",
       "src/components/Social/group/MemberList.tsx"
     ]
@@ -38550,17 +38663,6 @@
       "src/components/GroupVoiceProvider.tsx"
     ]
   },
-  "ipj5r8beo0": {
-    "en": "Couldn't reach the server. Check your connection.",
-    "tr": "Sunucuya ulaşılamadı. Bağlantını kontrol et.",
-    "files": [
-      "src/components/GroupVoiceProvider.tsx",
-      "src/components/Groups/api.ts",
-      "src/components/VoiceCallProvider.tsx",
-      "src/lib/collab/copy.ts",
-      "src/lib/social/api.ts"
-    ]
-  },
   "1y4hhik3pbp": {
     "en": "The voice channel connection dropped. Try joining again.",
     "tr": "Sesli kanal bağlantısı koptu. Tekrar katılmayı dene.",
@@ -39521,23 +39623,23 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1qxo87r10vq": {
-    "en": "Sort: New, Popular, Most liked.",
-    "tr": "Sırala: Yeni, Popüler, En beğenilen.",
+  "119xg27vwga": {
+    "en": "Sort: New, Most played, Top rated; filter by genre.",
+    "tr": "Sırala: Yeni, En çok oynanan, En yüksek puanlı; türe göre süz.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "15l72hd4qkh": {
-    "en": "Filter: 2D / 3D; search games or developers.",
-    "tr": "Filtrele: 2D / 3D; oyun ya da geliştirici ara.",
+  "sru711mj2e": {
+    "en": "Filter: 2D / 3D; search games or makers and see all of a maker's games on their page.",
+    "tr": "Filtrele: 2D / 3D; oyun ya da yapımcı ara, yapımcının sayfasında bütün oyunlarını gör.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "dg7ebsdl30": {
-    "en": "❤️ Like (sign-in required) and see play counts.",
-    "tr": "❤️ Beğen (giriş gerekir) ve oynanma sayısını gör.",
+  "1wttbwes0me": {
+    "en": "❤️ Like, rate 1–5 stars (sign-in required), see play counts; report inappropriate games.",
+    "tr": "❤️ Beğen, 1–5 yıldız ver (giriş gerekir), oynanma sayısını gör; uygunsuz oyunu bildir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -40271,9 +40373,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "bnkffvogvb": {
-    "en": "Publish code projects with a title, up to 6 tags and a license (MIT, Apache-2.0, GPL-3.0 or All rights reserved).",
-    "tr": "Kod projelerini başlık, en fazla 6 etiket ve lisansla (MIT, Apache-2.0, GPL-3.0 ya da Tüm hakları saklı) yayınla.",
+  "1s4oo22t7n3": {
+    "en": "Publish code projects with a title, up to 5 tags and a license (MIT, Apache-2.0, GPL-3.0 or All rights reserved).",
+    "tr": "Kod projelerini başlık, en fazla 5 etiket ve lisansla (MIT, Apache-2.0, GPL-3.0 ya da Tüm hakları saklı) yayınla.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -40918,6 +41020,14 @@
     "tr": "Reddet",
     "files": [
       "src/components/HanogtAI/AgentCard.tsx"
+    ]
+  },
+  "oy0l4z31sv": {
+    "en": "Working…",
+    "tr": "Yapılıyor…",
+    "files": [
+      "src/components/HanogtAI/AgentCard.tsx",
+      "src/components/Media/copy.ts"
     ]
   },
   "2dmzzubvd5x": {
@@ -45561,6 +45671,581 @@
     "tr": "5651 sayılı İnternet Kanunu",
     "files": [
       "src/components/LegalPage.tsx"
+    ]
+  },
+  "1vtt3d7nce8": {
+    "en": "Media couldn't be loaded.",
+    "tr": "Media yüklenemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "conhf1qmzl": {
+    "en": "More projects couldn't be loaded.",
+    "tr": "Daha fazla proje yüklenemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "sycczt7gcp": {
+    "en": "Your projects couldn't be loaded.",
+    "tr": "Projeleriniz yüklenemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "21cdh7lmx44": {
+    "en": "Sign in to publish a project.",
+    "tr": "Proje yayımlamak için giriş yapın.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1g8eoqun7gg": {
+    "en": "The action couldn't be completed.",
+    "tr": "İşlem tamamlanamadı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "2c6pfwqhj6p": {
+    "en": "The project couldn't be opened.",
+    "tr": "Proje açılamadı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "qib9oxkdnt": {
+    "en": "Sign in to like projects.",
+    "tr": "Beğenmek için giriş yapın.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1no2lwm3dwr": {
+    "en": "The project couldn't be published.",
+    "tr": "Proje yayımlanamadı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "19mz362dt83": {
+    "en": "Sign in to change your contribution preference.",
+    "tr": "Katkı tercihini değiştirmek için giriş yapın.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "287eqwcyxfs": {
+    "en": "Your preference couldn't be saved.",
+    "tr": "Tercih kaydedilemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "3rnj2f28zt": {
+    "en": "The comment couldn't be sent.",
+    "tr": "Yorum gönderilemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "u4qsikwplq": {
+    "en": "The comment was deleted.",
+    "tr": "Yorum silindi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "17xftskaq7n": {
+    "en": "The comment couldn't be deleted.",
+    "tr": "Yorum silinemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1ijkrqn87dq": {
+    "en": "Your report was added to the security and moderation queue.",
+    "tr": "Bildiriminiz güvenlik ve moderasyon kuyruğuna alındı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "175bxeehjj5": {
+    "en": "The post couldn't be deleted.",
+    "tr": "Yayın silinemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "2681n8l5f5y": {
+    "en": "No description yet.",
+    "tr": "Açıklama eklenmemiş.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "koktq9yat6": {
+    "en": "files",
+    "tr": "dosya",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "sjh9luvp98": {
+    "en": "Delete post",
+    "tr": "Yayını sil",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "202u1cyzsph": {
+    "en": "Download project",
+    "tr": "Projeyi indir",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "2epkmh27dx0": {
+    "en": "{count} downloads",
+    "tr": "{count} indirme",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1dkepq6fukd": {
+    "en": "Delete “{title}” and its comments and likes?",
+    "tr": "“{title}” yayını ve ilişkili yorum/beğeniler silinsin mi?",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "28h686do1fi": {
+    "en": "Edit the post",
+    "tr": "Yayını düzenle",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1m6l446y02v": {
+    "en": "The post was updated.",
+    "tr": "Yayın güncellendi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "mmzfh4qj3c": {
+    "en": "The post couldn't be updated.",
+    "tr": "Yayın güncellenemedi.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "yfm6vxv0sj": {
+    "en": "To change the code, open the post in the editor, edit it and send it with “Update the post”.",
+    "tr": "Kodu değiştirmek için yayını editörde açın, düzenleyin ve “Yayını güncelle” ile gönderin.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "9cdwz8isqm": {
+    "en": "Open in the editor",
+    "tr": "Editörde aç",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "tp9nwvt444": {
+    "en": "A copy of the files opens in the code editor.",
+    "tr": "Dosyaların bir kopyası kod editöründe açılır.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "12ru7cxd23u": {
+    "en": "The link couldn't be copied.",
+    "tr": "Bağlantı kopyalanamadı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "8j03mpaqhj": {
+    "en": "You can also publish your open files straight from the code editor with “Publish on Media”, without saving a project.",
+    "tr": "Kod editöründeki “Media'da yayınla” düğmesiyle açık dosyalarınızı, projeyi kaydetmeden de yayınlayabilirsiniz.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "29l10dc1wu0": {
+    "en": "Open the code editor",
+    "tr": "Kod editörünü aç",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "vufeky82c3": {
+    "en": "Up to 5 tags. Lowercase letters, digits and hyphens; up to 24 characters.",
+    "tr": "En fazla 5 etiket. Küçük harf, rakam ve kısa çizgi; en fazla 24 karakter.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1q2led200dt": {
+    "en": "Type a tag and press Enter",
+    "tr": "Etiket yazıp Enter'a basın",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "wko2a3vz1v": {
+    "en": "You can add up to 5 tags.",
+    "tr": "En fazla 5 etiket ekleyebilirsiniz.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "259e3m49t0s": {
+    "en": "“{tag}” can't be a tag: use lowercase letters, digits and hyphens.",
+    "tr": "“{tag}” etiket olarak kullanılamaz: küçük harf, rakam ve kısa çizgi kullanın.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "h5qny4d3ik": {
+    "en": "The project's languages",
+    "tr": "Projenin dilleri",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "d8wlb6waph": {
+    "en": "Add the tag “{tag}”",
+    "tr": "“{tag}” etiketini ekle",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "73sdn02gi1": {
+    "en": "Remove the tag “{tag}”",
+    "tr": "“{tag}” etiketini kaldır",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1jvy743jt1o": {
+    "en": "Show projects tagged “{tag}”",
+    "tr": "“{tag}” etiketli projeleri göster",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "15uenkwxrfk": {
+    "en": "Tag: {tag}",
+    "tr": "Etiket: {tag}",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "297jx4bo2r6": {
+    "en": "Remove the tag filter",
+    "tr": "Etiket filtresini kaldır",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "vc12n9caak": {
+    "en": "Choosing an open-source license lets others reuse the code under that license's terms.",
+    "tr": "Bir açık kaynak lisansı seçmek, alıcılara o lisansın koşullarıyla yeniden kullanım hakkı verir.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1eh4avlipdr": {
+    "en": "Show my profile name",
+    "tr": "Profil adımı göster",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "4rh8mxet0u": {
+    "en": "When off, the post appears as “Anonymous developer”. Your e-mail is never published.",
+    "tr": "Kapalıysa yayın “Anonim geliştirici” adıyla görünür. E-posta hiçbir durumda yayınlanmaz.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1hfdamelg2v": {
+    "en": "No license",
+    "tr": "Lisans belirtilmedi",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "grtzkuywhq": {
+    "en": "likes",
+    "tr": "beğeni",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "97an0lexvg": {
+    "en": "Write a constructive comment…",
+    "tr": "Yapıcı bir yorum yazın…",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "10rumb43a19": {
+    "en": "Sign in to comment",
+    "tr": "Yorum için giriş yapın",
+    "files": [
+      "src/components/Media/copy.ts",
+      "src/components/News/CommentsDrawer.tsx"
+    ]
+  },
+  "29zhfyky0ec": {
+    "en": "Comments with profanity, personal data or spam aren't posted.",
+    "tr": "Küfür, kişisel veri ve spam içeren yorumlar gönderilmez.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "xa46yrw78m": {
+    "en": "This post has reached its limit of {max} comments.",
+    "tr": "Bu yayın {max} yorum sınırına ulaştı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "t7xuvn9rij": {
+    "en": "Write the first constructive comment.",
+    "tr": "İlk yapıcı yorumu siz yazın.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "c02koshij1": {
+    "en": "Delete this comment permanently?",
+    "tr": "Bu yorum kalıcı olarak silinsin mi?",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "11t4c5vqcba": {
+    "en": "Your comment",
+    "tr": "Sizin yorumunuz",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "490nmd4ppu": {
+    "en": "{name} · {language} · {count} files",
+    "tr": "{name} · {language} · {count} dosya",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1wixp89xcl5": {
+    "en": "All languages",
+    "tr": "Tüm diller",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1rvqix45h52": {
+    "en": "Search projects, developers or tags",
+    "tr": "Proje, geliştirici veya etiket ara",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "lz26mqwet4": {
+    "en": "Showing {count} projects",
+    "tr": "{count} proje gösteriliyor",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1twqhn4vqku": {
+    "en": "No matching projects yet",
+    "tr": "Henüz eşleşen proje yok",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "axky4n4qew": {
+    "en": "Be the first to share a great project.",
+    "tr": "İlk kaliteli projeyi siz paylaşabilirsiniz.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "3wp5etd4k": {
+    "en": "Most liked projects",
+    "tr": "En çok beğenilen projeler",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "hyktqww0q2": {
+    "en": "Most liked",
+    "tr": "En çok beğenilen",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "u9v9vf19ck": {
+    "en": "Most downloaded",
+    "tr": "En çok indirilen",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1zt1hhan72l": {
+    "en": "The files couldn't be handed to the editor.",
+    "tr": "Dosyalar editöre aktarılamadı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "254dnjo6xg0": {
+    "en": "There are no files to open.",
+    "tr": "Açılacak dosya yok.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "29kkzfm8fzs": {
+    "en": "The files are too large to open in the editor.",
+    "tr": "Dosyalar editörde açmak için çok büyük.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "2ds7txfzrzp": {
+    "en": "The files' language isn't supported.",
+    "tr": "Dosyaların dili tanınmadı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "1cplo7epu6g": {
+    "en": "The files couldn't be opened because browser storage is unavailable.",
+    "tr": "Tarayıcı depolaması kullanılamadığı için dosyalar editörde açılamadı.",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "zwwtdfgl8y": {
+    "en": "Malicious code",
+    "tr": "Zararlı kod",
+    "files": [
+      "src/components/Media/copy.ts"
+    ]
+  },
+  "2acqjuvmdkq": {
+    "en": "Community code showcase",
+    "tr": "Topluluk kod vitrini",
+    "files": [
+      "src/components/Media/MediaGallery.tsx"
+    ]
+  },
+  "17jcgbc0wm1": {
+    "en": "Discover projects, read their source files, download them and give developers feedback. Posts go through a security check, and owners' e-mail addresses are never shown.",
+    "tr": "Projeleri keşfedin, kaynak dosyalarını inceleyin, indirin ve geliştiricilere geri bildirim verin. Yayınlar güvenlik kontrolünden geçirilir; sahip e-postaları herkese açılmaz.",
+    "files": [
+      "src/components/Media/MediaGallery.tsx"
+    ]
+  },
+  "xo1xksxb44": {
+    "en": "Hanogt Security contribution program",
+    "tr": "Hanogt Security katkı programı",
+    "files": [
+      "src/components/Media/MediaGallery.tsx"
+    ]
+  },
+  "pzwleitbq": {
+    "en": "Would you like the code you share to help human-reviewed security improvements? It's off by default, and pending contributions are deleted when you withdraw.",
+    "tr": "Paylaştığınız kodların, insan denetimli güvenlik iyileştirmelerinde kullanılmasına izin vermek ister misiniz? Tercih varsayılan kapalıdır ve geri çekildiğinde bekleyen katkı kayıtları silinir.",
+    "files": [
+      "src/components/Media/MediaGallery.tsx"
+    ]
+  },
+  "184sqczzwsh": {
+    "en": "Contribution on · Turn off",
+    "tr": "Katkı izni açık · Kapat",
+    "files": [
+      "src/components/Media/MediaGallery.tsx"
+    ]
+  },
+  "1ji8yl6raew": {
+    "en": "Turn on optional contribution",
+    "tr": "İsteğe bağlı katkı iznini aç",
+    "files": [
+      "src/components/Media/MediaGallery.tsx"
+    ]
+  },
+  "1hqhctr36dc": {
+    "en": "An open-source community project",
+    "tr": "Topluluğa açık kaynak proje",
+    "files": [
+      "src/components/Media/MediaGallery.tsx"
+    ]
+  },
+  "268evi87twt": {
+    "en": "Part of the security contribution program",
+    "tr": "Güvenlik katkı programına dahil",
+    "files": [
+      "src/components/Media/PostCard.tsx"
+    ]
+  },
+  "1nj5g1ji5pu": {
+    "en": "Project details",
+    "tr": "Proje ayrıntıları",
+    "files": [
+      "src/components/Media/PostModal.tsx"
+    ]
+  },
+  "guqn4e1frb": {
+    "en": "Publish a project on Media",
+    "tr": "Projeyi Media’da yayımla",
+    "files": [
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
+  "1wroicw8z8": {
+    "en": "A snapshot of the source files is shared.",
+    "tr": "Kaynak dosyalarının anlık bir kopyası paylaşılır.",
+    "files": [
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
+  "7p3rq3jpyc": {
+    "en": "Choose a project",
+    "tr": "Proje seçin",
+    "files": [
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
+  "1du5h0sx03d": {
+    "en": "You have no saved code projects",
+    "tr": "Kayıtlı kod projeniz yok",
+    "files": [
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
+  "46yo25k2rn": {
+    "en": "Save a project in the code editor first; saved projects are listed here.",
+    "tr": "Önce kod editöründe bir projeyi kaydedin; kaydedilen projeler burada listelenir.",
+    "files": [
+      "src/components/Media/PublishProjectDialog.tsx"
+    ]
+  },
+  "h2a6e7s9zw": {
+    "en": "If you think this is a false match, you can request a review from the Feedback page.",
+    "tr": "Yanlış bir eşleşme olduğunu düşünüyorsanız Geri Bildirim sayfasından inceleme isteyebilirsiniz.",
+    "files": [
+      "src/components/Media/PublishProjectDialog.tsx"
     ]
   },
   "25jfad5y3lw": {
@@ -54182,16 +54867,16 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1r28hop8kuw": {
-    "en": "The [Arcade](/arcade) showcases games made with Hanogt Engine:\n• **To publish**, press **Publish** in the engine; the game is compiled and screened by Hanogt Security.\n• Players play in the browser, fullscreen and with touch controls, like games and see play counts.\n• **Remix:** if the maker turned on **Allow remixes** when publishing (the card shows a \"Remixable\" icon), you can copy the game into your own project and build on it; the remix's page links back to the original. Without permission a game can only be played.\n• **Leaderboards and achievements:** when the maker defined them, they show next to the game; signed in, your best score goes on the board and your achievements are kept on your account (without signing in they stay on this device). Scores come from the player's browser, so boards say \"unverified\"; you can turn sharing off or remove your score.\n• You can unpublish your game any time; inappropriate games are reviewed by staff.",
-    "tr": "[Arcade](/arcade), Hanogt Engine ile yapılan oyunların vitrinidir:\n• **Yayınlamak için** motorda **Yayınla**'ya bas; oyun derlenir ve Hanogt Security taramasından geçer.\n• Oyuncular tarayıcıda, tam ekranda ve dokunmatik kontrollerle oynar; beğenir, oynanma sayısını görür.\n• **Remiks:** yapımcı yayınlarken **Remikslemelere izin ver**'i açtıysa (kartta \"Remikslenebilir\" simgesi) oyunun kopyasını kendi projene alıp geliştirebilirsin; remiksin sayfası asıl oyuna bağlantı verir. İzin yoksa oyun yalnızca oynanır.\n• **Skor tabloları ve başarımlar:** yapımcı tanımladıysa oyunun yanında görünür; giriş yaptıysan en iyi skorun tabloya, açtığın başarımlar hesabına kaydedilir (giriş yapmadan yalnızca bu cihazda tutulur). Skorlar oyuncunun tarayıcısından geldiği için tablolarda \"doğrulanmamış\" yazar; paylaşımı kapatabilir ya da skorunu kaldırabilirsin.\n• Yayınladığın oyunu istediğin an yayından kaldırabilirsin; uygunsuz oyunlar yetkili ekip tarafından incelenir.",
+  "1zz2t74b65q": {
+    "en": "The [Arcade](/arcade) showcases games made with Hanogt Engine:\n• **To publish**, press **Publish** in the engine; the game is compiled and screened by Hanogt Security.\n• Players play in the browser, fullscreen and with touch controls, like games and see play counts.\n• **Ratings and discovery:** you can rate games 1–5 stars (not your own), filter by genre and sort by newest, most played or top rated; featured games show at the top. Click a maker's name to see all of their games on their creator page, and use **Report** to send an inappropriate game to the team.\n• **Remix:** if the maker turned on **Allow remixes** when publishing (the card shows a \"Remixable\" icon), you can copy the game into your own project and build on it; the remix's page links back to the original. Without permission a game can only be played.\n• **Leaderboards and achievements:** when the maker defined them, they show next to the game; signed in, your best score goes on the board and your achievements are kept on your account (without signing in they stay on this device). Scores come from the player's browser, so boards say \"unverified\"; you can turn sharing off or remove your score.\n• You can unpublish your game any time; inappropriate games are reviewed by staff.",
+    "tr": "[Arcade](/arcade), Hanogt Engine ile yapılan oyunların vitrinidir:\n• **Yayınlamak için** motorda **Yayınla**'ya bas; oyun derlenir ve Hanogt Security taramasından geçer.\n• Oyuncular tarayıcıda, tam ekranda ve dokunmatik kontrollerle oynar; beğenir, oynanma sayısını görür.\n• **Puanlar ve keşif:** oyunlara 1–5 yıldız verebilir (kendi oyununa veremezsin), türe göre süzebilir ve en yeni, en çok oynanan ya da en yüksek puanlı oyunları sıralayabilirsin; öne çıkanlar en üstte görünür. Yapımcı adına tıklayınca yapımcının bütün oyunlarını yapımcı sayfasında görürsün; uygunsuz bir oyunu **Bildir** ile ekibe iletebilirsin.\n• **Remiks:** yapımcı yayınlarken **Remikslemelere izin ver**'i açtıysa (kartta \"Remikslenebilir\" simgesi) oyunun kopyasını kendi projene alıp geliştirebilirsin; remiksin sayfası asıl oyuna bağlantı verir. İzin yoksa oyun yalnızca oynanır.\n• **Skor tabloları ve başarımlar:** yapımcı tanımladıysa oyunun yanında görünür; giriş yaptıysan en iyi skorun tabloya, açtığın başarımlar hesabına kaydedilir (giriş yapmadan yalnızca bu cihazda tutulur). Skorlar oyuncunun tarayıcısından geldiği için tablolarda \"doğrulanmamış\" yazar; paylaşımı kapatabilir ya da skorunu kaldırabilirsin.\n• Yayınladığın oyunu istediğin an yayından kaldırabilirsin; uygunsuz oyunlar yetkili ekip tarafından incelenir.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "7zbox1053n": {
-    "en": "[Hanogt Media](/media) is where you share code projects with the community:\n• Projects are published from the Code Editor or the Media page with a title, description, up to 6 tags and a **license** (all rights reserved, MIT, Apache-2.0, GPL-3.0).\n• Posts pass a security pre-check first; code containing secret keys isn't published.\n• Others view your project, download it as a file or ZIP, open it in the editor, like and comment; they can report inappropriate content.\n• Browse popular and new projects in the discover tabs; update your own post or delete it any time.",
-    "tr": "[Hanogt Media](/media), kod projelerini toplulukla paylaştığın yerdir:\n• Projeler Kod Editörü'nden ya da Media sayfasından yayınlanır; başlık, açıklama, en fazla 6 etiket ve **lisans** (Tüm hakları saklı, MIT, Apache-2.0, GPL-3.0) seçilir.\n• Yayınlar önce güvenlik ön elemesinden geçer; gizli anahtar içeren kod yayınlanmaz.\n• Diğerleri projeni görüntüler, tek dosya veya ZIP olarak indirir, editörde açar, beğenir ve yorumlar; uygunsuz içeriği bildirebilirler.\n• Popüler ve yeni projeleri keşfet sekmelerinden görürsün; kendi yayınını güncelleyebilir ya da istediğin zaman silebilirsin.",
+  "1tmlhi849e0": {
+    "en": "[Hanogt Media](/media) is where you share code projects with the community:\n• Projects are published from the Code Editor or the Media page with a title, description, up to 5 tags and a **license** (all rights reserved, MIT, Apache-2.0, GPL-3.0).\n• Posts pass a security pre-check first; code containing secret keys isn't published.\n• Others view your project, download it as a file or ZIP, open it in the editor, like and comment; they can report inappropriate content.\n• Browse popular and new projects in the discover tabs; update your own post or delete it any time.",
+    "tr": "[Hanogt Media](/media), kod projelerini toplulukla paylaştığın yerdir:\n• Projeler Kod Editörü'nden ya da Media sayfasından yayınlanır; başlık, açıklama, en fazla 5 etiket ve **lisans** (Tüm hakları saklı, MIT, Apache-2.0, GPL-3.0) seçilir.\n• Yayınlar önce güvenlik ön elemesinden geçer; gizli anahtar içeren kod yayınlanmaz.\n• Diğerleri projeni görüntüler, tek dosya veya ZIP olarak indirir, editörde açar, beğenir ve yorumlar; uygunsuz içeriği bildirebilirler.\n• Popüler ve yeni projeleri keşfet sekmelerinden görürsün; kendi yayınını güncelleyebilir ya da istediğin zaman silebilirsin.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -54203,9 +54888,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "11md54z8euo": {
-    "en": "You can publish your project to [Hanogt Media](/media) straight from the [Code Editor](/editor):\n1. Sign in and open the files you want to share in the editor.\n2. Choose **Publish to Media** from the toolbar menu.\n3. Enter a title (up to 100 characters), a description, up to 6 tags and a license (all rights reserved, MIT, Apache-2.0, GPL-3.0), and pick the files to publish (up to 50).\n4. Before publishing, the files are security-scanned in your browser and on the server; secret keys or harmful code are shown with their line and the post is stopped.\n5. When you open your own Media project in the editor, you can send your changes to the same post as an **update**.",
-    "tr": "Projeni [Kod Editörü](/editor)'nden doğrudan [Hanogt Media](/media)'da yayınlayabilirsin:\n1. Giriş yap ve yayınlamak istediğin dosyaları editörde aç.\n2. Araç çubuğundaki menüden **Media'da yayınla**'yı seç.\n3. Başlık (en fazla 100 karakter), açıklama, en fazla 6 etiket ve lisans (Tüm hakları saklı, MIT, Apache-2.0, GPL-3.0) gir; yayınlanacak dosyaları seç (en fazla 50 dosya).\n4. Yayınlamadan önce dosyalar tarayıcında ve sunucuda güvenlik taramasından geçer; gizli anahtar ya da zararlı kod bulunursa satırıyla birlikte gösterilir ve yayın durdurulur.\n5. Kendi Media projeni editörde açtığında değişikliklerini aynı yayına **güncelleme** olarak gönderebilirsin.",
+  "6mzlzza535": {
+    "en": "You can publish your project to [Hanogt Media](/media) straight from the [Code Editor](/editor):\n1. Sign in and open the files you want to share in the editor.\n2. Choose **Publish to Media** from the toolbar menu.\n3. Enter a title (up to 100 characters), a description, up to 5 tags and a license (all rights reserved, MIT, Apache-2.0, GPL-3.0), and pick the files to publish (up to 50).\n4. Before publishing, the files are security-scanned in your browser and on the server; secret keys or harmful code are shown with their line and the post is stopped.\n5. When you open your own Media project in the editor, you can send your changes to the same post as an **update**.",
+    "tr": "Projeni [Kod Editörü](/editor)'nden doğrudan [Hanogt Media](/media)'da yayınlayabilirsin:\n1. Giriş yap ve yayınlamak istediğin dosyaları editörde aç.\n2. Araç çubuğundaki menüden **Media'da yayınla**'yı seç.\n3. Başlık (en fazla 100 karakter), açıklama, en fazla 5 etiket ve lisans (Tüm hakları saklı, MIT, Apache-2.0, GPL-3.0) gir; yayınlanacak dosyaları seç (en fazla 50 dosya).\n4. Yayınlamadan önce dosyalar tarayıcında ve sunucuda güvenlik taramasından geçer; gizli anahtar ya da zararlı kod bulunursa satırıyla birlikte gösterilir ve yayın durdurulur.\n5. Kendi Media projeni editörde açtığında değişikliklerini aynı yayına **güncelleme** olarak gönderebilirsin.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -55563,6 +56248,62 @@
       "src/lib/ai/voice.ts"
     ]
   },
+  "wd22jjaktl": {
+    "en": "Action",
+    "tr": "Aksiyon",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
+  "1oml3v8vw57": {
+    "en": "Platformer",
+    "tr": "Platform",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
+  "pj0vy2fp": {
+    "en": "Puzzle",
+    "tr": "Bulmaca",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
+  "njrtoqyqea": {
+    "en": "Racing",
+    "tr": "Yarış",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
+  "12t0nx8jibj": {
+    "en": "Shooter",
+    "tr": "Nişancı",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
+  "o3mwe2whn9": {
+    "en": "Adventure",
+    "tr": "Macera",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
+  "4ujzdvg4hq": {
+    "en": "Strategy",
+    "tr": "Strateji",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
+  "hym3mhkv3u": {
+    "en": "Sports",
+    "tr": "Spor",
+    "files": [
+      "src/lib/arcade-genres.ts"
+    ]
+  },
   "1w97u4x17m9": {
     "en": "Edit with your team",
     "tr": "Ekiple düzenle",
@@ -56300,9 +57041,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "1bycovnvxyo": {
-    "en": "With your project open in the Code Editor, open the publish dialog (Publish to Hanogt Media). Pick the files to share (up to 50) and set a title, a description, up to 6 tags and a license (All rights reserved, MIT, Apache-2.0 or GPL-3.0). The code goes through a Hanogt Security scan first; code found to be dangerous isn't published. Published projects are public and can be downloaded; you can update or remove them whenever you like.",
-    "tr": "Kod Editörü'nde projeniz açıkken yayınlama penceresini açın (Hanogt Media'da yayınla). Paylaşmak istediğiniz dosyaları (en fazla 50) seçin; başlık, açıklama, en fazla 6 etiket ve lisans (Tüm hakları saklıdır, MIT, Apache-2.0 veya GPL-3.0) belirleyin. Kod yayınlanmadan önce Hanogt Security taramasından geçer; tehlikeli bulunan kod yayınlanmaz. Yayınlanan projeler herkese açıktır ve indirilebilir; dilediğiniz zaman güncelleyebilir ya da kaldırabilirsiniz.",
+  "uj9ygfds6s": {
+    "en": "With your project open in the Code Editor, open the publish dialog (Publish to Hanogt Media). Pick the files to share (up to 50) and set a title, a description, up to 5 tags and a license (All rights reserved, MIT, Apache-2.0 or GPL-3.0). The code goes through a Hanogt Security scan first; code found to be dangerous isn't published. Published projects are public and can be downloaded; you can update or remove them whenever you like.",
+    "tr": "Kod Editörü'nde projeniz açıkken yayınlama penceresini açın (Hanogt Media'da yayınla). Paylaşmak istediğiniz dosyaları (en fazla 50) seçin; başlık, açıklama, en fazla 5 etiket ve lisans (Tüm hakları saklıdır, MIT, Apache-2.0 veya GPL-3.0) belirleyin. Kod yayınlanmadan önce Hanogt Security taramasından geçer; tehlikeli bulunan kod yayınlanmaz. Yayınlanan projeler herkese açıktır ve indirilebilir; dilediğiniz zaman güncelleyebilir ya da kaldırabilirsiniz.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -56391,9 +57132,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "v0y1ef0uav": {
-    "en": "Press Publish in the game engine. The game is compiled and goes through a security scan; published games are public on the Arcade, where people can play and like them; if you turn on “Allow remixes” when publishing, others can edit a copy too. You can take your game down any time.",
-    "tr": "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar Arcade'de herkese açıktır, oynanabilir ve beğenilebilir; yayınlarken “Remikslemelere izin ver” seçeneğini açarsanız başkaları da kopyasını düzenleyebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
+  "6n6gdgyxz1": {
+    "en": "Press Publish in the game engine. The game is compiled and goes through a security scan; you pick the game's genre when publishing. Published games are public on the Arcade, where people can play, like and rate them with 1–5 stars, and they are listed on your creator page; if you turn on “Allow remixes” when publishing, others can edit a copy too. You can take your game down any time.",
+    "tr": "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlarken oyunun türünü seçersiniz. Yayınlanan oyunlar Arcade'de herkese açıktır; oynanabilir, beğenilebilir ve 1–5 yıldızla puanlanabilir, yapımcı sayfanızda listelenir; yayınlarken “Remikslemelere izin ver” seçeneğini açarsanız başkaları da kopyasını düzenleyebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -57402,6 +58143,20 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "281sa2e0prf": {
+    "en": "Arcade ratings and creator pages: while signed in you can give games 1–5 stars. Your rating is stored with your pseudonymous ID derived with a secret salt; a game's page shows only the number of ratings and their average, never who gave which rating. You can change or remove your rating; it is deleted when the game is unpublished or your account is deleted, and it is included in “Download my data”. Games you publish are listed on a public creator page whose address is a non-reversible ID derived from your e-mail address; it shows your nickname, picture and games, never your e-mail address.",
+    "tr": "Arcade puanları ve yapımcı sayfaları: Giriş yapmış olarak oyunlara 1–5 yıldız verebilirsiniz. Puanınız gizli bir tuzla türetilen takma kimliğinizle saklanır; oyun sayfasında yalnızca puan sayısı ve ortalaması görünür, kimin hangi puanı verdiği görünmez. Puanınızı değiştirebilir veya kaldırabilirsiniz; oyun yayından kalkınca veya hesabınızı silince silinir ve “Verilerimi İndir” dosyasına dahildir. Yayımladığınız oyunlar, adresi e-posta adresinizden türetilen geri çevrilemeyen bir kimlik olan herkese açık bir yapımcı sayfasında listelenir; sayfada takma adınız, profil resminiz ve oyunlarınız görünür, e-posta adresiniz görünmez.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "135fgzcsy8p": {
+    "en": "Reporting Arcade games and Media comments: you can now report Arcade games too; your report is kept in the same moderation queue as Media reports and is seen only by authorised staff. Media comments are checked automatically before they are saved; your comment can be deleted by you or by the post's owner. On Media, downloads are kept only as a total; who downloaded is not recorded. The related sections of the Privacy Policy, the automated decisions and the retention table were updated accordingly.",
+    "tr": "Arcade oyunlarını bildirme ve Media yorumları: Arcade oyunlarını da bildirebilirsiniz; bildiriminiz Media bildirimleriyle aynı moderasyon kuyruğunda saklanır ve yalnızca yetkili ekip tarafından görülür. Media yorumları kaydedilmeden önce otomatik olarak denetlenir; yorumunuzu siz veya yayının sahibi silebilirsiniz. Media'da indirme sayısı yalnızca toplam olarak tutulur, kimin indirdiği kaydedilmez. Gizlilik Politikası'ndaki ilgili bölümler, otomatik kararlar ve saklama süreleri tablosu buna göre güncellendi.",
     "files": [
       "src/lib/legal.ts"
     ]

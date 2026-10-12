@@ -221,6 +221,19 @@ or Firebase console → Firestore → TTL policies): it holds the TTL policies o
 (180 days) and `automod_events` (90 days). Without them these records stay
 until someone deletes them, which the Privacy Policy doesn't allow.
 
+Since 0.3.34 the Media and Arcade lists (`/api/media`, `/api/arcade`,
+creator pages) read 24 rows at a time from ordered queries that need the
+composite indexes in `firestore.indexes.json` (likes, downloads, plays and
+ratings with `createdAt`, optionally with a language, tag, genre or creator
+filter). Until they are deployed and built, Firestore answers those queries
+with 400 and the lists fall back to reading at most 500 rows with the filter
+alone and ordering them on the server (`src/lib/server/feed-pages.ts`), so
+they keep working but stop at 500 rows. The same file exempts big or
+never-queried fields (`arcade_games.game`, `arcade_games.thumbnail`,
+`media_comments.text`, most `arcade_ratings` fields) from indexing to save
+storage. Deploy both with `firebase deploy --only firestore:indexes,firestore:rules`;
+the new `arcade_ratings` collection is server-only.
+
 Voice messages no longer depend on Cloud Storage or `storage.rules`:
 browsers upload and play them through `/api/social/voice`, which checks the
 friendship or group membership and keeps the recording in the server-only

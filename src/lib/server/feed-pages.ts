@@ -69,6 +69,60 @@ export function feedCursorOf(row: Record<string, unknown> & { _path: string }, o
     return { values: values as Array<number | string>, path: row._path };
 }
 
+/** Orders two positions of the same list: by each ordered value, then by the path (as Firestore orders `__name__`). */
+function compareFeedCursors(a: FeedCursor, b: FeedCursor) {
+    for (let index = 0; index < a.values.length; index += 1) {
+        const left = a.values[index];
+        const right = b.values[index];
+        if (left !== right) return left < right ? -1 : 1;
+    }
+    return a.path === b.path ? 0 : a.path < b.path ? -1 : 1;
+}
+
+/** Firestore answers 400 FAILED_PRECONDITION while the composite index a query needs isn't deployed (or still building). */
+function isMissingIndex(error: unknown) {
+    return error instanceof Error && (error as Error & { status?: number }).status === 400;
+}
+
+/**
+ * Rows read when a list's composite index isn't deployed yet: the filter
+ * alone needs only the automatic single-field indexes, and the rows are
+ * ordered and paged here with the same cursors. Lists longer than this show
+ * their first rows by document path until the indexes are deployed.
+ */
+export const UNINDEXED_SCAN_LIMIT = 500;
+
+async function unindexedFeedPage<T extends Record<string, unknown>>(options: {
+    collectionId: string;
+    where?: FeedFilter[];
+    order: readonly FeedOrder[];
+    select?: string[];
+    limit: number;
+    cursor: FeedCursor | null;
+    keep?: (row: FeedRow<T>) => boolean;
+}) {
+    const rows = await runServerQuery<T>({
+        collectionId: options.collectionId,
+        ...(options.where?.length ? { where: options.where } : {}),
+        ...(options.select ? { select: options.select } : {}),
+        limit: UNINDEXED_SCAN_LIMIT,
+    }) as Array<FeedRow<T>>;
+    const sorted = rows
+        .map((row) => ({ row, at: feedCursorOf(row, options.order) }))
+        .filter((entry): entry is { row: FeedRow<T>; at: FeedCursor } => entry.at !== null)
+        .sort((a, b) => compareFeedCursors(b.at, a.at));
+    const cursor = options.cursor;
+    let index = cursor ? sorted.findIndex((entry) => compareFeedCursors(entry.at, cursor) < 0) : 0;
+    if (index < 0) index = sorted.length;
+    const items: Array<FeedRow<T>> = [];
+    let last: FeedCursor | null = null;
+    for (; index < sorted.length && items.length < options.limit; index += 1) {
+        last = sorted[index].at;
+        if (!options.keep || options.keep(sorted[index].row)) items.push(sorted[index].row);
+    }
+    return { items, nextCursor: index < sorted.length && last ? encodeFeedCursor(last) : null };
+}
+
 /**
  * One page of `collectionId`, every `order` field descending, then the path.
  *
@@ -78,7 +132,7 @@ export function feedCursorOf(row: Record<string, unknown> & { _path: string }, o
  * cursor marks how far the reading got, so the next page continues from there
  * even when this one came back short.
  */
-export async function feedPage<T extends Record<string, unknown>>(options: {
+async function indexedFeedPage<T extends Record<string, unknown>>(options: {
     collectionId: string;
     where?: FeedFilter[];
     order: readonly FeedOrder[];
@@ -135,4 +189,20 @@ export async function feedPage<T extends Record<string, unknown>>(options: {
         }
     }
     return { items, nextCursor: !exhausted && position && position !== options.cursor ? encodeFeedCursor(position) : null };
+}
+
+/**
+ * One page of a list (see indexedFeedPage). While the composite index the
+ * ordered query needs isn't deployed, the page comes from a bounded read of
+ * the filter alone, ordered here (see unindexedFeedPage), so the list keeps
+ * working until `firebase deploy --only firestore:indexes` has finished.
+ */
+export async function feedPage<T extends Record<string, unknown>>(options: Parameters<typeof indexedFeedPage<T>>[0]): Promise<{ items: Array<FeedRow<T>>; nextCursor: string | null }> {
+    try {
+        return await indexedFeedPage<T>(options);
+    } catch (error) {
+        if (!isMissingIndex(error)) throw error;
+        const select = options.select ? [...new Set([...options.select, ...options.order.map((item) => item.field)])] : undefined;
+        return unindexedFeedPage<T>({ ...options, select });
+    }
 }

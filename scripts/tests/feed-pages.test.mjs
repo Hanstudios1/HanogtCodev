@@ -77,6 +77,40 @@ test("pages follow each other without skipping or repeating equal values", async
     });
 });
 
+test("without the composite index (400) the list is ordered and paged here with the same cursors", async () => {
+    // Like Firestore before `firebase deploy --only firestore:indexes`: any ordered query fails.
+    const failQuery = ({ query }) => (query?.orderBy?.length ? 400 : 0);
+    const all = Object.entries(games(23)).map(([path, data]) => ({ id: path.split("/")[1], ...data }));
+    all.sort((a, b) => b.plays - a.plays || b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+    await withBackend(games(23), { failQuery }, async () => {
+        const seen = [];
+        let cursor = null;
+        for (let pages = 0; pages < 20; pages += 1) {
+            const page = await feedPage({ collectionId: "arcade_games", order: BY_PLAYS, select: ["title"], limit: 5, cursor: decodeFeedCursor(cursor, "arcade_games", BY_PLAYS) });
+            seen.push(...page.items.map((item) => item._id));
+            cursor = page.nextCursor;
+            if (!cursor) break;
+        }
+        assert.deepEqual(seen, all.map((item) => item.id), "the same order as the indexed query, nothing skipped or repeated");
+
+        // An equality filter alone needs no composite index; `keep` still filters.
+        const threeD = [];
+        cursor = null;
+        for (let pages = 0; pages < 20; pages += 1) {
+            const page = await feedPage({ collectionId: "arcade_games", where: [{ field: "dimension", op: "EQUAL", value: "3d" }], order: BY_PLAYS, select: ["title", "dimension"], limit: 4, cursor: decodeFeedCursor(cursor, "arcade_games", BY_PLAYS), keep: (row) => row.plays !== 0 });
+            assert.ok(page.items.every((item) => item.dimension === "3d" && item.plays !== 0));
+            threeD.push(...page.items.map((item) => item._id));
+            cursor = page.nextCursor;
+            if (!cursor) break;
+        }
+        assert.deepEqual(threeD, all.filter((item) => item.dimension === "3d" && item.plays !== 0).map((item) => item.id));
+    });
+    // Any other failure is still an error.
+    await withBackend(games(3), { failQuery: () => 503 }, async () => {
+        await assert.rejects(feedPage({ collectionId: "arcade_games", order: BY_PLAYS, limit: 5, cursor: null }));
+    });
+});
+
 test("a filtered page reads on until it is full and its cursor continues from where it stopped", async () => {
     await withBackend(games(40), {}, async () => {
         const keep = (row) => row.dimension === "2d";

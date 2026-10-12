@@ -1,5 +1,48 @@
 # Değişiklik Günlüğü
 
+## 0.3.34 — 2026-10-07
+
+### Arcade ve Media: sayfa sayfa yükleme, türler, yıldız puanları, yapımcı sayfaları
+
+- **Media:**
+  - Galeri artık bütün koleksiyonu okumuyor: `GET /api/media` indeksli
+    sorgularla 24'er yayın getiriyor ("Daha fazla yükle"); sıralama en çok
+    beğenilen, en yeni ve en çok indirilen; dil, etiket ve metin araması.
+    Beğeniler yalnızca sayfadaki yayınlar için tek toplu okumayla alınıyor.
+    İmleçler sunucuda doğrulanan opak değerler (`src/lib/server/feed-pages.ts`).
+  - İndirme sayısı (`downloadCount`; aynı ziyaretçi bir yayını 6 saatte bir
+    kez sayılır, kayıt tutulmaz) ve eski yayınlar için tek seferlik
+    tamamlama (`site_config/backfills`).
+  - Yorumlar kaydedilmeden önce `moderateText` ile denetleniyor (2–500
+    karakter, en fazla 2 bağlantı); yayın başına 200 yorum, 10 dakikada 15.
+    Yorumu yazarı veya yayının sahibi silebiliyor.
+  - En fazla 5 etiket, biçimleri sunucuda doğrulanıyor; projenin dilleri hazır
+    etiket olarak öneriliyor, etiketler galeriyi süzüyor. Sayfa
+    `src/components/Media/` altında bileşenlere bölündü.
+- **Arcade:**
+  - 24'erli sayfalar; sıralama en yeni, en çok oynanan, en yüksek puanlı;
+    10 oyun türü (yayınlarken seçilir, sahibi sonradan değiştirebilir; eski
+    oyunlar "diğer").
+  - 1–5 yıldız puan: `arcade_ratings/{oyun}_{takmaKimlik}`; oyunun toplamları
+    ve ağırlıklı puanı aynı yazımda, sürüm kontrolüyle güncelleniyor. Sahip
+    kendi oyununu puanlayamıyor; puanlar oyunla ve hesapla siliniyor ve veri
+    dışa aktarımına dahil.
+  - Öne çıkanlar satırı, oyun bildirme (Media bildirimleriyle aynı kuyruk,
+    yeni "Uygunsuz içerik" nedeni; Yönetici Paneli'nden "Oyunu kaldır"),
+    `/arcade/creator/[id]` yapımcı sayfaları (tuzlanmış karma kimlik) ve
+    oyunlar ile Media yayınları için paylaşım (Open Graph) görselleri.
+  - Liste ve oyun sayfası istekleri, her görüntülemede Firestore'a yazmak
+    yerine bellekte hız sınırı kullanıyor.
+- **Firestore:** yeni bileşik indeksler ve alan muafiyetleri
+  (`firestore.indexes.json`), `arcade_ratings` için kurallar ve kural
+  testleri. İndeksler yüklenene kadar listeler yalnızca filtreyle en fazla
+  500 kaydı okuyup sıralamayı sunucuda yapan yedek yolla çalışır;
+  `firebase deploy --only firestore:indexes,firestore:rules` sonrasında
+  indeksli sorgular devreye girer.
+- SSS, Hanogt AI bilgi tabanı ve rehberde Media'nın etiket sınırı (5) ve
+  Arcade'in yeni özellikleri güncellendi.
+- Gizlilik Politikası 5.10.
+
 ## 0.3.33 — 2026-10-07
 
 ### Kod editörüne 10 yeni dil, sorunlar paneli, projede arama, yerel geçmiş ve Vim

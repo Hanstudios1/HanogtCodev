@@ -292,9 +292,9 @@ export const PAGES: BookPage[] = [
             {
                 type: "list",
                 items: [
-                    { TR: "Sırala: Yeni, Popüler, En beğenilen.", EN: "Sort: New, Popular, Most liked." },
-                    { TR: "Filtrele: 2D / 3D; oyun ya da geliştirici ara.", EN: "Filter: 2D / 3D; search games or developers." },
-                    { TR: "❤️ Beğen (giriş gerekir) ve oynanma sayısını gör.", EN: "❤️ Like (sign-in required) and see play counts." },
+                    { TR: "Sırala: Yeni, En çok oynanan, En yüksek puanlı; türe göre süz.", EN: "Sort: New, Most played, Top rated; filter by genre." },
+                    { TR: "Filtrele: 2D / 3D; oyun ya da yapımcı ara, yapımcının sayfasında bütün oyunlarını gör.", EN: "Filter: 2D / 3D; search games or makers and see all of a maker's games on their page." },
+                    { TR: "❤️ Beğen, 1–5 yıldız ver (giriş gerekir), oynanma sayısını gör; uygunsuz oyunu bildir.", EN: "❤️ Like, rate 1–5 stars (sign-in required), see play counts; report inappropriate games." },
                     { TR: "Tam ekran oyna; oyun destekliyorsa telefonda dokunmatik kontroller çıkar.", EN: "Play full screen; on phones, touch controls appear when the game supports them." },
                     { TR: "Remiksle: \"Remikslenebilir\" rozetli oyunların kopyasını kendi projene al, değiştir, yeniden yayınla.", EN: "Remix: copy games with the \"Remixable\" badge into your projects, change them, republish." },
                 ],
@@ -532,7 +532,7 @@ export const PAGES: BookPage[] = [
         chapter: "social",
         title: { TR: "Hanogt Media", EN: "Hanogt Media" },
         blocks: [
-            { type: "item", icon: "📣", name: { TR: "Paylaş", EN: "Share" }, text: { TR: "Kod projelerini başlık, en fazla 6 etiket ve lisansla (MIT, Apache-2.0, GPL-3.0 ya da Tüm hakları saklı) yayınla.", EN: "Publish code projects with a title, up to 6 tags and a license (MIT, Apache-2.0, GPL-3.0 or All rights reserved)." } },
+            { type: "item", icon: "📣", name: { TR: "Paylaş", EN: "Share" }, text: { TR: "Kod projelerini başlık, en fazla 5 etiket ve lisansla (MIT, Apache-2.0, GPL-3.0 ya da Tüm hakları saklı) yayınla.", EN: "Publish code projects with a title, up to 5 tags and a license (MIT, Apache-2.0, GPL-3.0 or All rights reserved)." } },
             { type: "item", icon: "🛡️", name: { TR: "Güvenlik ön elemesi", EN: "Security pre-check" }, text: { TR: "Yayınlar taramadan geçer; gizli anahtar içeren kod yayınlanmaz.", EN: "Posts are scanned first; code containing secret keys is not published." } },
             { type: "item", icon: "❤️", name: { TR: "Keşfet", EN: "Discover" }, text: { TR: "Beğen, yorumla, ZIP olarak indir, editörde aç; uygunsuz içeriği bildir.", EN: "Like, comment, download as ZIP, open in the editor; report inappropriate content." } },
         ],

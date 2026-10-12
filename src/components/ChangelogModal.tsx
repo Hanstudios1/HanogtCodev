@@ -24,6 +24,20 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.34",
+        version: "v0.3.34",
+        date: "2026-10-07",
+        title: { TR: "Arcade ve Media yenilendi", EN: "Arcade and Media renewed" },
+        desc: { TR: "Media ve Arcade sayfa sayfa yükleniyor; Arcade'de oyun türleri, yıldız puanları, öne çıkanlar ve yapımcı sayfaları var, Media'da etiket filtresi ve en çok indirilenler.", EN: "Media and Arcade load page by page; the Arcade has genres, star ratings, a featured row and creator pages, and Media has a tag filter and a most-downloaded sort." },
+        items: [
+            { TR: "Media: “Daha fazla yükle”, en çok indirilen sıralaması, etiket filtresi ve yorum silme.", EN: "Media: “Load more”, a most-downloaded sort, a tag filter and comment deletion." },
+            { TR: "Arcade: 10 oyun türü, 1–5 yıldız puan ve en yüksek puanlılar sıralaması.", EN: "Arcade: 10 genres, 1–5 star ratings and a top-rated sort." },
+            { TR: "Öne çıkan oyunlar satırı ve her yapımcının bütün oyunlarını gösteren yapımcı sayfaları.", EN: "A featured games row and creator pages that show all of a maker's games." },
+            { TR: "Uygunsuz oyunları bildirme ve paylaşılan bağlantılarda oyun ve yayın önizleme görselleri.", EN: "Reporting inappropriate games, and preview images for shared links to games and posts." },
+            { TR: "Gizlilik Politikası 5.10.", EN: "Privacy Policy 5.10." },
+        ],
+    },
+    {
         id: "v0.3.33",
         version: "v0.3.33",
         date: "2026-10-07",
