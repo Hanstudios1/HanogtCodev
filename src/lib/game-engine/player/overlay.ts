@@ -13,9 +13,11 @@
  * through `onInput`.
  */
 import type { TRS } from "../math";
+import { joystickVector } from "../touch-controls";
 import type {
     GameComponent,
     TextureAsset,
+    TouchLayout,
     UIAnchor,
     UIButtonComponent,
     UIInputFieldComponent,
@@ -42,6 +44,12 @@ export interface OverlayOptions {
     /** true = always, "auto" = only on touch devices, false = never. */
     touchControls: boolean | "auto";
     onVirtualKey?: (key: string, down: boolean) => void;
+    /** V6 layout (joystick, side, buttons); without it the V5 arrow pad and A/B buttons. */
+    touchLayout?: TouchLayout | null;
+    /** The virtual joystick moved: x right, y up, length 0–1 after its dead zone (V6). */
+    onTouchStick?: (x: number, y: number) => void;
+    /** An on-screen button pressing an input action (V6); `button` is its index. */
+    onTouchAction?: (action: string, down: boolean, button: number) => void;
     /** Images shown by UI panels. */
     textures?: readonly TextureAsset[];
     /** Text typed into an input field; without it input fields are read-only (editor previews). */
@@ -120,6 +128,8 @@ export class GameOverlay {
     private readonly notice: HTMLDivElement;
     private readonly textures = new Map<string, string>();
     private touch: HTMLDivElement | null = null;
+    /** Lets go of every held on-screen control (when they are hidden). */
+    private releaseTouch: (() => void) | null = null;
     private fpsFrames = 0;
     private fpsTime = 0;
     private lastHud = "";
@@ -166,43 +176,160 @@ export class GameOverlay {
 
         parent.appendChild(root);
         this.element = root;
+        this.setTouchControls(options.touchControls);
+    }
+
+    /** Shows or hides the on-screen controls (true = always, "auto" = on touch screens). */
+    setTouchControls(mode: boolean | "auto") {
         const coarse = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
-        if (options.touchControls === true || (options.touchControls === "auto" && coarse)) this.createTouchControls();
+        const show = mode === true || (mode === "auto" && Boolean(coarse));
+        if (show === Boolean(this.touch)) return;
+        if (show) {
+            this.createTouchControls();
+            return;
+        }
+        this.releaseTouch?.();
+        this.touch?.remove();
+        this.touch = null;
     }
 
     private createTouchControls() {
+        const layout = this.options.touchLayout ?? null;
+        const stickSide = layout?.side ?? "left";
+        const buttonSide = stickSide === "left" ? "right" : "left";
+        const joystick = layout?.stick === "joystick";
         const pad = document.createElement("div");
-        Object.assign(pad.style, { position: "absolute", inset: "auto 0 0 0", height: "160px", pointerEvents: "none" });
-        const button = (label: string, key: string, style: Partial<CSSStyleDeclaration>) => {
+        Object.assign(pad.style, { position: "absolute", inset: "auto 0 0 0", height: `${Math.max(160, joystick ? (layout?.size ?? 130) + 48 : 0)}px`, pointerEvents: "none" });
+        const releases: Array<() => void> = [];
+        const idle = "rgba(24,24,27,.45)";
+        const button = (label: string, name: string, style: Partial<CSSStyleDeclaration>, onPress: (down: boolean) => void) => {
             const element = document.createElement("button");
             element.type = "button";
             element.textContent = label;
-            element.setAttribute("aria-label", key);
+            element.setAttribute("aria-label", name);
             Object.assign(element.style, {
                 position: "absolute", width: "58px", height: "58px", borderRadius: "18px", border: "1px solid rgba(255,255,255,.25)",
-                background: "rgba(24,24,27,.45)", color: "#fff", fontSize: "20px", fontWeight: "800", pointerEvents: "auto",
+                background: idle, color: "#fff", fontSize: "20px", fontWeight: "800", pointerEvents: "auto",
                 touchAction: "none", backdropFilter: "blur(6px)", WebkitTapHighlightColor: "transparent", ...style,
             });
-            const press = (down: boolean) => (event: Event) => {
+            let down = false;
+            const press = (next: boolean) => (event: Event) => {
                 event.preventDefault();
-                element.style.background = down ? "rgba(99,102,241,.7)" : "rgba(24,24,27,.45)";
-                this.options.onVirtualKey?.(key, down);
+                element.style.background = next ? "rgba(99,102,241,.7)" : idle;
+                if (next === down) return;
+                down = next;
+                onPress(next);
             };
             element.addEventListener("pointerdown", press(true));
             element.addEventListener("pointerup", press(false));
             element.addEventListener("pointercancel", press(false));
             element.addEventListener("pointerleave", press(false));
             element.addEventListener("contextmenu", (event) => event.preventDefault());
+            releases.push(() => {
+                element.style.background = idle;
+                if (down) onPress(false);
+                down = false;
+            });
             pad.appendChild(element);
         };
-        button("◀", "LeftArrow", { left: "16px", bottom: "40px" });
-        button("▶", "RightArrow", { left: "136px", bottom: "40px" });
-        button("▲", "UpArrow", { left: "76px", bottom: "96px" });
-        button("▼", "DownArrow", { left: "76px", bottom: "12px" });
-        button("A", "Space", { right: "20px", bottom: "56px", borderRadius: "999px", width: "66px", height: "66px" });
-        button("B", "LeftControl", { right: "96px", bottom: "20px", borderRadius: "999px" });
+        const key = (name: string) => (down: boolean) => this.options.onVirtualKey?.(name, down);
+        const at = (side: "left" | "right", x: number, y: number): Partial<CSSStyleDeclaration> => ({ [side]: `${x}px`, bottom: `${y}px` });
+
+        if (joystick && layout) releases.push(this.createJoystick(pad, layout));
+        else {
+            // V5's arrow pad (mirrored when it sits on the right).
+            const left = stickSide === "left";
+            button("◀", "LeftArrow", at(stickSide, left ? 16 : 136, 40), key("LeftArrow"));
+            button("▶", "RightArrow", at(stickSide, left ? 136 : 16, 40), key("RightArrow"));
+            button("▲", "UpArrow", at(stickSide, 76, 96), key("UpArrow"));
+            button("▼", "DownArrow", at(stickSide, 76, 12), key("DownArrow"));
+        }
+        const actions = layout?.buttons ?? [];
+        if (!actions.length) {
+            button("A", "Space", { ...at(buttonSide, 20, 56), borderRadius: "999px", width: "66px", height: "66px" }, key("Space"));
+            button("B", "LeftControl", { ...at(buttonSide, 96, 20), borderRadius: "999px" }, key("LeftControl"));
+        } else {
+            // Up to four round buttons in a cluster, the first one nearest the corner.
+            const spots: Record<number, Array<[number, number, number]>> = {
+                1: [[28, 44, 72]],
+                2: [[20, 56, 66], [96, 20, 58]],
+                3: [[18, 70, 62], [92, 22, 58], [92, 112, 58]],
+                4: [[14, 66, 58], [80, 14, 58], [80, 118, 58], [146, 66, 58]],
+            };
+            actions.forEach((item, index) => {
+                const [x, y, size] = spots[actions.length][index];
+                button(item.label, item.action, { ...at(buttonSide, x, y), borderRadius: "999px", width: `${size}px`, height: `${size}px`, fontSize: item.label.length > 2 ? "13px" : "20px" }, (down) => this.options.onTouchAction?.(item.action, down, index));
+            });
+        }
         this.element.appendChild(pad);
         this.touch = pad;
+        this.releaseTouch = () => releases.forEach((release) => release());
+    }
+
+    /** The V6 virtual joystick: a ring and a knob; returns what lets it go. */
+    private createJoystick(pad: HTMLDivElement, layout: TouchLayout): () => void {
+        const size = layout.size;
+        const knobSize = Math.round(size * 0.42);
+        // The knob travels until it touches the ring: that is full deflection.
+        const travel = Math.max(1, (size - knobSize) / 2);
+        const base = document.createElement("div");
+        base.setAttribute("aria-hidden", "true");
+        const idle = "rgba(24,24,27,.35)";
+        Object.assign(base.style, {
+            position: "absolute", bottom: "24px", [layout.side]: "24px", width: `${size}px`, height: `${size}px`, borderRadius: "999px",
+            border: "1px solid rgba(255,255,255,.25)", background: idle, pointerEvents: "auto", touchAction: "none", backdropFilter: "blur(6px)",
+            WebkitTapHighlightColor: "transparent",
+        });
+        const knob = document.createElement("div");
+        Object.assign(knob.style, {
+            position: "absolute", left: "50%", top: "50%", width: `${knobSize}px`, height: `${knobSize}px`, margin: `${-knobSize / 2}px 0 0 ${-knobSize / 2}px`,
+            borderRadius: "999px", background: "rgba(255,255,255,.32)", border: "1px solid rgba(255,255,255,.55)", pointerEvents: "none", transition: "transform .12s ease-out",
+        });
+        base.appendChild(knob);
+        let pointer: number | null = null;
+        const move = (event: PointerEvent) => {
+            const rect = base.getBoundingClientRect();
+            const dx = event.clientX - (rect.left + rect.width / 2);
+            const dy = event.clientY - (rect.top + rect.height / 2);
+            const distance = Math.hypot(dx, dy);
+            const shown = distance > travel ? travel / distance : 1;
+            knob.style.transform = `translate(${dx * shown}px, ${dy * shown}px)`;
+            const value = joystickVector(dx, dy, travel, layout.deadZone);
+            this.options.onTouchStick?.(value.x, value.y);
+        };
+        const release = () => {
+            if (pointer === null) return;
+            pointer = null;
+            knob.style.transition = "transform .12s ease-out";
+            knob.style.transform = "";
+            base.style.background = idle;
+            this.options.onTouchStick?.(0, 0);
+        };
+        base.addEventListener("pointerdown", (event) => {
+            event.preventDefault();
+            if (pointer !== null) return;
+            pointer = event.pointerId;
+            try {
+                base.setPointerCapture(event.pointerId);
+            } catch {
+                // Synthetic events can't be captured; moves still arrive while the finger stays on the ring.
+            }
+            knob.style.transition = "none";
+            base.style.background = "rgba(99,102,241,.35)";
+            move(event);
+        });
+        base.addEventListener("pointermove", (event) => {
+            if (event.pointerId === pointer) move(event);
+        });
+        const end = (event: PointerEvent) => {
+            if (event.pointerId === pointer) release();
+        };
+        base.addEventListener("pointerup", end);
+        base.addEventListener("pointercancel", end);
+        base.addEventListener("lostpointercapture", end);
+        base.addEventListener("contextmenu", (event) => event.preventDefault());
+        pad.appendChild(base);
+        return release;
     }
 
     setFpsVisible(visible: boolean) {
@@ -605,6 +732,7 @@ export class GameOverlay {
     }
 
     dispose() {
+        this.releaseTouch?.();
         this.element.remove();
         this.entries.clear();
         this.touch = null;

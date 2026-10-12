@@ -35,10 +35,12 @@ import {
     type VMValue,
 } from "../script/values";
 import type {
+    AnimationEvent,
     AnimatorState,
     AnimatorTransition,
     PostProcessingSettings,
     PlayerInputComponent,
+    PrefabAsset,
     SceneSettings,
     AudioAsset,
     AudioSourceComponent,
@@ -59,9 +61,11 @@ import type {
     UIToggleComponent,
     Vector3,
 } from "../types";
-import { SOUND_PRESETS, UNIQUE_COMPONENT_TYPES } from "../types";
+import { MAX_LAYERS, SOUND_PRESETS, UNIQUE_COMPONENT_TYPES } from "../types";
+import { ALL_LAYERS, defaultRaycastMask, IGNORE_RAYCAST_LAYER, layerOfName } from "../layers";
 import { rectContains, scaleRect, uiRect, type ScreenRect } from "../ui-layout";
 import { AnimationPlayer } from "./animator";
+import { compileLogPoints } from "./log-points";
 import { AnimatorController } from "./animator-controller";
 import { SoundEngine, type SoundHandle } from "./audio";
 import { CameraFollower, CameraShaker } from "./camera-follow";
@@ -111,6 +115,7 @@ import { InputManager, type PlayerInputView } from "./input";
 import { inputSourceOf, type InputSourceSpec } from "../input-actions";
 import { ParticleEmitter } from "./particles";
 import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity, type RaycastResult } from "./physics";
+import { ObjectPools } from "./pools";
 import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
 import { ButtonHandle, ButtonLabelHandle, InputFieldHandle, PanelHandle, ProgressBarHandle, SliderHandle, ToggleHandle, sameCallable } from "./ui-handles";
 import { CameraFollowHandle, CharacterController2DHandle, JointHandle, NavAgent2DHandle } from "./v4-handles";
@@ -179,7 +184,14 @@ export interface WorldStats {
     tweens: number;
     timers: number;
     particles: number;
+    /** Pooled copies in use and in all pools (V6). */
+    pooled: { active: number; total: number };
+    /** Milliseconds each script class's code takes per frame, slowest first (V6; only while profiling). */
+    scripts: Array<{ name: string; ms: number }>;
 }
+
+/** Wall-clock milliseconds (performance.now where there is one). */
+const clockMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
 const TEXT_TYPE_NAMES = new Set(["Text", "UIText", "TextMeshProUGUI", "TextMeshPro", "TMP_Text", "TextMesh"]);
 
@@ -415,6 +427,8 @@ export class RuntimeWorld implements ScriptHost {
     readonly debugLines: DebugLine[] = [];
     readonly tweens = new TweenManager();
     readonly timers = new TimerManager();
+    /** Pool.Spawn / Pool.Despawn (V6). */
+    readonly pools: ObjectPools = new ObjectPools(this);
     hud: { text: string; until: number; color: string } | null = null;
     /** Behaviour whose code is running (owner of timers created from scripts). */
     currentBehaviour: BehaviourState | null = null;
@@ -491,12 +505,65 @@ export class RuntimeWorld implements ScriptHost {
         if (owner?.destroyed || owner?.failed) return;
         const previous = this.currentBehaviour;
         this.currentBehaviour = owner;
+        const timed = this.profileEnter(owner);
         try {
             this.guard(owner, label, () => this.interpreter.invokeCallable(callback, args));
         } finally {
+            if (timed) this.profileExit();
             this.currentBehaviour = previous;
         }
     };
+
+    /**
+     * Per-script timing (V6): while the editor's stats overlay is open, every
+     * call into a script measures its own time (minus the scripts it calls).
+     */
+    profiling = false;
+    private readonly profileStack: Array<{ key: string; start: number; child: number }> = [];
+    private readonly frameScriptMs = new Map<string, number>();
+    private readonly scriptMsAverage = new Map<string, number>();
+
+    private profileEnter(state: BehaviourState | null): boolean {
+        if (!this.profiling || !state) return false;
+        this.profileStack.push({ key: state.cls.name, start: clockMs(), child: 0 });
+        return true;
+    }
+
+    private profileExit() {
+        const top = this.profileStack.pop();
+        if (!top) return;
+        const elapsed = clockMs() - top.start;
+        const parent = this.profileStack[this.profileStack.length - 1];
+        if (parent) parent.child += elapsed;
+        this.frameScriptMs.set(top.key, (this.frameScriptMs.get(top.key) ?? 0) + Math.max(0, elapsed - top.child));
+    }
+
+    /** Folds this frame's script times into the running averages (about the last second). */
+    private rollScriptTimes() {
+        if (!this.profiling) {
+            if (this.scriptMsAverage.size) this.scriptMsAverage.clear();
+            this.frameScriptMs.clear();
+            return;
+        }
+        for (const key of new Set([...this.scriptMsAverage.keys(), ...this.frameScriptMs.keys()])) {
+            const value = this.frameScriptMs.get(key) ?? 0;
+            const average = this.scriptMsAverage.get(key);
+            this.scriptMsAverage.set(key, average === undefined ? value : average + (value - average) * 0.1);
+        }
+        this.frameScriptMs.clear();
+    }
+
+    /** A log point that pauses was reached this frame (V6). */
+    private breakAt: { scriptName: string; line: number } | null = null;
+
+    logPointPause(source: { scriptName: string; line: number }) {
+        this.breakAt ??= source;
+    }
+
+    /** Average milliseconds per frame of each script class, slowest first. */
+    scriptTimes(): Array<{ name: string; ms: number }> {
+        return [...this.scriptMsAverage].map(([name, ms]) => ({ name, ms })).sort((a, b) => b.ms - a.ms || a.name.localeCompare(b.name));
+    }
 
     constructor(options: WorldOptions) {
         this.options = options;
@@ -504,6 +571,8 @@ export class RuntimeWorld implements ScriptHost {
         this.program = options.program;
         this.is2D = options.project.dimension === "2d";
         this.interpreter = new Interpreter(options.program, this);
+        // V6: log points print only in the editor's play mode.
+        if (options.isEditor) this.interpreter.logPoints = compileLogPoints(options.project.settings.logPoints ?? [], options.project.scripts);
         this.scriptBudget = options.scriptBudget ?? 3_000_000;
         this.interpreter.budget = this.scriptBudget;
         const adapter: PhysicsAdapter = {
@@ -513,6 +582,8 @@ export class RuntimeWorld implements ScriptHost {
             rotateEuler: (entity, delta) => this.rotateEuler(entity, delta),
         };
         this.physics = new PhysicsWorld(adapter, options.project.dimension);
+        // The project's collision matrix (V6); Physics.IgnoreLayerCollision changes this copy for the session.
+        this.physics.collisions = [...options.project.settings.layers.collisions];
         this.input = options.input ?? new InputManager();
         this.input.configure(options.project.settings.input);
         this.audio = options.audio === undefined ? null : options.audio;
@@ -538,6 +609,43 @@ export class RuntimeWorld implements ScriptHost {
     /** Engine rules of the game (3 for projects made before V4). */
     get rules() {
         return this.options.project.settings.rules;
+    }
+
+    // -------------------------------------------------------------------
+    // Layers (V6)
+    // -------------------------------------------------------------------
+
+    /** Names of layers 0–15 ("" = unused). */
+    get layerNames(): readonly string[] {
+        return this.project.settings.layers.names;
+    }
+
+    /** The layer named "Ignore Raycast", or -1. */
+    ignoreRaycastLayer(): number {
+        return layerOfName(this.layerNames, IGNORE_RAYCAST_LAYER);
+    }
+
+    /**
+     * The layer mask of a physics query: the script's mask, else every layer
+     * ("all") or every layer but Ignore Raycast ("raycast"). Rules before V6
+     * ignore masks, as V5 did.
+     */
+    queryMask(value: VMValue | undefined, fallback: "raycast" | "all" = "raycast"): number {
+        if (this.rules < 6) return -1;
+        if (typeof value === "number" && Number.isFinite(value)) {
+            const mask = Math.trunc(value);
+            if (!(mask & ALL_LAYERS)) this.warnOnce("empty-layer-mask", "Katman maskesi boş (Nothing): bu fizik sorgusu hiçbir şeye çarpmaz. LayerMask alanında Inspector'dan katman seçin ya da LayerMask.GetMask(\"Ad\") kullanın.");
+            return mask;
+        }
+        return fallback === "all" ? -1 : defaultRaycastMask(this.layerNames);
+    }
+
+    /** gameObject.layer = n (V6 rules; V5 ignored it). */
+    setLayer(entity: RuntimeEntity, value: VMValue) {
+        if (this.rules < 6) return;
+        const layer = typeof value === "number" ? Math.trunc(value) : NaN;
+        if (!(layer >= 0 && layer < MAX_LAYERS)) hostError(`gameObject.layer 0 ile ${MAX_LAYERS - 1} arasında olmalı (${this.display(value)} verildi). Katman adından numara için LayerMask.NameToLayer("Ad") kullanın.`, "ArgumentException");
+        entity.layer = layer;
     }
 
     // -------------------------------------------------------------------
@@ -653,6 +761,13 @@ export class RuntimeWorld implements ScriptHost {
         if (this.hud && this.hud.until < this.realtime) this.hud = null;
         this.updateFade(clamped);
         this.interpreter.flushAllStreams();
+        this.rollScriptTimes();
+        if (this.breakAt) {
+            const at = this.breakAt;
+            this.breakAt = null;
+            this.log("info", `Log noktası ${at.scriptName}:${at.line}: oyun kare sonunda duraklatıldı. Devam etmek için Devam'a, kare kare ilerlemek için Bir kare ilerle'ye basın.`, at);
+            this.pause();
+        }
 
         if (this.pendingScene) {
             const next = this.pendingScene;
@@ -732,11 +847,13 @@ export class RuntimeWorld implements ScriptHost {
         if (state.destroyed || state.failed) return undefined;
         const previous = this.currentBehaviour;
         this.currentBehaviour = state;
+        const timed = this.profileEnter(state);
         try {
             const result = this.guard(state, name, () => this.interpreter.invoke(state.object, name, args));
             if (result instanceof VMCoroutine && !result.started) this.startCoroutine(state, result, []);
             return result === NOT_FOUND ? undefined : result;
         } finally {
+            if (timed) this.profileExit();
             this.currentBehaviour = previous;
         }
     }
@@ -808,7 +925,7 @@ export class RuntimeWorld implements ScriptHost {
         switch (typeName) {
             case "GameObject": {
                 const name = typeof args[0] === "string" ? args[0] : "New Game Object";
-                const doc: GameEntity = { id: createEngineId("entity"), name, tag: "Untagged", parentId: null, active: true, components: [createTransform()] };
+                const doc: GameEntity = { id: createEngineId("entity"), name, tag: "Untagged", layer: 0, parentId: null, active: true, components: [createTransform()] };
                 const [entity] = this.spawn([doc], {});
                 for (const extra of args.slice(1)) if (typeof extra === "string") this.addComponent(entity, extra);
                 return this.gameObjectHandle(entity);
@@ -1350,6 +1467,7 @@ export class RuntimeWorld implements ScriptHost {
                 id: node.id,
                 name: node.name,
                 tag: node.tag,
+                layer: node.layer,
                 parentId: node === root ? null : node.parent?.id ?? null,
                 active: node.activeSelf,
                 components,
@@ -1420,6 +1538,13 @@ export class RuntimeWorld implements ScriptHost {
         return this.gameObjectHandle(root);
     }
 
+    /** A prefab by name (exact, then ignoring case), like Resources.Load. */
+    prefabByName(name: string): PrefabAsset | null {
+        const prefabs = this.project.prefabs;
+        const lower = name.toLocaleLowerCase("tr");
+        return prefabs.find((item) => item.name === name) ?? prefabs.find((item) => item.name.toLocaleLowerCase("tr") === lower) ?? null;
+    }
+
     createPrimitive(kind: string): VMValue {
         const mesh = String(kind).toLowerCase();
         const valid = ["cube", "sphere", "capsule", "cylinder", "plane", "quad"];
@@ -1439,7 +1564,7 @@ export class RuntimeWorld implements ScriptHost {
             collider.size = { x: 1, y: 0.02, z: 1 };
         }
         components.push(collider);
-        const [entity] = this.spawn([{ id: createEngineId("entity"), name: names[mesh], tag: "Untagged", parentId: null, active: true, components }], {});
+        const [entity] = this.spawn([{ id: createEngineId("entity"), name: names[mesh], tag: "Untagged", layer: 0, parentId: null, active: true, components }], {});
         return this.gameObjectHandle(entity);
     }
 
@@ -1474,6 +1599,7 @@ export class RuntimeWorld implements ScriptHost {
     }
 
     private processDestroyQueue() {
+        this.pools.update(this.time);
         if (this.timedDestroys.length) {
             const due = this.timedDestroys.filter((item) => item.at <= this.time);
             if (due.length) {
@@ -1857,7 +1983,21 @@ export class RuntimeWorld implements ScriptHost {
             const emitter = entity.emitter;
             if (!emitter || !entity.activeInHierarchy) continue;
             emitter.update(dt, entity.world, this.physics.gravity, this.is2D);
+            if (emitter.deaths.length) this.fireSubEmitter(entity, emitter);
         }
+    }
+
+    /** Particles V2 (V6): the sub-emitter's system emits where this system's particles died. */
+    private fireSubEmitter(entity: RuntimeEntity, emitter: ParticleEmitter) {
+        const targetId = emitter.component.subEmitterId;
+        const target = targetId ? this.entities.get(targetId) : undefined;
+        if (!target || target === entity || target.destroyed || !target.activeInHierarchy) return;
+        const sub = this.emitterOf(target, true);
+        if (!sub || !sub.component.enabled) return;
+        const count = Math.max(1, Math.min(50, Math.trunc(emitter.component.subEmitterCount)));
+        const deaths = emitter.deaths;
+        const world = target.world;
+        for (let index = 0; index < deaths.length; index += 3) sub.emit(count, world, { x: deaths[index], y: deaths[index + 1], z: deaths[index + 2] }, true);
     }
 
     private recordAudio(kind: "sfx" | "loop" | "music" | "stopMusic", name: string) {
@@ -2117,7 +2257,8 @@ export class RuntimeWorld implements ScriptHost {
         const mouse = { x: this.input.mouseX, y: this.input.mouseY };
         if (this.is2D) {
             const point = screenToWorld(view, { x: mouse.x, y: mouse.y, z: 0 });
-            const ids = this.physics.overlapSphere(point, 0.0005, true);
+            // Like Unity, mouse events skip the Ignore Raycast layer (V6).
+            const ids = this.physics.overlapSphere(point, 0.0005, true, this.queryMask(undefined));
             let best: RuntimeEntity | null = null;
             let bestOrder = -Infinity;
             for (const id of ids) {
@@ -2133,7 +2274,7 @@ export class RuntimeWorld implements ScriptHost {
             return best;
         }
         const ray = screenRay(view, mouse);
-        const hit = this.physics.raycast(ray.origin, ray.direction, camera.component.farClip, true);
+        const hit = this.physics.raycast(ray.origin, ray.direction, camera.component.farClip, true, undefined, this.queryMask(undefined));
         return hit ? this.entities.get(hit.entityId) ?? null : null;
     }
 
@@ -2273,6 +2414,7 @@ export class RuntimeWorld implements ScriptHost {
             let result: IteratorResult<VMValue, void>;
             const previous = this.currentBehaviour;
             this.currentBehaviour = state.owner;
+            const timed = this.profileEnter(state.owner);
             try {
                 result = top.generator.next();
             } catch (error) {
@@ -2280,6 +2422,7 @@ export class RuntimeWorld implements ScriptHost {
                 this.finishCoroutine(state);
                 return;
             } finally {
+                if (timed) this.profileExit();
                 this.currentBehaviour = previous;
             }
             if (result.done) {
@@ -2518,7 +2661,8 @@ export class RuntimeWorld implements ScriptHost {
             }
             if (solidTilemap && tilemap) {
                 const cell = tilemap.cellSize;
-                const solid = new Set(tilemap.palette.filter((tile) => tile.solid).map((tile) => tile.key));
+                // One-way platforms (V6) are no walls.
+                const solid = new Set(tilemap.palette.filter((tile) => tile.solid && !tile.oneWay).map((tile) => tile.key));
                 const { height } = tilemapSize(tilemap);
                 anchor ??= { x: trs.position.x, y: trs.position.y };
                 tileCell ??= cell * sx;
@@ -2863,13 +3007,37 @@ export class RuntimeWorld implements ScriptHost {
         }
     }
 
+    /**
+     * Animation events (V6): each script on the object with the method runs it
+     * (like SendMessage), with the event's parameter when it has one.
+     */
+    private runAnimationEvents(entity: RuntimeEntity, events: readonly AnimationEvent[]) {
+        for (const event of events) {
+            if (entity.destroyed || !entity.activeInHierarchy) return;
+            const args: VMValue[] = event.parameter === "none" ? [] : [event.parameter === "string" ? String(event.value) : Number(event.value)];
+            let received = false;
+            for (const state of entity.behaviours.slice()) {
+                if (!state.live || !this.interpreter.hasMethod(state.object, event.method, false)) continue;
+                received = true;
+                const arity = this.interpreter.methodArity(state.object, event.method);
+                if (arity > args.length) {
+                    this.warnOnce(`animation-event-args:${entity.id}:${event.method}`, `Animasyon olayı '${event.method}' (${entity.name}): metot bir parametre bekliyor; Animation bileşeninde olaya bir değer verin.`);
+                    continue;
+                }
+                this.callMethod(state, event.method, args);
+            }
+            if (!received) this.warnOnce(`animation-event:${entity.id}:${event.method}`, `Animasyon olayı '${event.method}' (${entity.name}): nesnedeki betiklerde bu adda bir metot yok.`);
+        }
+    }
+
     private updateAnimations(deltaTime: number) {
         for (const entity of this.entities.values()) {
             if (entity.destroyed || !entity.activeInHierarchy) continue;
             const animator = entity.animator;
             if (animator && animator.playing && animator.component.enabled) {
                 const finished = animator.update(entity, deltaTime);
-                if (finished) {
+                if (animator.firedEvents.length) this.runAnimationEvents(entity, animator.firedEvents);
+                if (finished && !entity.destroyed) {
                     // Scripts on the object can react without a warning when nobody listens.
                     for (const state of entity.behaviours.slice()) {
                         if (state.live && this.interpreter.hasMethod(state.object, "OnAnimationComplete", false)) this.callMethod(state, "OnAnimationComplete", [finished]);
@@ -3168,6 +3336,8 @@ export class RuntimeWorld implements ScriptHost {
             tweens: this.tweens.activeCount,
             timers: this.timers.activeCount,
             particles,
+            pooled: this.pools.stats(),
+            scripts: this.profiling ? this.scriptTimes() : [],
         };
     }
 

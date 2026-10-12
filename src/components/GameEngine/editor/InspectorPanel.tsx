@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COMPONENT_LABELS } from "@/lib/game-engine/components";
+import { componentKey, instanceOverrides, instanceRootOf, instancesOf, linkedPrefab } from "@/lib/game-engine/prefab-links";
 import { getTransform } from "@/lib/game-engine/scene";
 import type { CompiledProgram } from "@/lib/game-engine/script/compiler";
 import { UNIQUE_COMPONENT_TYPES, type ComponentType, type GameComponent, type GameEntity, type GameProjectDocument } from "@/lib/game-engine/types";
@@ -51,7 +52,6 @@ import {
     ColliderEditor,
     LightEditor,
     MeshEditor,
-    ParticleEditor,
     RigidBodyEditor,
     ScriptEditor,
     SpriteEditor,
@@ -63,8 +63,9 @@ import AnimationEditor from "./AnimationEditor";
 import AnimatorEditor from "./AnimatorEditor";
 import { AudioInspector } from "./AudioAssets";
 import { ModelInspector } from "./ModelAssets";
+import { ParticleEditor } from "./ParticleEditor";
 import { useEditor } from "./context";
-import { MultiEditContext } from "./inspector-fields";
+import { LayerSelect, MultiEditContext } from "./inspector-fields";
 import { sharedComponents } from "./multi-edit";
 import TilemapEditor from "./TilemapEditor";
 import { PlayerInputEditor } from "./PlayerInputEditor";
@@ -74,6 +75,7 @@ import {
     activeScene,
     addComponent,
     addScriptComponent,
+    applyPrefabInstance,
     createScript,
     deleteEntities,
     deletePrefab,
@@ -85,8 +87,10 @@ import {
     instantiatePrefab,
     moveComponent,
     removeComponent,
+    revertPrefabInstance,
     touch,
 } from "./operations";
+import { PrefabMarksContext } from "./prefab-marks";
 import { useEditorState, type EditorStore } from "./store";
 import type { TextKey } from "./text";
 import { Button, Checkbox, Dropdown, FieldRow, IconButton, NumberInput, PanelHeader, Section, SelectInput, TextInput, cx, inputClass, type MenuItem } from "./ui";
@@ -247,12 +251,66 @@ function buildAddMenu({ entities, scripts, program, store, t, is2D, onNewScript 
     ];
 }
 
+/** "Prefab: name" with Select, Apply and Revert (V6) for an object made from a prefab. */
+function PrefabBar({ entity, root, prefabName, prefabId, overrides, disabled }: {
+    entity: GameEntity;
+    root: GameEntity;
+    prefabName: string;
+    prefabId: string;
+    overrides: ReadonlyMap<string, readonly string[]>;
+    disabled: boolean;
+}) {
+    const { store, t, toast } = useEditor();
+    const count = [...overrides.values()].reduce((sum, paths) => sum + paths.length, 0);
+    const mine = overrides.get(entity.id) ?? [];
+    const removed = mine.filter((path) => path.startsWith("-") && !path.startsWith("-object:")).length;
+    const deletedObjects = (overrides.get(root.id) ?? []).filter((path) => path.startsWith("-object:")).length;
+    const apply = () => {
+        let others = 0;
+        store.update(t("hPrefabApply"), (draft) => { others = applyPrefabInstance(draft, root.id); });
+        toast(t("prefabApplied").replace("{name}", prefabName).replace("{count}", String(others)), "success");
+    };
+    const revert = () => {
+        // An object the instance added goes away with the revert; the root stays selected then.
+        const keep = !mine.includes("+object");
+        store.update(t("hPrefabRevert"), (draft) => revertPrefabInstance(draft, root.id), { selection: [keep ? entity.id : root.id] });
+    };
+    return (
+        <div className="space-y-1 rounded-lg border border-sky-400/25 bg-sky-500/[0.07] px-2 py-1.5" data-prefab-bar>
+            <div className="flex items-center gap-1.5">
+                <Package className="h-3.5 w-3.5 shrink-0 text-sky-300" />
+                <p className="min-w-0 flex-1 truncate text-[11.5px] text-sky-100" title={mine.length ? mine.join("\n") : undefined}>
+                    {t("prefabLabel")}: <b>{prefabName}</b>{root.id !== entity.id ? <span className="text-sky-300/80"> · {t("prefabChildOf").replace("{name}", root.name)}</span> : null}
+                </p>
+                <span className="shrink-0 text-[10.5px] text-sky-300/80">{count ? t("prefabOverrideCount").replace("{count}", String(count)) : t("prefabNoOverrides")}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+                <Button className="h-6 px-1.5 text-[11px]" onClick={() => store.selectAsset({ kind: "prefab", id: prefabId })}>{t("prefabSelect")}</Button>
+                <Button className="h-6 px-1.5 text-[11px]" disabled={disabled || !count} title={t("prefabApplyHint")} onClick={apply}>{t("prefabApply")}</Button>
+                <Button className="h-6 px-1.5 text-[11px]" disabled={disabled || !count} title={t("prefabRevertHint")} onClick={revert}>{t("prefabRevert")}</Button>
+            </div>
+            {removed || deletedObjects ? <p className="text-[10.5px] leading-snug text-sky-200/80">{t("prefabRemovedNote").replace("{components}", String(removed)).replace("{objects}", String(deletedObjects))}</p> : null}
+        </div>
+    );
+}
+
 function EntityInspector({ entity }: { entity: GameEntity }) {
     const { store, t, playing, program, openScript } = useEditor();
     const project = useEditorState(store, (state) => state.project);
     const disabled = playing;
     const is2D = project.dimension === "2d";
     const [newScriptName, setNewScriptName] = useState<string | null>(null);
+    // V6: the prefab this object (or its instance root) was made from, and what the instance changed.
+    const sceneObjects = activeScene(project).objects;
+    const prefabInfo = useMemo(() => {
+        const root = instanceRootOf(sceneObjects, entity.id, project.prefabs);
+        const prefab = root ? linkedPrefab(project, root) : null;
+        if (!root || !prefab) return null;
+        const overrides = instanceOverrides(sceneObjects, root, prefab);
+        return { root, prefab, overrides, mine: overrides.get(entity.id) ?? [] };
+    }, [sceneObjects, entity.id, project]);
+    const mine = prefabInfo?.mine ?? [];
+    const marks = useMemo(() => (prefabInfo ? { entity, paths: prefabInfo.mine } : null), [prefabInfo, entity]);
 
     const updateEntity = (label: string, recipe: (target: GameEntity) => void, mergeKey?: string) => {
         store.update(label, (draft) => {
@@ -284,100 +342,110 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
     };
 
     return (
-        <div>
-            <div className="space-y-2 border-b border-white/[0.06] p-3">
-                <div className="flex items-center gap-2">
-                    <Checkbox checked={entity.active} disabled={disabled} label={t("active")} onChange={(value) => updateEntity("Aktiflik", (target) => { target.active = value; })} />
-                    <TextInput value={entity.name} disabled={disabled} maxLength={80} onChange={(value) => updateEntity(t("rename2"), (target) => { target.name = value.trim().slice(0, 80) || target.name; })} className="font-semibold" />
-                </div>
-                <FieldRow label={t("tag")}>
-                    <div className="relative">
-                        <input
-                            list="hanogt-tags"
-                            defaultValue={entity.tag}
-                            key={`${entity.id}:${entity.tag}`}
-                            disabled={disabled}
-                            maxLength={40}
-                            onBlur={(event) => {
-                                const tag = event.target.value.trim().slice(0, 40) || "Untagged";
-                                if (tag !== entity.tag) updateEntity("Etiket", (target) => { target.tag = tag; });
-                            }}
-                            onKeyDown={(event) => { if (event.key === "Enter") (event.target as HTMLInputElement).blur(); }}
-                            className={inputClass}
-                        />
-                        <datalist id="hanogt-tags">{COMMON_TAGS.map((tag) => <option key={tag} value={tag} />)}</datalist>
+        <PrefabMarksContext.Provider value={marks}>
+            <div>
+                <div className="space-y-2 border-b border-white/[0.06] p-3">
+                    {prefabInfo ? <PrefabBar entity={entity} root={prefabInfo.root} prefabName={prefabInfo.prefab.name} prefabId={prefabInfo.prefab.id} overrides={prefabInfo.overrides} disabled={disabled} /> : null}
+                    <div className={cx("flex items-center gap-2", (mine.includes("active") || mine.includes("name")) && "-ml-1.5 pl-1 shadow-[inset_2px_0_0_0_#38bdf8]")} data-overridden={mine.includes("active") || mine.includes("name") ? "true" : undefined}>
+                        <Checkbox checked={entity.active} disabled={disabled} label={t("active")} onChange={(value) => updateEntity("Aktiflik", (target) => { target.active = value; })} />
+                        <TextInput value={entity.name} disabled={disabled} maxLength={80} onChange={(value) => updateEntity(t("rename2"), (target) => { target.name = value.trim().slice(0, 80) || target.name; })} className="font-semibold" />
                     </div>
-                </FieldRow>
-            </div>
-            {entity.components.map((component, index) => {
-                const icon = COMPONENT_ICONS[component.type];
-                const isTransform = component.type === "transform";
-                return (
-                    <Section
-                        key={component.id}
-                        title={componentTitle(component, scriptName, is2D)}
-                        icon={icon.icon}
-                        iconClassName={icon.className}
-                        enabled={isTransform ? undefined : component.enabled}
-                        onEnabledChange={isTransform || disabled ? undefined : (value) => store.update(t("hComponentEnabled"), (draft) => {
-                            const target = findEntity(draft, entity.id)?.components.find((item) => item.id === component.id);
-                            if (target) target.enabled = value;
-                        })}
-                        actions={disabled ? null : (
-                            <Dropdown
-                                align="right"
-                                trigger={({ toggle }) => <IconButton icon={MoreHorizontal} label={t("componentMenu")} size="sm" onClick={toggle} />}
-                                items={[
-                                    { label: t("resetComponent"), icon: RotateCcw, onSelect: () => store.update(t("hResetComponent"), (draft) => {
-                                        const target = findEntity(draft, entity.id);
-                                        if (!target) return;
-                                        const position = target.components.findIndex((item) => item.id === component.id);
-                                        if (position >= 0) target.components[position] = defaultComponentFor(target.components[position], draft.dimension);
-                                    }) },
-                                    ...(!isTransform ? [
-                                        { label: t("moveUp"), icon: ArrowUp, disabled: index <= 1, onSelect: () => store.update(t("hMoveComponent"), (draft) => moveComponent(draft, entity.id, component.id, -1)) },
-                                        { label: t("moveDown"), icon: ArrowDown, disabled: index >= entity.components.length - 1, onSelect: () => store.update(t("hMoveComponent"), (draft) => moveComponent(draft, entity.id, component.id, 1)) },
-                                        { separator: true, label: "" },
-                                        { label: t("removeComponent"), icon: Trash2, danger: true, onSelect: () => store.update(t("hRemoveComponent"), (draft) => removeComponent(draft, entity.id, component.id)) },
-                                    ] as MenuItem[] : []),
-                                ]}
+                    <FieldRow label={t("tag")} overridden={mine.includes("tag")}>
+                        <div className="relative">
+                            <input
+                                list="hanogt-tags"
+                                defaultValue={entity.tag}
+                                key={`${entity.id}:${entity.tag}`}
+                                disabled={disabled}
+                                maxLength={40}
+                                onBlur={(event) => {
+                                    const tag = event.target.value.trim().slice(0, 40) || "Untagged";
+                                    if (tag !== entity.tag) updateEntity("Etiket", (target) => { target.tag = tag; });
+                                }}
+                                onKeyDown={(event) => { if (event.key === "Enter") (event.target as HTMLInputElement).blur(); }}
+                                className={inputClass}
                             />
-                        )}
-                    >
-                        <ComponentBody entity={entity} component={component} disabled={disabled} />
-                    </Section>
-                );
-            })}
-            <div className="p-3">
-                {newScriptName !== null ? (
-                    <div className="space-y-2 rounded-xl border border-indigo-400/30 bg-indigo-500/10 p-3">
-                        <p className="text-[11.5px] font-semibold text-indigo-100">{t("newScript")}</p>
-                        <input
-                            autoFocus
-                            value={newScriptName}
-                            onChange={(event) => setNewScriptName(event.target.value.replace(/[^A-Za-z0-9_]/g, "").slice(0, 60))}
-                            placeholder={`${entity.name.replace(/[^A-Za-z0-9]/g, "")}Controller`}
-                            className={inputClass}
-                            onKeyDown={(event) => { if (event.key === "Enter") createAndAttach("csharp"); if (event.key === "Escape") setNewScriptName(null); }}
-                        />
-                        <div className="grid grid-cols-3 gap-1.5">
-                            <Button variant="primary" onClick={() => createAndAttach("csharp")}>C#</Button>
-                            <Button onClick={() => createAndAttach("cpp")}>C++</Button>
-                            <Button variant="ghost" onClick={() => setNewScriptName(null)}>{t("cancel")}</Button>
+                            <datalist id="hanogt-tags">{COMMON_TAGS.map((tag) => <option key={tag} value={tag} />)}</datalist>
                         </div>
-                    </div>
-                ) : (
-                    <Dropdown
-                        items={addMenu}
-                        trigger={({ toggle }) => (
-                            <button type="button" disabled={disabled} onClick={toggle} className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-[12.5px] font-semibold text-zinc-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white disabled:opacity-40">
-                                <Plus className="h-4 w-4" />{t("addComponent")}
-                            </button>
-                        )}
-                    />
-                )}
+                    </FieldRow>
+                    <FieldRow label={t("layer")} overridden={mine.includes("layer")}>
+                        <LayerSelect value={entity.layer} disabled={disabled} onChange={(layer) => updateEntity(t("hLayer"), (target) => { target.layer = layer; })} />
+                    </FieldRow>
+                </div>
+                {entity.components.map((component, index) => {
+                    const icon = COMPONENT_ICONS[component.type];
+                    const isTransform = component.type === "transform";
+                    const key = prefabInfo ? componentKey(entity, component) : "";
+                    const added = Boolean(prefabInfo) && mine.includes(`+${key}`);
+                    const changed = Boolean(prefabInfo) && !added && mine.some((path) => path.startsWith(`${key}.`));
+                    return (
+                        <Section
+                            key={component.id}
+                            title={componentTitle(component, scriptName, is2D)}
+                            subtitle={added || changed ? <span className="inline-flex items-center gap-1 text-[10.5px] text-sky-300" title={mine.filter((path) => path.startsWith(`${key}.`)).map((path) => path.slice(key.length + 1)).join(", ") || undefined}><span className="h-1.5 w-1.5 rounded-full bg-sky-400" />{added ? t("prefabAdded") : t("prefabChanged")}</span> : undefined}
+                            icon={icon.icon}
+                            iconClassName={icon.className}
+                            enabled={isTransform ? undefined : component.enabled}
+                            onEnabledChange={isTransform || disabled ? undefined : (value) => store.update(t("hComponentEnabled"), (draft) => {
+                                const target = findEntity(draft, entity.id)?.components.find((item) => item.id === component.id);
+                                if (target) target.enabled = value;
+                            })}
+                            actions={disabled ? null : (
+                                <Dropdown
+                                    align="right"
+                                    trigger={({ toggle }) => <IconButton icon={MoreHorizontal} label={t("componentMenu")} size="sm" onClick={toggle} />}
+                                    items={[
+                                        { label: t("resetComponent"), icon: RotateCcw, onSelect: () => store.update(t("hResetComponent"), (draft) => {
+                                            const target = findEntity(draft, entity.id);
+                                            if (!target) return;
+                                            const position = target.components.findIndex((item) => item.id === component.id);
+                                            if (position >= 0) target.components[position] = defaultComponentFor(target.components[position], draft.dimension);
+                                        }) },
+                                        ...(!isTransform ? [
+                                            { label: t("moveUp"), icon: ArrowUp, disabled: index <= 1, onSelect: () => store.update(t("hMoveComponent"), (draft) => moveComponent(draft, entity.id, component.id, -1)) },
+                                            { label: t("moveDown"), icon: ArrowDown, disabled: index >= entity.components.length - 1, onSelect: () => store.update(t("hMoveComponent"), (draft) => moveComponent(draft, entity.id, component.id, 1)) },
+                                            { separator: true, label: "" },
+                                            { label: t("removeComponent"), icon: Trash2, danger: true, onSelect: () => store.update(t("hRemoveComponent"), (draft) => removeComponent(draft, entity.id, component.id)) },
+                                        ] as MenuItem[] : []),
+                                    ]}
+                                />
+                            )}
+                        >
+                            <ComponentBody entity={entity} component={component} disabled={disabled} />
+                        </Section>
+                    );
+                })}
+                <div className="p-3">
+                    {newScriptName !== null ? (
+                        <div className="space-y-2 rounded-xl border border-indigo-400/30 bg-indigo-500/10 p-3">
+                            <p className="text-[11.5px] font-semibold text-indigo-100">{t("newScript")}</p>
+                            <input
+                                autoFocus
+                                value={newScriptName}
+                                onChange={(event) => setNewScriptName(event.target.value.replace(/[^A-Za-z0-9_]/g, "").slice(0, 60))}
+                                placeholder={`${entity.name.replace(/[^A-Za-z0-9]/g, "")}Controller`}
+                                className={inputClass}
+                                onKeyDown={(event) => { if (event.key === "Enter") createAndAttach("csharp"); if (event.key === "Escape") setNewScriptName(null); }}
+                            />
+                            <div className="grid grid-cols-3 gap-1.5">
+                                <Button variant="primary" onClick={() => createAndAttach("csharp")}>C#</Button>
+                                <Button onClick={() => createAndAttach("cpp")}>C++</Button>
+                                <Button variant="ghost" onClick={() => setNewScriptName(null)}>{t("cancel")}</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <Dropdown
+                            items={addMenu}
+                            trigger={({ toggle }) => (
+                                <button type="button" disabled={disabled} onClick={toggle} className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-[12.5px] font-semibold text-zinc-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white disabled:opacity-40">
+                                    <Plus className="h-4 w-4" />{t("addComponent")}
+                                </button>
+                            )}
+                        />
+                    )}
+                </div>
             </div>
-        </div>
+        </PrefabMarksContext.Provider>
     );
 }
 
@@ -480,6 +548,9 @@ function MultiEntityInspector({ entities }: { entities: GameEntity[] }) {
                         onKeyDown={(event) => { if (event.key === "Enter") (event.target as HTMLInputElement).blur(); }}
                         className={inputClass}
                     />
+                </FieldRow>
+                <FieldRow label={t("layer")}>
+                    <LayerSelect value={primary.layer} mixed={entities.some((entity) => entity.layer !== primary.layer)} disabled={disabled} onChange={(layer) => updateAll(t("hLayer"), (target) => { target.layer = layer; })} />
                 </FieldRow>
                 <div className="grid grid-cols-2 gap-2">
                     <Button disabled={disabled} onClick={() => {
@@ -628,12 +699,14 @@ function AssetInspector() {
                     })} />
                 </div>
                 <p className="text-[11.5px] text-zinc-400">{prefab.entities.length} {t("objects")} · {root?.components.map((component) => COMPONENT_LABELS[component.type]).join(", ")}</p>
+                <p className="text-[11px] text-zinc-500">{t("prefabInstances").replace("{count}", String(project.scenes.reduce((sum, item) => sum + instancesOf(item.objects, prefab).length, 0)))}</p>
                 <Button variant="primary" className="w-full" disabled={disabled} onClick={() => {
                     let id: string | null = null;
                     store.update("Prefab ekle", (draft) => { id = instantiatePrefab(draft, prefab.id, createAt()); });
                     if (id) store.setSelection([id]);
                 }}><CopyPlus className="h-4 w-4" />{t("instantiate")}</Button>
                 <p className="rounded-lg bg-white/[0.03] p-2 text-[11px] leading-relaxed text-zinc-500">{t("prefabUsage1")}<code className="text-zinc-300">public GameObject prefab;</code>{t("prefabUsage2")}<code className="text-zinc-300">Instantiate(prefab)</code>{t("prefabUsage3")}</p>
+                <p className="rounded-lg bg-white/[0.03] p-2 text-[11px] leading-relaxed text-zinc-500">{t("prefabPoolHint")} <code className="break-all text-zinc-300">Pool.Spawn(&quot;{prefab.name}&quot;, position)</code> · <code className="text-zinc-300">Pool.Despawn(gameObject)</code></p>
                 <Button variant="danger" className="w-full" disabled={disabled} onClick={() => {
                     if (!window.confirm(`"${prefab.name}" ${t("confirmDelete")}`)) return;
                     store.update("Prefab sil", (draft) => deletePrefab(draft, prefab.id));

@@ -26,6 +26,7 @@ import {
 import { cleanLocalizationKey } from "../localization";
 import { countTiles, fillTiles, localPointToCell, resolveTileKey, setTileKey, tileAt, tilemapSize } from "../tilemap";
 import { VMColor, VMError, VMList, VMQuat, VMRef, Vec3, ScriptObject, type HostObject, type VMValue } from "../script/values";
+import { PARTICLE_SHAPES } from "../types";
 import type {
     AnimationComponent,
     AudioSourceComponent,
@@ -302,7 +303,7 @@ export class GameObjectHandle extends EntityHandle {
         switch (name) {
             case "activeSelf": return this.entity.activeSelf;
             case "activeInHierarchy": return this.entity.activeInHierarchy;
-            case "layer": return 0;
+            case "layer": return this.entity.layer;
             case "isStatic": return false;
             case "scene": return this.world.sceneHandle();
             case "gameObject": return this;
@@ -311,7 +312,11 @@ export class GameObjectHandle extends EntityHandle {
     }
 
     set(name: string, value: VMValue): void {
-        if (name === "layer" || name === "isStatic") return;
+        if (name === "layer") {
+            this.world.setLayer(this.entity, value);
+            return;
+        }
+        if (name === "isStatic") return;
         if (name === "active") {
             this.world.setActive(this.entity, toBool(value));
             return;
@@ -1457,6 +1462,13 @@ export class ParticleSystemHandle extends ComponentHandle<ParticleSystemComponen
             case "emissionRate":
                 return c.emissionRate;
             case "angle": return c.spread;
+            // V6: the shape module (ps.shape.radius…) and the size curve's middle.
+            case "shapeType": return c.shape.charAt(0).toUpperCase() + c.shape.slice(1);
+            case "radius": return c.shapeRadius;
+            case "radiusThickness": return c.radiusThickness;
+            case "arc": return c.arc;
+            case "midSize": return c.midSize ?? (c.startSize + c.endSize) / 2;
+            case "subEmitterCount": return c.subEmitterCount;
             default: {
                 const common = this.componentGet(name);
                 if (common !== undefined) return common;
@@ -1468,6 +1480,27 @@ export class ParticleSystemHandle extends ComponentHandle<ParticleSystemComponen
     set(name: string, value: VMValue): void {
         const c = this.component;
         switch (name) {
+            case "shapeType": {
+                const shape = String(value ?? "").toLowerCase();
+                if (!(PARTICLE_SHAPES as readonly string[]).includes(shape)) hostError(`ParticleSystem.shapeType: '${String(value)}' yok; Point, Circle, Cone, Box ya da Edge kullanın.`, "ArgumentException");
+                c.shape = shape as ParticleSystemComponent["shape"];
+                break;
+            }
+            case "radius":
+                c.shapeRadius = Math.max(0, Math.min(1000, toNumber(value)));
+                break;
+            case "radiusThickness":
+                c.radiusThickness = Math.max(0, Math.min(1, toNumber(value)));
+                break;
+            case "arc":
+                c.arc = Math.max(0, Math.min(360, toNumber(value)));
+                break;
+            case "midSize":
+                c.midSize = Math.max(0, toNumber(value));
+                break;
+            case "subEmitterCount":
+                c.subEmitterCount = Math.max(1, Math.min(50, Math.trunc(toNumber(value))));
+                break;
             case "startColor":
                 c.startColor = toColor(value).toHex();
                 break;

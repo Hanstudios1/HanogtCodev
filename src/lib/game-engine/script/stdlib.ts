@@ -459,6 +459,9 @@ export function defaultForTypeName(typeName: string, dialect: Dialect, program: 
             return new VMQuat(0, 0, 0, 1);
         case "KeyCode":
             return "None";
+        case "LayerMask":
+            // Like Unity, a LayerMask field starts as Nothing until the Inspector (or code) picks layers.
+            return 0;
         case "List":
         case "HashSet":
         case "Queue":
@@ -600,6 +603,8 @@ export function getBuiltinMember(object: VMValue, name: string, dialect: Dialect
         if (name === "Length") return object.length;
         return NOT_FOUND;
     }
+    // A LayerMask is its int; mask.value reads it (V6).
+    if (typeof object === "number" && name === "value") return object;
     if (object instanceof VMList) {
         if (name === "Count" || name === "Length") return object.items.length;
         if (name === "Capacity") return Math.max(4, object.items.length);

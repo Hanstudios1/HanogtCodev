@@ -1,5 +1,5 @@
 /**
- * Hanogt Engine data model (schema v5).
+ * Hanogt Engine data model (schema v6).
  *
  * Everything in this file is plain JSON so projects can be saved to the
  * cloud, exported, published to the Arcade and loaded by the standalone
@@ -7,14 +7,14 @@
  */
 import type { InputSettings } from "./input-actions";
 
-export const GAME_ENGINE_SCHEMA_VERSION = 5 as const;
+export const GAME_ENGINE_SCHEMA_VERSION = 6 as const;
 
 /** Engine release shown in the UI, exported games and the Arcade. */
-export const ENGINE_VERSION = 5 as const;
-export const ENGINE_VERSION_LABEL = "Hanogt Engine V5";
+export const ENGINE_VERSION = 6 as const;
+export const ENGINE_VERSION_LABEL = "Hanogt Engine V6";
 
-export type EngineRules = 3 | 4 | 5;
-export const ENGINE_RULES: readonly EngineRules[] = [3, 4, 5];
+export type EngineRules = 3 | 4 | 5 | 6;
+export const ENGINE_RULES: readonly EngineRules[] = [3, 4, 5, 6];
 
 export const SUPPORTED_SCRIPT_LANGUAGES = ["csharp", "cpp"] as const;
 
@@ -157,12 +157,42 @@ export interface ScriptComponent extends ComponentBase {
     fields: Record<string, ScriptFieldValue>;
 }
 
+/**
+ * Where particles start (V6). point: from the object's position (the V5
+ * behaviour); circle: on a ring or disc in the object's XY plane, moving
+ * outwards; cone: on a disc, fanning out by the cone angle; box: anywhere in
+ * a box; edge: along a line on the object's X axis. Every shape but circle
+ * moves along the object's forward axis (+Z) within the cone angle.
+ */
+export const PARTICLE_SHAPES = ["point", "circle", "cone", "box", "edge"] as const;
+export type ParticleShape = (typeof PARTICLE_SHAPES)[number];
+
+/** A timed burst of a particle system (V6), counted from the start of every loop. */
+export interface ParticleBurst {
+    /** Seconds after the loop starts. */
+    time: number;
+    count: number;
+    /** How many times it fires; 0 repeats every interval while the system plays. */
+    cycles: number;
+    /** Seconds between the cycles. */
+    interval: number;
+}
+
+/** A stop of the colour-over-lifetime gradient (V6). */
+export interface ParticleColorStop {
+    /** 0 = when a particle is born, 1 = when it dies. */
+    time: number;
+    color: string;
+    alpha: number;
+}
+
 export interface ParticleSystemComponent extends ComponentBase {
     type: "particleSystem";
     playOnStart: boolean;
     loop: boolean;
     duration: number;
     emissionRate: number;
+    /** Particles emitted at once whenever a loop starts. */
     burstCount: number;
     maxParticles: number;
     lifetime: number;
@@ -175,6 +205,30 @@ export interface ParticleSystemComponent extends ComponentBase {
     endColor: string;
     gravityModifier: number;
     worldSpace: boolean;
+    /** V6: emission shape and its sizes. */
+    shape: ParticleShape;
+    /** circle and cone: radius of the ring/disc. */
+    shapeRadius: number;
+    /** circle and cone: 0 = only on the rim, 1 = anywhere inside. */
+    radiusThickness: number;
+    /** circle: degrees of the ring used (360 = all of it). */
+    arc: number;
+    /** box: size of the box. */
+    boxSize: Vector3;
+    /** edge: length of the line. */
+    edgeLength: number;
+    /** V6: repeating timed bursts (up to 8). */
+    bursts: ParticleBurst[];
+    /** V6: colour and opacity over lifetime (2–8 stops); empty keeps start → end colour with a fade (V5). */
+    colorStops: ParticleColorStop[];
+    /** V6: size in the middle of a particle's life (a smooth start → middle → end curve); null keeps start → end (V5). */
+    midSize: number | null;
+    /** V6: an image of the project drawn on every particle instead of a soft dot. */
+    textureId: string | null;
+    /** V6: object whose Particle System emits where each particle dies (one level: its own deaths emit nothing). */
+    subEmitterId: string | null;
+    /** Particles the sub-emitter emits per death. */
+    subEmitterCount: number;
 }
 
 export const SOUND_PRESETS = ["coin", "jump", "hit", "explosion", "laser", "powerup", "click", "blip", "lose", "win", "step", "shoot"] as const;
@@ -341,6 +395,27 @@ export interface UIInputFieldComponent extends ComponentBase, UIRectFields {
     onEndEdit: UIEventTarget;
 }
 
+/**
+ * A rule tile (V6): the atlas frame it draws depends on which neighbours hold
+ * a tile it joins (auto-tiling). 4 neighbours (N, E, S, W) give 16 slots; 8
+ * neighbours give the 47 slots of a "blob" tileset (a corner only counts when
+ * both of its sides join).
+ */
+export interface RuleTile {
+    neighbors: 4 | 8;
+    /** Atlas frame per slot (16 or 47 of them); -1 draws the tile's own frame. */
+    frames: number[];
+    /** Joins every tile of the tilemap instead of only itself. */
+    matchAny: boolean;
+}
+
+/** An animated tile (V6): atlas frames shown one after another. */
+export interface AnimatedTile {
+    frames: number[];
+    /** Frames per second. */
+    fps: number;
+}
+
 /** One kind of tile in a tilemap palette. */
 export interface TileDefinition {
     /** Single printable character used in `rows` ("." means an empty cell). */
@@ -351,6 +426,12 @@ export interface TileDefinition {
     solid: boolean;
     /** Cell of the tilemap atlas drawn for this tile; -1 draws a plain colored tile. */
     frame: number;
+    /** V6: picks its frame from its neighbours (null = a normal tile). The schema always writes it. */
+    rule?: RuleTile | null;
+    /** V6: cycles through atlas frames (null = still). A rule tile can't be animated. */
+    animation?: AnimatedTile | null;
+    /** V6: a solid tile bodies only land on from above; they pass through from below and the sides. */
+    oneWay?: boolean;
 }
 
 export interface TilemapComponent extends ComponentBase {
@@ -406,6 +487,26 @@ export interface AnimationClip {
     duration: number;
     wrap: AnimationWrapMode;
     tracks: AnimationTrack[];
+    /** V6: script methods called when playback passes a time (Unity's animation events). */
+    events?: AnimationEvent[];
+}
+
+export const ANIMATION_EVENT_PARAMETERS = ["none", "float", "int", "string"] as const;
+export type AnimationEventParameter = (typeof ANIMATION_EVENT_PARAMETERS)[number];
+
+/**
+ * An animation event (V6): when playback passes `time`, every script on the
+ * object with a method of that name runs it (like SendMessage), with the
+ * parameter when the event has one.
+ */
+export interface AnimationEvent {
+    /** Seconds from the clip's start (0 … duration). */
+    time: number;
+    /** Method name ("" while it is being typed: nothing runs). */
+    method: string;
+    parameter: AnimationEventParameter;
+    /** The parameter's value: a number for float/int, text for string. */
+    value: number | string;
 }
 
 export interface AnimationComponent extends ComponentBase {
@@ -711,9 +812,20 @@ export interface GameEntity {
     id: string;
     name: string;
     tag: string;
+    /** Physics layer 0–15 (V6): the collision matrix and layer masks use it. */
+    layer: number;
     parentId: string | null;
     active: boolean;
     components: GameComponent[];
+    /** V6 (editor): the prefab this scene object was made from, so it can be applied or reverted. Absent on other objects. */
+    prefab?: PrefabLink;
+}
+
+/** A scene object's link to its prefab (V6). */
+export interface PrefabLink {
+    prefabId: string;
+    /** The prefab entity it matches (the prefab's root for the instance root, a child for children). */
+    sourceId: string;
 }
 
 export interface SceneSettings {
@@ -812,18 +924,74 @@ export interface ProjectSettings {
     pixelArt: boolean;
     showFps: boolean;
     touchControls: boolean;
+    /** What the on-screen touch controls look like (V6: joystick, side, buttons). */
+    touchLayout: TouchLayout;
     /**
      * Engine rules the game was made with. A project keeps the behavior of the
      * engine it was made with wherever a later engine changed it: documents
-     * from before V4 use 3, V4 projects 4, new projects 5.
+     * from before V4 use 3, V4 projects 4, V5 projects 5, new projects 6. The
+     * Engine rules panel upgrades a project (and can undo it).
      */
     rules: EngineRules;
+    /** Rules the project had before the Engine rules panel upgraded it (V6), so the upgrade can be undone; null otherwise. */
+    rulesBefore: EngineRules | null;
     /** Named buttons and axes for keyboard, mouse and gamepad (V4). */
     input: InputSettings;
     /** Languages and the string table (V5). */
     localization: LocalizationSettings;
     /** Leaderboards and achievements the Arcade keeps for players (V5). */
     arcade: ArcadeSettings;
+    /** Named physics layers and which of them collide (V6). */
+    layers: LayerSettings;
+    /** Log points of the script editor (V6): they print while the game runs in the editor only. */
+    logPoints: LogPoint[];
+}
+
+/** A log point (V6): prints `message` each time the line runs; {expression} parts show values. */
+export interface LogPoint {
+    scriptId: string;
+    /** 1-based line in the script. */
+    line: number;
+    message: string;
+    enabled: boolean;
+    /** Also pauses the game at the end of that frame (a breakpoint that lets the frame finish). */
+    pause: boolean;
+}
+
+/** On-screen touch controls (V6). */
+export interface TouchLayout {
+    /** "dpad": the arrow pad of V5 (presses the arrow keys); "joystick": an analog stick that also feeds the Horizontal/Vertical axes. */
+    stick: "dpad" | "joystick";
+    /** Side of the screen with the stick; the buttons take the other side. */
+    side: "left" | "right";
+    /** Joystick diameter in CSS pixels. */
+    size: number;
+    /** Part of the joystick's radius (0–0.9) that counts as zero. */
+    deadZone: number;
+    /** Up to 4 buttons, each pressing an input action; none = A (Space) and B (LeftControl) as before V6. */
+    buttons: TouchButtonSetting[];
+}
+
+/** One on-screen button (V6). */
+export interface TouchButtonSetting {
+    /** Input action it presses (its keys and gamepad buttons too), e.g. "Jump". */
+    action: string;
+    /** Short text on the button. */
+    label: string;
+}
+
+/** Physics layers (V6): up to 16, layer 0 is "Default". */
+export const MAX_LAYERS = 16;
+
+/** Named layers and the collision matrix (V6). */
+export interface LayerSettings {
+    /** Names of layers 0–15 ("" = unused); layer 0 is always "Default". */
+    names: string[];
+    /**
+     * Collision matrix: bit j of row i is set when layers i and j collide.
+     * Rows are symmetric; all bits set means everything collides (as before V6).
+     */
+    collisions: number[];
 }
 
 /** One text of the string table in every language of the game (V5). */

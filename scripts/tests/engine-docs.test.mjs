@@ -129,7 +129,7 @@ test("every docs section is listed in the contents once and written in both lang
     for (const id of listed) assert.equal(written.filter((item) => item === id).length, 2, `'${id}' is written in Turkish and English`);
     for (const id of written) assert.ok(listed.includes(id), `'${id}' is in the contents`);
     const whatsNew = await load("components/GameEngine/whats-new.ts");
-    for (const list of ["V5_FEATURES", "V4_FEATURES", "V3_FEATURES", "TEMPLATE_UPDATE"]) {
+    for (const list of ["V6_FEATURES", "V5_FEATURES", "V4_FEATURES", "V3_FEATURES", "TEMPLATE_UPDATE"]) {
         for (const item of whatsNew[list]) assert.ok(listed.includes(item.section), `${list}: '${item.title.EN}' links to #${item.section}`);
     }
 });

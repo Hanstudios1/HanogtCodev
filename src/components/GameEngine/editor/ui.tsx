@@ -88,10 +88,10 @@ export function Button({ children, onClick, variant = "secondary", disabled, cla
 // Fields
 // ---------------------------------------------------------------------------
 
-export function FieldRow({ label, children, title, wide }: { label: ReactNode; children: ReactNode; title?: string; wide?: boolean }) {
+export function FieldRow({ label, children, title, wide, overridden }: { label: ReactNode; children: ReactNode; title?: string; wide?: boolean; overridden?: boolean }) {
     return (
-        <div className={cx("group/field grid items-center gap-2 py-[3px]", wide ? "grid-cols-1" : "grid-cols-[minmax(84px,38%)_1fr]")}>
-            <span className="truncate text-[11.5px] text-zinc-400" title={title ?? (typeof label === "string" ? label : undefined)}>{label}</span>
+        <div className={cx("group/field grid items-center gap-2 py-[3px]", wide ? "grid-cols-1" : "grid-cols-[minmax(84px,38%)_1fr]", overridden && "-ml-1.5 pl-1 shadow-[inset_2px_0_0_0_#38bdf8]")} data-overridden={overridden ? "true" : undefined}>
+            <span className={cx("truncate text-[11.5px]", overridden ? "font-semibold text-sky-200" : "text-zinc-400")} title={title ?? (typeof label === "string" ? label : undefined)}>{label}</span>
             <div className="min-w-0">{children}</div>
         </div>
     );

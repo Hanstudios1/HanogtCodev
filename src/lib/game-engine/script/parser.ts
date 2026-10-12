@@ -1046,6 +1046,11 @@ export class Parser {
         return this.parseAssignment();
     }
 
+    /** All tokens were read (a standalone expression ended where it should). */
+    get done(): boolean {
+        return this.peek().kind === "eof";
+    }
+
     private isLambdaStart(): boolean {
         if (this.isIdent() && this.is("=>", 1)) return true;
         if (!this.is("(")) return false;
@@ -1551,4 +1556,15 @@ export class Parser {
 
 export function parseScript(source: string, options: ParserOptions): ProgramUnit {
     return new Parser(source, options).parseProgram();
+}
+
+/** One expression on its own (log point messages, V6); null when the text isn't exactly one expression. */
+export function parseStandaloneExpression(source: string, dialect: ScriptDialect): Expr | null {
+    try {
+        const parser = new Parser(source, { scriptId: "", scriptName: "", dialect });
+        const expression = parser.parseExpression();
+        return parser.done ? expression : null;
+    } catch {
+        return null;
+    }
 }

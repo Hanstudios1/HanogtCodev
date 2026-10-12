@@ -448,6 +448,7 @@ class Analyzer {
             if (["x", "y", "z", "magnitude", "sqrMagnitude"].includes(name)) return "float";
         }
         if (objectType === "Transform" && ["position", "localPosition", "eulerAngles", "localEulerAngles", "localScale", "forward", "right", "up", "lossyScale"].includes(name)) return "Vector3";
+        if (objectType === "LayerMask" && name === "value") return "int";
         if (objectType === "static:Vector3" || objectType === "static:Vector2") return objectType.slice(7);
         if (objectType === "static:Color") return "Color";
         if (objectType === "Rigidbody" && name === "velocity") return "Vector3";
@@ -658,6 +659,8 @@ const KNOWN_CONSTRUCTIBLE = new Set([
     "WaitForSecondsRealtime", "WaitForEndOfFrame", "WaitForFixedUpdate", "WaitUntil", "WaitWhile", "Exception",
     "ArgumentException", "InvalidOperationException", "NullReferenceException", "IndexOutOfRangeException", "KeyNotFoundException",
     "GameObject", "Random", "string", "int", "float", "bool", "object", "Pair", "Array", "Func", "Action",
+    // Made by the engine (RuntimeWorld.construct): new Ray(origin, direction) for Physics.Raycast(ray, …).
+    "Ray", "Ray2D", "RaycastHit", "RaycastHit2D",
 ]);
 
 function fieldInfoFrom(decl: FieldDecl, dialect: "csharp" | "cpp", enums: Map<string, EnumInfo>): FieldInfo {

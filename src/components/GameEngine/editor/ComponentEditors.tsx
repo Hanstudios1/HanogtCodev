@@ -43,7 +43,6 @@ import {
     type GameEntity,
     type LightComponent,
     type MeshRendererComponent,
-    type ParticleSystemComponent,
     type RigidBodyComponent,
     type ScriptComponent,
     type ScriptFieldValue,
@@ -54,10 +53,11 @@ import {
     type Vector3,
 } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
-import { AnchorInput, TextureSelect, useComponentEdit, type Editor } from "./inspector-fields";
+import { AnchorInput, LayerMaskInput, TextureSelect, useComponentEdit, type Editor } from "./inspector-fields";
 import { LocalizationKeyField } from "./LocalizationPanel";
 import { activeScene } from "./operations";
 import { useEditorState } from "./store";
+import { usePrefabMarks } from "./prefab-marks";
 import { addWatch, SHOW_WATCH_EVENT } from "./WatchPanel";
 import { Button, Checkbox, ColorInput, FieldRow, NumberInput, SelectInput, SliderInput, TextInput, Toggle, VectorInput } from "./ui";
 
@@ -70,12 +70,13 @@ export function TransformEditor({ entity, component, disabled }: Editor<Transfor
     const project = useEditorState(store, (state) => state.project);
     const is2D = project.dimension === "2d";
     const edit = useComponentEdit(entity.id, component);
+    const marked = usePrefabMarks();
     return (
         <div className="space-y-0.5">
-            <FieldRow label={t("position")}>
+            <FieldRow label={t("position")} overridden={marked(component, "position")}>
                 <VectorInput value={component.position} disabled={disabled} onChange={(value) => edit("position", (draft) => { draft.position = value; })} />
             </FieldRow>
-            <FieldRow label={t("rotation")}>
+            <FieldRow label={t("rotation")} overridden={marked(component, "rotation")}>
                 {is2D ? (
                     <div className="grid grid-cols-3 gap-1">
                         <div className="col-span-1 col-start-3">
@@ -86,7 +87,7 @@ export function TransformEditor({ entity, component, disabled }: Editor<Transfor
                     <VectorInput value={component.rotation} step={1} precision={2} disabled={disabled} onChange={(value) => edit("rotation", (draft) => { draft.rotation = value; })} />
                 )}
             </FieldRow>
-            <FieldRow label={t("scaleLabel")}>
+            <FieldRow label={t("scaleLabel")} overridden={marked(component, "scale")}>
                 <VectorInput value={component.scale} hideZ={is2D} disabled={disabled} onChange={(value) => edit("scale", (draft) => { draft.scale = is2D ? { ...value, z: draft.scale.z } : value; })} />
             </FieldRow>
         </div>
@@ -381,34 +382,6 @@ export function ColliderEditor({ entity, component, disabled }: Editor<ColliderC
 // Effects, audio & UI
 // ---------------------------------------------------------------------------
 
-export function ParticleEditor({ entity, component, disabled }: Editor<ParticleSystemComponent>) {
-    const edit = useComponentEdit(entity.id, component);
-    const number = (label: string, key: keyof ParticleSystemComponent, options: { min?: number; max?: number; step?: number; integer?: boolean } = {}) => (
-        <FieldRow label={label}>
-            <NumberInput value={component[key] as number} min={options.min} max={options.max} step={options.step ?? 0.1} integer={options.integer} disabled={disabled} onChange={(value) => edit(String(key), (draft) => { (draft as unknown as Record<string, number>)[key] = value; })} />
-        </FieldRow>
-    );
-    return (
-        <div className="space-y-0.5">
-            <FieldRow label="Play On Start"><Toggle checked={component.playOnStart} disabled={disabled} onChange={(value) => edit("playOnStart", (draft) => { draft.playOnStart = value; })} /></FieldRow>
-            <FieldRow label="Looping"><Toggle checked={component.loop} disabled={disabled} onChange={(value) => edit("loop", (draft) => { draft.loop = value; })} /></FieldRow>
-            {number("Duration", "duration", { min: 0.05, step: 0.1 })}
-            {number("Rate over Time", "emissionRate", { min: 0, step: 1 })}
-            {number("Burst Count", "burstCount", { min: 0, step: 1, integer: true })}
-            {number("Max Particles", "maxParticles", { min: 1, max: 4000, step: 10, integer: true })}
-            {number("Lifetime", "lifetime", { min: 0.05, step: 0.1 })}
-            {number("Start Speed", "startSpeed", { step: 0.1 })}
-            <FieldRow label="Cone Angle"><SliderInput value={component.spread} min={0} max={180} step={1} disabled={disabled} onChange={(value) => edit("spread", (draft) => { draft.spread = value; })} /></FieldRow>
-            {number("Start Size", "startSize", { min: 0, step: 0.02 })}
-            {number("End Size", "endSize", { min: 0, step: 0.02 })}
-            <FieldRow label="Start Color"><ColorInput value={component.startColor} disabled={disabled} onChange={(color) => edit("startColor", (draft) => { draft.startColor = color; })} /></FieldRow>
-            <FieldRow label="End Color"><ColorInput value={component.endColor} disabled={disabled} onChange={(color) => edit("endColor", (draft) => { draft.endColor = color; })} /></FieldRow>
-            {number("Gravity Modifier", "gravityModifier", { step: 0.1 })}
-            <FieldRow label="World Space"><Toggle checked={component.worldSpace} disabled={disabled} onChange={(value) => edit("worldSpace", (draft) => { draft.worldSpace = value; })} /></FieldRow>
-        </div>
-    );
-}
-
 let previewEngine: SoundEngine | null = null;
 
 let previewHandle: SoundHandle | null = null;
@@ -521,6 +494,8 @@ function defaultFieldValue(field: FieldInfo): ScriptFieldValue {
             return "#ffffff";
         case "KeyCode":
             return "None";
+        case "LayerMask":
+            return 0;
         default:
             return null;
     }
@@ -543,6 +518,7 @@ function ScriptFieldInput({ field, value, onChange, disabled }: { field: FieldIn
     }
     if (type === "Color") return <ColorInput value={typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value) ? value : "#ffffff"} disabled={disabled} onChange={onChange} />;
     if (type === "KeyCode") return <SelectInput value={typeof value === "string" ? value : "None"} disabled={disabled} onChange={onChange} options={KEY_CODES.map((key) => ({ value: key, label: key }))} />;
+    if (type === "LayerMask") return <LayerMaskInput value={typeof value === "number" ? value : 0} disabled={disabled} onChange={onChange} />;
     if (type === "AudioClip") {
         // An uploaded file is kept by id (renaming it keeps the link), a built-in sound by name.
         const audio = project.audio ?? [];
@@ -617,6 +593,7 @@ export function ScriptEditor({ entity, component, disabled }: Editor<ScriptCompo
     const scripts = useEditorState(store, (state) => state.project.scripts);
     const projectId = useEditorState(store, (state) => state.project.id);
     const edit = useComponentEdit(entity.id, component);
+    const marked = usePrefabMarks();
     const script = scripts.find((item) => item.id === component.scriptId);
     const classes = program.behavioursByScript.get(component.scriptId) ?? [];
     const className = component.className && classes.includes(component.className) ? component.className : classes[0] ?? null;
@@ -683,6 +660,7 @@ export function ScriptEditor({ entity, component, disabled }: Editor<ScriptCompo
                                         </span>
                                     )}
                                     title={field.tooltip ?? `${field.typeName} ${field.name}`}
+                                    overridden={marked(component, `fields.${field.name}`)}
                                 >
                                     <ScriptFieldInput field={field} value={value} disabled={disabled} onChange={(next) => edit(`field:${field.name}`, (draft) => { draft.fields[field.name] = next; })} />
                                 </FieldRow>

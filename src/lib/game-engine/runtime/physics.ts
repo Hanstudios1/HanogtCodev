@@ -5,10 +5,13 @@
  * triggers, friction, restitution, kinematic bodies, grounded detection,
  * raycasts and overlap queries. Collisions change linear velocity only;
  * rotation is integrated from angular velocity (and spheres roll visually).
+ * V6: layers and the collision matrix decide which pairs touch (triggers
+ * too), single pairs can be ignored and queries take a layer mask.
  */
+import { ALL_LAYERS, layersCollide } from "../layers";
 import { conjugateQuat, mat3FromQuat, rotateVec3, type Quat, type TRS } from "../math";
 import { solidTiles } from "../tilemap";
-import type { ColliderComponent, GameDimension, RigidBodyComponent, TilemapComponent, Vector3 } from "../types";
+import { MAX_LAYERS, type ColliderComponent, type GameDimension, type RigidBodyComponent, type TilemapComponent, type Vector3 } from "../types";
 
 export interface BodyRuntime {
     velocity: Vector3;
@@ -35,6 +38,8 @@ export interface PhysicsEntity {
     body: BodyRuntime;
     /** Contacts of this body have no friction (character controllers set their own speed). */
     frictionless?: boolean;
+    /** Physics layer 0–15 (V6); missing means the Default layer. */
+    layer?: number;
 }
 
 export interface PhysicsAdapter {
@@ -69,6 +74,8 @@ interface ShapeEntry {
     hasBody: boolean;
     /** Tile boxes only push bodies out through open faces (no snagging on seams between tiles). */
     open?: OpenFaces;
+    /** One-way tile (V6): it only holds bodies that come down onto its top. */
+    oneWay?: boolean;
 }
 
 export interface ContactPoint {
@@ -127,6 +134,10 @@ function pairKey(a: string, b: string) {
 export class PhysicsWorld {
     gravity: Vector3 = { x: 0, y: -9.81, z: 0 };
     solverIterations = 3;
+    /** Collision matrix (V6): bit j of row i lets layers i and j touch. */
+    collisions: number[] = Array.from({ length: MAX_LAYERS }, () => ALL_LAYERS);
+    /** Pairs of objects that pass through each other (Physics.IgnoreCollision), keyed like contacts. */
+    readonly ignoredPairs = new Set<string>();
     private previousPairs = new Map<string, ContactInfo>();
     private shapes: ShapeEntry[] = [];
     private tileCache = new WeakMap<PhysicsEntity, { key: string; tilemap: TilemapComponent; entries: ShapeEntry[] }>();
@@ -142,6 +153,24 @@ export class PhysicsWorld {
         this.previousPairs.clear();
         this.shapes = [];
         this.tileCache = new WeakMap();
+        this.ignoredPairs.clear();
+    }
+
+    /** Whether two objects may touch: their layers collide and the pair isn't ignored. */
+    pairAllowed(a: PhysicsEntity, b: PhysicsEntity): boolean {
+        if (!layersCollide(this.collisions, a.layer ?? 0, b.layer ?? 0)) return false;
+        return !(this.ignoredPairs.size && this.ignoredPairs.has(pairKey(a.id, b.id)));
+    }
+
+    /** Physics.IgnoreCollision: the two objects pass through each other (or touch again). */
+    ignorePair(a: string, b: string, ignore: boolean) {
+        if (a === b) return;
+        if (ignore) this.ignoredPairs.add(pairKey(a, b));
+        else this.ignoredPairs.delete(pairKey(a, b));
+    }
+
+    isPairIgnored(a: string, b: string): boolean {
+        return this.ignoredPairs.has(pairKey(a, b));
     }
 
     private bodyType(entity: PhysicsEntity): "dynamic" | "kinematic" | "static" {
@@ -232,7 +261,7 @@ export class PhysicsWorld {
             };
             const shape: Shape = { kind: "box", center, axes, half };
             const { min, max } = this.bounds(shape);
-            entries.push({ entity, shape, min, max, type, invMass: 0, trigger: tilemap.isTrigger, friction: tilemap.friction, bounciness: tilemap.bounciness, hasBody: Boolean(rb && rb.enabled), open });
+            entries.push({ entity, shape, min, max, type, invMass: 0, trigger: tilemap.isTrigger, friction: tilemap.friction, bounciness: tilemap.bounciness, hasBody: Boolean(rb && rb.enabled), open, oneWay: tile.oneWay });
         }
         this.tileCache.set(entity, { key, tilemap, entries });
         return entries;
@@ -480,9 +509,11 @@ export class PhysicsWorld {
                     if (a.type === "static" && b.type === "static" && !a.hasBody && !b.hasBody) continue;
                     if (b.min.y > a.max.y || b.max.y < a.min.y) continue;
                     if (!is2D && (b.min.z > a.max.z || b.max.z < a.min.z)) continue;
+                    if (!this.pairAllowed(a.entity, b.entity)) continue;
                     const contact = this.collide(a, b);
                     if (!contact) continue;
                     const trigger = a.trigger || b.trigger;
+                    if ((a.oneWay || b.oneWay) && !trigger && !this.oneWayHolds(a, b, contact, dt)) continue;
                     const key = pairKey(a.entity.id, b.entity.id);
                     if (iteration === 0) {
                         const [first, second] = a.entity.id < b.entity.id ? [a, b] : [b, a];
@@ -537,6 +568,23 @@ export class PhysicsWorld {
         }
         this.previousPairs = currentPairs;
         return events;
+    }
+
+    /**
+     * One-way tiles (V6): the contact only counts when the body is above the
+     * tile's top, not moving up, and got into it this step (so a body jumping
+     * up through the platform, or walking into its side, passes).
+     */
+    private oneWayHolds(a: ShapeEntry, b: ShapeEntry, contact: { normal: Vector3; penetration: number }, dt: number): boolean {
+        const tile = a.oneWay ? a : b;
+        const body = tile === a ? b : a;
+        if (body.oneWay) return false;
+        // The contact normal points from A to B: make it point from the tile to the body.
+        const up = tile === a ? contact.normal : scale(contact.normal, -1);
+        if (up.y < 0.7) return false;
+        const rising = body.entity.body.velocity.y - tile.entity.body.velocity.y;
+        if (rising > 0.05) return false;
+        return contact.penetration <= Math.max(0, -rising) * dt + 0.05;
     }
 
     /** Forgets contacts of a destroyed entity (without exit callbacks). */
@@ -620,12 +668,13 @@ export class PhysicsWorld {
         return this.collectShapes();
     }
 
-    raycast(origin: Vector3, direction: Vector3, maxDistance = Infinity, includeTriggers = false, ignoreId?: string): RaycastResult | null {
-        const hits = this.raycastAll(origin, direction, maxDistance, includeTriggers, ignoreId);
+    raycast(origin: Vector3, direction: Vector3, maxDistance = Infinity, includeTriggers = false, ignoreId?: string, layerMask = -1): RaycastResult | null {
+        const hits = this.raycastAll(origin, direction, maxDistance, includeTriggers, ignoreId, layerMask);
         return hits[0] ?? null;
     }
 
-    raycastAll(origin: Vector3, direction: Vector3, maxDistance = Infinity, includeTriggers = false, ignoreId?: string): RaycastResult[] {
+    /** Hits along a ray, nearest first; `layerMask` (V6) keeps only objects on its layers. */
+    raycastAll(origin: Vector3, direction: Vector3, maxDistance = Infinity, includeTriggers = false, ignoreId?: string, layerMask = -1): RaycastResult[] {
         const is2D = this.dimension === "2d";
         const dir = normalize(is2D ? v(direction.x, direction.y, 0) : direction);
         if (length(dir) < EPS) return [];
@@ -634,6 +683,7 @@ export class PhysicsWorld {
         for (const entry of this.queryShapes()) {
             if (entry.trigger && !includeTriggers) continue;
             if (entry.entity.id === ignoreId) continue;
+            if (!((1 << (entry.entity.layer ?? 0)) & layerMask)) continue;
             const hit = entry.shape.kind === "sphere" ? this.raySphere(start, dir, entry.shape) : this.rayBox(start, dir, entry.shape);
             if (!hit || hit.distance > maxDistance) continue;
             results.push({ entityId: entry.entity.id, ...hit });
@@ -699,7 +749,7 @@ export class PhysicsWorld {
         return { point, normal, distance: tMin };
     }
 
-    overlapSphere(center: Vector3, radius: number, includeTriggers = true): string[] {
+    overlapSphere(center: Vector3, radius: number, includeTriggers = true, layerMask = -1): string[] {
         const probe: ShapeEntry = {
             entity: { id: "__probe__", rigidBody: null, collider: null, tilemap: null, activeInHierarchy: true, body: { velocity: v(), angularVelocity: v(), grounded: false, groundNormal: v(0, 1, 0), groundVelocity: v(), force: v() } },
             shape: { kind: "sphere", center: this.dimension === "2d" ? v(center.x, center.y, 0) : { ...center }, radius },
@@ -709,6 +759,7 @@ export class PhysicsWorld {
         for (const entry of this.queryShapes()) {
             if (entry.trigger && !includeTriggers) continue;
             if (output.has(entry.entity.id)) continue;
+            if (!((1 << (entry.entity.layer ?? 0)) & layerMask)) continue;
             if (this.collide(probe, entry)) output.add(entry.entity.id);
         }
         return [...output];

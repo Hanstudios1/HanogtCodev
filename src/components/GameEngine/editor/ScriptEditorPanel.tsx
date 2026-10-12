@@ -2,15 +2,37 @@
 
 import type { OnMount } from "@monaco-editor/react";
 import type { Position, editor as MonacoEditor } from "monaco-editor";
-import { AlertTriangle, Check, FileCode, LoaderCircle, Save, X, XCircle } from "lucide-react";
+import { AlertTriangle, Check, DiamondPlus, FileCode, LoaderCircle, Save, Trash2, X, XCircle } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KEY_CODES } from "@/lib/game-engine/script/stdlib";
+import type { LogPoint } from "@/lib/game-engine/types";
 import { API_MEMBERS, GLOBAL_SUGGESTIONS, LIFECYCLE_SNIPPETS, TYPE_MEMBERS } from "./completions";
 import { useEditor } from "./context";
 import { touch } from "./operations";
 import { useEditorState } from "./store";
-import { Button, IconButton, cx } from "./ui";
+import { Button, Checkbox, IconButton, cx, inputClass } from "./ui";
+
+/** Monaco options of the script editor: the glyph margin holds the log points (V6). */
+const EDITOR_OPTIONS = { glyphMargin: true } as const;
+
+/** Log point marks in the gutter (a diamond; a dot when it also pauses; hollow when switched off). */
+const LOG_POINT_CSS = `.hanogt-logpoint{display:flex;align-items:center;justify-content:center;cursor:pointer}
+.hanogt-logpoint::before{content:"";width:8px;height:8px;border-radius:1px;transform:rotate(45deg);background:#fb7185}
+.hanogt-logpoint-pause::before{width:9px;height:9px;border-radius:999px;transform:none;background:#ef4444}
+.hanogt-logpoint-off::before{background:transparent;border:1.5px solid #fb7185}`;
+
+const NO_LOG_POINTS: LogPoint[] = [];
+
+/** The log point being added or edited (V6). */
+interface LogPointDraft {
+    scriptId: string;
+    line: number;
+    message: string;
+    enabled: boolean;
+    pause: boolean;
+    exists: boolean;
+}
 
 const CodeEditor = dynamic(() => import("@/components/Editor/CodeEditor"), {
     ssr: false,
@@ -96,6 +118,15 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
     const { store, program, t, playing } = useEditor();
     const scripts = useEditorState(store, (state) => state.project.scripts);
     const projectId = useEditorState(store, (state) => state.project.id);
+    const logPoints = useEditorState(store, (state) => state.project.settings.logPoints ?? NO_LOG_POINTS);
+    const [logDraft, setLogDraft] = useState<LogPointDraft | null>(null);
+    const logPointsRef = useRef(logPoints);
+    useEffect(() => {
+        logPointsRef.current = logPoints;
+    }, [logPoints]);
+    const decorationsRef = useRef<MonacoEditor.IEditorDecorationsCollection | null>(null);
+    /** The log points behind the gutter marks, in the order the marks were set. */
+    const decoratedRef = useRef<LogPoint[]>([]);
     const [buffers, setBuffers] = useState<Record<string, string>>({});
     const committed = useRef<Record<string, string>>({});
     const timers = useRef<Record<string, number>>({});
@@ -132,11 +163,25 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
         delete timers.current[id];
         if (committed.current[id] === text) return;
         committed.current[id] = text;
+        // Log points (V6) follow their lines as code is inserted or deleted above them.
+        const ranges = id === activeIdRef.current ? decorationsRef.current?.getRanges() ?? [] : [];
+        const moved = decoratedRef.current.map((point, index) => ({ point, line: ranges[index]?.startLineNumber ?? point.line })).filter((item) => item.line !== item.point.line);
         store.update(t("hEditScript"), (draft) => {
             const script = draft.scripts.find((item) => item.id === id);
             if (script && script.content !== text) {
                 script.content = text.slice(0, 160 * 1024);
                 touch(draft);
+            }
+            if (moved.length && draft.settings.logPoints) {
+                const taken = new Set<number>();
+                draft.settings.logPoints = draft.settings.logPoints.flatMap((point) => {
+                    if (point.scriptId !== id) return [point];
+                    const line = moved.find((item) => item.point.line === point.line)?.line ?? point.line;
+                    // Two marks squeezed onto one line (lines deleted between them): the first stays.
+                    if (taken.has(line)) return [];
+                    taken.add(line);
+                    return [{ ...point, line }];
+                });
             }
         }, { mergeKey: `script:${id}` });
     }, [store, t]);
@@ -181,10 +226,33 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
         timers.current[id] = window.setTimeout(() => commit(id, text), 650);
     };
 
+    const openLogPoint = useCallback((line: number) => {
+        const id = activeIdRef.current;
+        if (!id || line < 1) return;
+        const existing = logPointsRef.current.find((point) => point.scriptId === id && point.line === line);
+        setLogDraft({ scriptId: id, line, message: existing?.message ?? "", enabled: existing?.enabled ?? true, pause: existing?.pause ?? false, exists: Boolean(existing) });
+    }, []);
+
+    const saveLogPoint = (draftPoint: LogPointDraft, remove = false) => {
+        store.update(t("hLogPoint"), (draft) => {
+            const others = (draft.settings.logPoints ?? []).filter((point) => !(point.scriptId === draftPoint.scriptId && point.line === draftPoint.line));
+            draft.settings.logPoints = remove ? others : [...others, { scriptId: draftPoint.scriptId, line: draftPoint.line, message: draftPoint.message.slice(0, 200), enabled: draftPoint.enabled, pause: draftPoint.pause }].slice(-64);
+            touch(draft);
+        });
+        setLogDraft(null);
+    };
+
     const onMount: OnMount = (editor, monaco) => {
         editorRef.current = editor;
         monacoRef.current = monaco;
         registerCompletions(monaco);
+        decorationsRef.current = editor.createDecorationsCollection([]);
+        // A click in the gutter's glyph margin adds or edits the line's log point.
+        editor.onMouseDown((event) => {
+            if (event.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) return;
+            const line = event.target.position?.lineNumber;
+            if (line) openLogPoint(line);
+        });
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
             const target = activeIdRef.current;
             if (target) commitRef.current(target, editor.getValue());
@@ -214,6 +282,23 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
             };
         }));
     }, [program, active, mounted, buffers]);
+
+    // Log point marks of the open script.
+    useEffect(() => {
+        const collection = decorationsRef.current;
+        const monaco = monacoRef.current;
+        if (!collection || !monaco) return;
+        const points = active ? logPoints.filter((point) => point.scriptId === active.id) : [];
+        decoratedRef.current = points;
+        collection.set(points.map((point) => ({
+            range: new monaco.Range(point.line, 1, point.line, 1),
+            options: {
+                glyphMarginClassName: cx("hanogt-logpoint", point.pause && "hanogt-logpoint-pause", !point.enabled && "hanogt-logpoint-off"),
+                glyphMarginHoverMessage: { value: `${t("logPoint")}: ${point.message || `${active?.name}:${point.line}`}` },
+                stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+            },
+        })));
+    }, [logPoints, active, mounted, t]);
 
     useEffect(() => {
         const editor = editorRef.current;
@@ -260,12 +345,43 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
                         {errorCount ? <><XCircle className="h-3.5 w-3.5" />{errorCount} {t("errors").toLocaleLowerCase()}</> : <><Check className="h-3.5 w-3.5" />{t("compiledOk")}</>}
                     </span>
                 ) : null}
+                <IconButton icon={DiamondPlus} label={t("logPointAdd")} size="sm" disabled={!active} onClick={() => openLogPoint(editorRef.current?.getPosition()?.lineNumber ?? 1)} />
                 <Button variant="ghost" className="h-7 px-2" disabled={!active || playing} onClick={() => active && commit(active.id, buffers[active.id] ?? active.content)}><Save className="h-3.5 w-3.5" />{t("save")}</Button>
                 <IconButton icon={X} label={t("close")} size="sm" onClick={() => {
                     flushAll();
                     onClose();
                 }} />
             </div>
+            <style>{LOG_POINT_CSS}</style>
+            {logDraft && active && logDraft.scriptId === active.id ? (
+                <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-black/40 bg-zinc-900 px-3 py-1.5 text-[12px] text-zinc-200" role="group" aria-label={t("logPoint")}>
+                    <span className="h-2 w-2 shrink-0 rotate-45 rounded-[1px] bg-rose-400" aria-hidden="true" />
+                    <span className="shrink-0 font-semibold">{t("logPointAt").replace("{line}", String(logDraft.line))}</span>
+                    <input
+                        autoFocus
+                        value={logDraft.message}
+                        maxLength={200}
+                        placeholder={t("logPointPlaceholder")}
+                        aria-label={t("logPointMessage")}
+                        onChange={(event) => setLogDraft({ ...logDraft, message: event.target.value })}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") saveLogPoint(logDraft);
+                            if (event.key === "Escape") setLogDraft(null);
+                        }}
+                        className={cx(inputClass, "min-w-[12rem] flex-1 font-mono")}
+                    />
+                    <label className="flex shrink-0 items-center gap-1 text-[11.5px] text-zinc-400">
+                        <Checkbox checked={logDraft.enabled} onChange={(enabled) => setLogDraft({ ...logDraft, enabled })} />{t("logPointEnabled")}
+                    </label>
+                    <label className="flex shrink-0 items-center gap-1 text-[11.5px] text-zinc-400" title={t("logPointPauseHint")}>
+                        <Checkbox checked={logDraft.pause} onChange={(pause) => setLogDraft({ ...logDraft, pause })} />{t("logPointPause")}
+                    </label>
+                    <Button variant="primary" className="h-7 px-2.5" onClick={() => saveLogPoint(logDraft)}>{t("save")}</Button>
+                    {logDraft.exists ? <IconButton icon={Trash2} label={t("logPointRemove")} size="sm" tone="danger" onClick={() => saveLogPoint(logDraft, true)} /> : null}
+                    <IconButton icon={X} label={t("close")} size="sm" onClick={() => setLogDraft(null)} />
+                    <p className="basis-full text-[11px] leading-snug text-zinc-500">{t("logPointHint")}{playing ? ` ${t("logPointNextRun")}` : ""}</p>
+                </div>
+            ) : null}
             <div className="relative min-h-0 flex-1">
                 {active ? (
                     <CodeEditor
@@ -276,6 +392,7 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
                         onMount={onMount}
                         theme="dark"
                         readOnly={playing}
+                        options={EDITOR_OPTIONS}
                         className="rounded-none border-0"
                     />
                 ) : (

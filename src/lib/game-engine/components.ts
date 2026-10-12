@@ -187,6 +187,18 @@ export function createParticleSystem(overrides: Overrides<ParticleSystemComponen
         endColor: overrides.endColor ?? "#f97316",
         gravityModifier: overrides.gravityModifier ?? 0,
         worldSpace: overrides.worldSpace ?? true,
+        shape: overrides.shape ?? "point",
+        shapeRadius: overrides.shapeRadius ?? 1,
+        radiusThickness: overrides.radiusThickness ?? 1,
+        arc: overrides.arc ?? 360,
+        boxSize: overrides.boxSize ?? { x: 1, y: 1, z: 1 },
+        edgeLength: overrides.edgeLength ?? 2,
+        bursts: overrides.bursts ?? [],
+        colorStops: overrides.colorStops ?? [],
+        midSize: overrides.midSize ?? null,
+        textureId: overrides.textureId ?? null,
+        subEmitterId: overrides.subEmitterId ?? null,
+        subEmitterCount: overrides.subEmitterCount ?? 6,
     };
 }
 

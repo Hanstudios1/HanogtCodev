@@ -13,9 +13,12 @@ import { defaultTilePalette } from "./components";
 import { createEngineId, isEngineId, nowIso } from "./ids";
 import { ACTION_NAME, normalizeInputSettings } from "./input-actions";
 import { isKeyCode } from "./key-codes";
+import { clampLayer, normalizeLayerSettings } from "./layers";
 import { cleanLocalizationKey, LOCALIZATION_LIMITS, normalizeLanguageCode } from "./localization";
-import { isTileKey, TILEMAP_LIMITS } from "./tilemap";
+import { isTileKey, ruleSlotCount, TILEMAP_LIMITS } from "./tilemap";
+import { normalizeTouchLayout } from "./touch-controls";
 import {
+    ANIMATION_EVENT_PARAMETERS,
     ANIMATION_PROPERTIES,
     ANIMATION_WRAP_MODES,
     ANIMATOR_ANY_STATE,
@@ -26,6 +29,7 @@ import {
     GAME_ENGINE_SCHEMA_VERSION,
     INPUT_CONTENT_TYPES,
     MAX_LOCAL_PLAYERS,
+    PARTICLE_SHAPES,
     PLAYER_INPUT_SCHEMES,
     PRIMITIVE_MESHES,
     PROGRESS_DIRECTIONS,
@@ -35,6 +39,8 @@ import {
     UI_ANCHORS,
     UNIQUE_COMPONENT_TYPES,
     type AnimationClip,
+    type AnimationEvent,
+    type LogPoint,
     type AnimationKey,
     type AnimationProperty,
     type AnimationTrack,
@@ -44,6 +50,7 @@ import {
     type AnimatorParameter,
     type AnimatorState,
     type AnimatorTransition,
+    type AnimatedTile,
     type EngineRules,
     type ColliderComponent,
     type GameComponent,
@@ -54,8 +61,12 @@ import {
     type LocalizationEntry,
     type ModelAsset,
     type LocalizationSettings,
+    type ParticleBurst,
+    type ParticleColorStop,
+    type ParticleSystemComponent,
     type PrefabAsset,
     type ProjectSettings,
+    type RuleTile,
     type SceneDocument,
     type SceneSettings,
     type ScriptAsset,
@@ -100,10 +111,17 @@ export const ENGINE_LIMITS = {
     maxAnimationClips: 16,
     maxAnimationTracks: 12,
     maxAnimationKeys: 120,
+    /** Animation events per clip (V6). */
+    maxAnimationEvents: 32,
+    /** Log points of a project (V6). */
+    maxLogPoints: 64,
     maxAnimatorParameters: 32,
     maxAnimatorStates: 32,
     maxAnimatorTransitions: 96,
     maxAnimatorConditions: 8,
+    /** Particles V2 (V6). */
+    maxParticleBursts: 8,
+    maxParticleColorStops: 8,
 } as const;
 
 export class SchemaError extends Error {
@@ -307,6 +325,38 @@ function normalizeAnimator(source: AnyRecord): Omit<AnimatorComponent, "id" | "t
     };
 }
 
+/**
+ * The V6 particle fields: emission shape, timed bursts, colour stops, a size
+ * curve, a texture and a sub-emitter. Missing fields keep the V5 look.
+ */
+function normalizeParticlesV2(source: AnyRecord): Pick<ParticleSystemComponent, "shape" | "shapeRadius" | "radiusThickness" | "arc" | "boxSize" | "edgeLength" | "bursts" | "colorStops" | "midSize" | "textureId" | "subEmitterId" | "subEmitterCount"> {
+    const bursts: ParticleBurst[] = (Array.isArray(source.bursts) ? source.bursts.slice(0, ENGINE_LIMITS.maxParticleBursts) : []).map((raw) => {
+        const burst = rec(raw);
+        return { time: num(burst.time, 0, 0, 600), count: int(burst.count, 10, 0, 2000), cycles: int(burst.cycles, 1, 0, 100), interval: num(burst.interval, 0.5, 0.01, 600) };
+    });
+    let colorStops: ParticleColorStop[] = (Array.isArray(source.colorStops) ? source.colorStops.slice(0, ENGINE_LIMITS.maxParticleColorStops) : []).map((raw) => {
+        const stop = rec(raw);
+        return { time: num(stop.time, 0, 0, 1), color: normalizeColor(stop.color, "#ffffff"), alpha: num(stop.alpha, 1, 0, 1) };
+    });
+    colorStops.sort((a, b) => a.time - b.time);
+    // A gradient needs two stops; fewer means "start → end colour" like V5.
+    if (colorStops.length < 2) colorStops = [];
+    return {
+        shape: enumOf(source.shape, PARTICLE_SHAPES, "point"),
+        shapeRadius: num(source.shapeRadius, 1, 0, 1000),
+        radiusThickness: num(source.radiusThickness, 1, 0, 1),
+        arc: num(source.arc, 360, 0, 360),
+        boxSize: vec3(source.boxSize, { x: 1, y: 1, z: 1 }, 0, 1000),
+        edgeLength: num(source.edgeLength, 2, 0, 1000),
+        bursts,
+        colorStops,
+        midSize: source.midSize === null || source.midSize === undefined ? null : num(source.midSize, 0.2, 0, 100),
+        textureId: refId(source.textureId),
+        subEmitterId: refId(source.subEmitterId),
+        subEmitterCount: int(source.subEmitterCount, 6, 1, 50),
+    };
+}
+
 function uiRectFields(source: AnyRecord, defaults: UIRectFields): UIRectFields {
     return {
         anchor: enumOf(source.anchor, UI_ANCHORS, defaults.anchor),
@@ -317,6 +367,23 @@ function uiRectFields(source: AnyRecord, defaults: UIRectFields): UIRectFields {
     };
 }
 
+/** A rule tile (V6): 4 neighbours and 16 frames, or 8 neighbours and the 47 frames of a blob tileset. */
+function normalizeRuleTile(value: unknown): RuleTile | null {
+    if (!isRecord(value)) return null;
+    const neighbors = value.neighbors === 8 ? 8 : 4;
+    const count = ruleSlotCount(neighbors);
+    const raw = Array.isArray(value.frames) ? value.frames : [];
+    return { neighbors, frames: Array.from({ length: count }, (_, slot) => int(raw[slot], -1, -1, 4095)), matchAny: bool(value.matchAny, false) };
+}
+
+/** An animated tile (V6): 1–32 atlas frames and a speed. */
+function normalizeAnimatedTile(value: unknown): AnimatedTile | null {
+    if (!isRecord(value)) return null;
+    const frames = (Array.isArray(value.frames) ? value.frames.slice(0, 32) : []).map((frame) => int(frame, 0, 0, 4095));
+    if (!frames.length) return null;
+    return { frames, fps: num(value.fps, 8, 0.1, 60) };
+}
+
 function normalizeTilemap(source: AnyRecord, id: string, enabled: boolean): TilemapComponent {
     const palette: TileDefinition[] = [];
     if (Array.isArray(source.palette)) {
@@ -325,12 +392,17 @@ function normalizeTilemap(source: AnyRecord, id: string, enabled: boolean): Tile
             const tile = rec(raw);
             if (!isTileKey(tile.key) || keys.has(tile.key)) continue;
             keys.add(tile.key);
+            const rule = normalizeRuleTile(tile.rule);
             palette.push({
                 key: tile.key,
                 name: str(tile.name, `Tile ${palette.length + 1}`, 40),
                 color: normalizeColor(tile.color, "#94a3b8"),
                 solid: bool(tile.solid, true),
                 frame: int(tile.frame, -1, -1, 4095),
+                rule,
+                // A rule tile picks its frame from its neighbours, so it can't also be animated.
+                animation: rule ? null : normalizeAnimatedTile(tile.animation),
+                oneWay: bool(tile.oneWay, false),
             });
             if (palette.length >= ENGINE_LIMITS.maxPaletteTiles) break;
         }
@@ -375,6 +447,21 @@ function animationValue(property: AnimationProperty, value: unknown): AnimationV
     }
 }
 
+/** Animation events (V6): sorted by time, inside the clip, with a method name (or "" while typed) and a typed parameter. */
+function normalizeAnimationEvents(value: unknown, duration: number): AnimationEvent[] {
+    const events: AnimationEvent[] = [];
+    for (const raw of Array.isArray(value) ? value.slice(0, ENGINE_LIMITS.maxAnimationEvents) : []) {
+        const source = rec(raw);
+        const method = typeof source.method === "string" && /^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(source.method.trim()) ? source.method.trim() : "";
+        const parameter = enumOf(source.parameter, ANIMATION_EVENT_PARAMETERS, "none");
+        const value = parameter === "string" ? text(source.value, "", 200)
+            : parameter === "int" ? int(source.value, 0, -1_000_000_000, 1_000_000_000)
+                : parameter === "float" ? num(source.value, 0, -1e9, 1e9) : "";
+        events.push({ time: num(source.time, 0, 0, duration), method, parameter, value });
+    }
+    return events.sort((a, b) => a.time - b.time);
+}
+
 function normalizeAnimationClips(value: unknown): AnimationClip[] {
     const clips: AnimationClip[] = [];
     const names = new Set<string>();
@@ -397,7 +484,7 @@ function normalizeAnimationClips(value: unknown): AnimationClip[] {
             keys.sort((a, b) => a.time - b.time);
             tracks.push({ property, keys });
         }
-        clips.push({ name, duration, wrap: enumOf(source.wrap, ANIMATION_WRAP_MODES, "once"), tracks });
+        clips.push({ name, duration, wrap: enumOf(source.wrap, ANIMATION_WRAP_MODES, "once"), tracks, events: normalizeAnimationEvents(source.events, duration) });
     }
     return clips;
 }
@@ -621,6 +708,7 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 endColor: normalizeColor(source.endColor, "#f97316"),
                 gravityModifier: num(source.gravityModifier, 0, -50, 50),
                 worldSpace: bool(source.worldSpace, true),
+                ...normalizeParticlesV2(source),
             };
         case "audioSource":
             return {
@@ -916,9 +1004,14 @@ export function normalizeEntity(value: unknown, context: MigrationContext = { re
         id: idOr(source.id, "entity"),
         name: str(source.name, "GameObject", ENGINE_LIMITS.maxNameLength),
         tag: str(source.tag, "Untagged", ENGINE_LIMITS.maxTagLength),
+        layer: clampLayer(source.layer),
         parentId: refId(source.parentId ?? legacyTransform.parentId),
         active: bool(source.active, true),
         components: [transform, ...components.filter((component) => component !== transform)],
+        // V6: checked against the project's prefabs once they are read (normalizeProject).
+        ...(isRecord(source.prefab) && isEngineId(source.prefab.prefabId) && isEngineId(source.prefab.sourceId)
+            ? { prefab: { prefabId: source.prefab.prefabId, sourceId: source.prefab.sourceId } }
+            : {}),
     };
 }
 
@@ -1116,8 +1209,16 @@ export function normalizeTexture(value: unknown): TextureAsset | null {
     };
 }
 
+/** Rules of the engine that saved a document of this schema version (schema v1–v3 documents: V3). */
+function rulesOfVersion(documentVersion: number): EngineRules {
+    return documentVersion >= 6 ? 6 : documentVersion >= 5 ? 5 : documentVersion >= 4 ? 4 : 3;
+}
+
 function normalizeProjectSettings(value: unknown, sceneIds: string[], documentVersion: number): ProjectSettings {
     const source = rec(value);
+    // Documents saved before V4 have no rules field: they keep V3 behavior. Without valid
+    // rules a document gets those of the engine that saved it.
+    const rules = ENGINE_RULES.includes(source.rules as EngineRules) ? source.rules as EngineRules : rulesOfVersion(documentVersion);
     const startSceneId = typeof source.startSceneId === "string" && sceneIds.includes(source.startSceneId) ? source.startSceneId : sceneIds[0];
     return {
         startSceneId,
@@ -1127,12 +1228,34 @@ function normalizeProjectSettings(value: unknown, sceneIds: string[], documentVe
         pixelArt: bool(source.pixelArt, false),
         showFps: bool(source.showFps, false),
         touchControls: bool(source.touchControls, true),
-        // Documents saved before V4 have no rules field: they keep V3 behavior.
-        rules: ENGINE_RULES.includes(source.rules as EngineRules) ? source.rules as EngineRules : documentVersion >= 5 ? 5 : documentVersion >= 4 ? 4 : 3,
+        // V6: documents without a layout keep V5's arrow pad and A/B buttons.
+        touchLayout: normalizeTouchLayout(source.touchLayout),
+        rules,
+        // V6: what the Engine rules panel upgraded from (only an older rule set counts).
+        rulesBefore: ENGINE_RULES.includes(source.rulesBefore as EngineRules) && (source.rulesBefore as EngineRules) < rules ? source.rulesBefore as EngineRules : null,
         input: normalizeInputSettings(source.input),
         localization: normalizeLocalization(source.localization),
         arcade: normalizeArcadeSettings(source.arcade),
+        layers: normalizeLayerSettings(source.layers),
+        logPoints: normalizeLogPoints(source.logPoints),
     };
+}
+
+/** Log points (V6): at most 64, one per script line, with a short message. */
+function normalizeLogPoints(value: unknown): LogPoint[] {
+    const points: LogPoint[] = [];
+    const seen = new Set<string>();
+    for (const raw of Array.isArray(value) ? value : []) {
+        const source = rec(raw);
+        if (!isEngineId(source.scriptId)) continue;
+        const line = int(source.line, 0, 0, 100_000);
+        const key = `${source.scriptId}:${line}`;
+        if (line < 1 || seen.has(key)) continue;
+        seen.add(key);
+        points.push({ scriptId: source.scriptId, line, message: text(source.message, "", 200), enabled: bool(source.enabled, true), pause: bool(source.pause, false) });
+        if (points.length >= ENGINE_LIMITS.maxLogPoints) break;
+    }
+    return points;
 }
 
 /** Languages (valid, unique codes) and the string table (unique keys, texts only for those languages). */
@@ -1231,6 +1354,12 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
         modelIds.add(asset.id);
         return true;
     });
+    // Prefab links (V6) only point at a prefab entity that exists; prefabs don't nest.
+    const prefabEntityIds = new Map(prefabs.map((prefab) => [prefab.id, new Set(prefab.entities.map((entity) => entity.id))]));
+    for (const entity of scenes.flatMap((scene) => scene.objects)) {
+        if (entity.prefab && !prefabEntityIds.get(entity.prefab.prefabId)?.has(entity.prefab.sourceId)) delete entity.prefab;
+    }
+    for (const entity of prefabs.flatMap((prefab) => prefab.entities)) delete entity.prefab;
     // Audio Sources keep only files the project still has (else they play their built-in sound);
     // Mesh Renderers whose model is gone show their primitive again.
     for (const entity of [...scenes.flatMap((scene) => scene.objects), ...prefabs.flatMap((prefab) => prefab.entities)]) {
@@ -1271,6 +1400,8 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
             updatedAt: iso(metadata.updatedAt ?? source.updatedAt, now),
         },
     };
+    // Log points (V6) of scripts the project no longer has go.
+    project.settings.logPoints = project.settings.logPoints.filter((point) => scripts.has(point.scriptId));
     if (projectContentBytes(project) > ENGINE_LIMITS.maxContentBytes) {
         throw new SchemaError(`Proje içeriği ${Math.round(ENGINE_LIMITS.maxContentBytes / 1024)} KB sınırını aşıyor. Büyük dokuları küçültün veya kaldırın.`);
     }

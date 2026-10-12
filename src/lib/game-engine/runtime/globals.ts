@@ -1,12 +1,14 @@
 /** Engine namespaces visible to scripts (Debug, Time, Input, Physics, SceneManager, Tween, Timer…). */
 import { compositeFormat } from "../script/stdlib";
-import { NOT_FOUND, ScriptObject, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMRef, Vec3, type VMValue } from "../script/values";
-import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, MAX_LOCAL_PLAYERS, type Vector3 } from "../types";
+import { NOT_FOUND, ScriptObject, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMQuat, VMRef, Vec3, type VMValue } from "../script/values";
+import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, MAX_LAYERS, MAX_LOCAL_PLAYERS, type PrefabAsset, type Vector3 } from "../types";
+import { layerOfName, layersCollide, setLayerCollision } from "../layers";
 import { languageName } from "../localization";
 import { fromJsonValue, overwriteFields, SaveStore, toJsonValue, typeFromArgument } from "./save-system";
 import { animatorHash } from "./animator-controller";
 import type { RuntimeEntity } from "./entity";
-import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, colorToVM, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toVector, typeNameFrom, vec } from "./handles";
+import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, colorToVM, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toQuat, toVector, typeNameFrom, vec } from "./handles";
+import { POOL_LIMITS } from "./pools";
 import { scaleTarget, TimerHandle, TweenHandle, type TweenKind } from "./tweens";
 import type { RuntimeWorld } from "./world";
 
@@ -137,6 +139,8 @@ interface RaycastRequest {
     direction: Vector3;
     maxDistance: number;
     outRef: VMRef | null;
+    /** Where the layer mask would be (right after the distance). */
+    maskIndex: number;
 }
 
 /** Parses the many Physics.Raycast overloads (Vector3/Ray, out hit, distance, layer mask…). */
@@ -159,7 +163,7 @@ function parseRaycast(args: VMValue[], refs: Array<VMRef | null>): RaycastReques
         index += 1;
     }
     const maxDistance = typeof args[index] === "number" ? Math.max(0, args[index] as number) : Infinity;
-    return { origin, direction, maxDistance, outRef };
+    return { origin, direction, maxDistance, outRef, maskIndex: index + 1 };
 }
 
 function colliderList(world: RuntimeWorld, ids: string[]): VMValue[] {
@@ -179,6 +183,13 @@ function isCallable(value: VMValue | undefined): boolean {
 function requireCallable(value: VMValue | undefined, api: string): VMValue {
     if (!isCallable(value)) hostError(`${api} bir fonksiyon bekliyor: () => { ... } veya bir metot adı (ör. ${api.split("(")[0]}(1f, Spawn)).`, "ArgumentException");
     return value ?? null;
+}
+
+/** A layer number argument (0–15). */
+function layerArgument(value: VMValue | undefined, api: string): number {
+    const layer = Math.trunc(toNumber(value ?? 0, "katman"));
+    if (layer < 0 || layer >= MAX_LAYERS) hostError(`${api}: katman 0 ile ${MAX_LAYERS - 1} arasında olmalı (${layer} verildi).`, "ArgumentException");
+    return layer;
 }
 
 // ---------------------------------------------------------------------------
@@ -280,27 +291,32 @@ function createTimerNamespace(world: RuntimeWorld) {
 
 function createPhysicsNamespace(world: RuntimeWorld, name: "Physics" | "Physics2D") {
     const is2DApi = name === "Physics2D";
-    const raycastAll = (request: RaycastRequest) => world.physics.raycastAll(request.origin, request.direction, request.maxDistance, true);
+    /** The query's layer mask (V6): the one given at `index`, else the default; earlier rules ignore masks. */
+    const maskAt = (args: VMValue[], index: number, overlap = false) => world.queryMask(args[index], overlap && !is2DApi ? "all" : "raycast");
+    const raycastAll = (request: RaycastRequest, args: VMValue[]) => world.physics.raycastAll(request.origin, request.direction, request.maxDistance, true, undefined, maskAt(args, request.maskIndex));
+    const overlap = (center: VMValue, radius: number, mask: number) => world.physics.overlapSphere(toVector(center, "merkez"), radius, true, mask);
     return ns(name, {
         gravity: () => vec(world.physics.gravity, is2DApi),
         queriesHitTriggers: () => true,
         defaultContactOffset: () => 0.01,
         AllLayers: () => -1,
-        DefaultRaycastLayers: () => -5,
-        IgnoreRaycastLayer: () => 4,
+        // V6: a layer named "Ignore Raycast" is what raycasts without a mask skip (V5 kept Unity's fixed numbers).
+        DefaultRaycastLayers: () => (world.rules >= 6 ? world.ignoreRaycastLayer() >= 0 ? ~(1 << world.ignoreRaycastLayer()) : -1 : -5),
+        IgnoreRaycastLayer: () => (world.rules >= 6 ? world.ignoreRaycastLayer() >= 0 ? 1 << world.ignoreRaycastLayer() : 0 : 4),
     }, {
         Raycast: (args, refs) => {
             const request = parseRaycast(args, refs);
-            const hit = raycastAll(request)[0];
+            const hit = raycastAll(request, args)[0];
             if (is2DApi) return hit ? world.raycastHit(hit) : RaycastHitHandle.miss(world);
             request.outRef?.set(hit ? world.raycastHit(hit) : RaycastHitHandle.miss(world));
             return Boolean(hit);
         },
-        RaycastAll: (args, refs) => new VMList(raycastAll(parseRaycast(args, refs)).map((hit) => world.raycastHit(hit)), "Array"),
+        RaycastAll: (args, refs) => new VMList(raycastAll(parseRaycast(args, refs), args).map((hit) => world.raycastHit(hit)), "Array"),
         RaycastNonAlloc: (args, refs) => {
             const results = args.find((arg) => arg instanceof VMList) as VMList | undefined;
-            const request = parseRaycast(args.filter((arg) => !(arg instanceof VMList)), refs.filter((_, index) => !(args[index] instanceof VMList)));
-            const hits = raycastAll(request);
+            const rest = args.filter((arg) => !(arg instanceof VMList));
+            const request = parseRaycast(rest, refs.filter((_, index) => !(args[index] instanceof VMList)));
+            const hits = raycastAll(request, rest);
             if (results) {
                 const count = Math.min(results.items.length || hits.length, hits.length);
                 for (let index = 0; index < count; index += 1) results.items[index] = world.raycastHit(hits[index]);
@@ -313,7 +329,8 @@ function createPhysicsNamespace(world: RuntimeWorld, name: "Physics" | "Physics2
             const end = toVector(args[1], "bitiş");
             const delta = { x: end.x - start.x, y: end.y - start.y, z: end.z - start.z };
             const distance = Math.hypot(delta.x, delta.y, is2DApi ? 0 : delta.z);
-            const hit = distance > 0 ? world.physics.raycast(start, delta, distance, true) : null;
+            const mask = maskAt(args, refs[2] ? 3 : 2);
+            const hit = distance > 0 ? world.physics.raycast(start, delta, distance, true, undefined, mask) : null;
             if (is2DApi) return hit ? world.raycastHit(hit) : RaycastHitHandle.miss(world);
             refs[2]?.set(hit ? world.raycastHit(hit) : RaycastHitHandle.miss(world));
             return Boolean(hit);
@@ -323,8 +340,10 @@ function createPhysicsNamespace(world: RuntimeWorld, name: "Physics" | "Physics2
             const origin = args[0] instanceof RayHandle ? args[0].ray.origin : toVector(args[0], "başlangıç");
             const direction = args[0] instanceof RayHandle ? args[0].ray.direction : toVector(args[2], "yön");
             const outIndex = refs.findIndex((ref) => ref);
-            const distanceArg = args.slice(outIndex >= 0 ? outIndex + 1 : 3).find((arg) => typeof arg === "number");
-            const hit = world.physics.raycast(origin, direction, typeof distanceArg === "number" ? distanceArg : Infinity, true);
+            // After the out hit (or the direction): the distance, then the layer mask.
+            const after = outIndex >= 0 ? outIndex + 1 : args[0] instanceof RayHandle ? 2 : 3;
+            const distanceArg = args[after];
+            const hit = world.physics.raycast(origin, direction, typeof distanceArg === "number" ? distanceArg : Infinity, true, undefined, maskAt(args, after + 1));
             if (outIndex >= 0) refs[outIndex]?.set(hit ? world.raycastHit(hit) : RaycastHitHandle.miss(world));
             return Boolean(hit);
         },
@@ -332,12 +351,12 @@ function createPhysicsNamespace(world: RuntimeWorld, name: "Physics" | "Physics2
             const origin = toVector(args[0], "başlangıç");
             const direction = toVector(args[2], "yön");
             const distance = typeof args[3] === "number" ? args[3] : Infinity;
-            const hit = world.physics.raycast(origin, direction, distance, true);
+            const hit = world.physics.raycast(origin, direction, distance, true, undefined, maskAt(args, 4));
             return hit ? world.raycastHit(hit) : RaycastHitHandle.miss(world);
         },
-        OverlapSphere: (args) => new VMList(colliderList(world, world.physics.overlapSphere(toVector(args[0], "merkez"), Math.max(0, toNumber(args[1] ?? 0.5)), true)), "Array"),
+        OverlapSphere: (args) => new VMList(colliderList(world, overlap(args[0], Math.max(0, toNumber(args[1] ?? 0.5)), maskAt(args, 2, true))), "Array"),
         OverlapSphereNonAlloc: (args) => {
-            const found = colliderList(world, world.physics.overlapSphere(toVector(args[0], "merkez"), Math.max(0, toNumber(args[1] ?? 0.5)), true));
+            const found = colliderList(world, overlap(args[0], Math.max(0, toNumber(args[1] ?? 0.5)), maskAt(args, 3, true)));
             const results = args[2];
             if (results instanceof VMList) {
                 const count = Math.min(results.items.length || found.length, found.length);
@@ -346,26 +365,55 @@ function createPhysicsNamespace(world: RuntimeWorld, name: "Physics" | "Physics2
             }
             return found.length;
         },
-        CheckSphere: (args) => world.physics.overlapSphere(toVector(args[0], "merkez"), Math.max(0, toNumber(args[1] ?? 0.5)), true).length > 0,
+        CheckSphere: (args) => overlap(args[0], Math.max(0, toNumber(args[1] ?? 0.5)), maskAt(args, 2)).length > 0,
         OverlapBox: (args) => {
             const half = isVector(args[1]) ? toVector(args[1]) : { x: 0.5, y: 0.5, z: 0.5 };
             const radius = is2DApi ? Math.max(half.x, half.y) / 2 : Math.max(half.x, half.y, half.z);
-            const found = colliderList(world, world.physics.overlapSphere(toVector(args[0], "merkez"), radius, true));
+            const found = colliderList(world, overlap(args[0], radius, maskAt(args, 3, true)));
             return is2DApi ? found[0] ?? null : new VMList(found, "Array");
         },
         CheckBox: (args) => {
             const half = isVector(args[1]) ? toVector(args[1]) : { x: 0.5, y: 0.5, z: 0.5 };
-            return world.physics.overlapSphere(toVector(args[0], "merkez"), Math.max(half.x, half.y, half.z), true).length > 0;
+            return overlap(args[0], Math.max(half.x, half.y, half.z), maskAt(args, 3)).length > 0;
         },
-        OverlapCircle: (args) => colliderList(world, world.physics.overlapSphere(toVector(args[0], "merkez"), Math.max(0, toNumber(args[1] ?? 0.5)), true))[0] ?? null,
-        OverlapCircleAll: (args) => new VMList(colliderList(world, world.physics.overlapSphere(toVector(args[0], "merkez"), Math.max(0, toNumber(args[1] ?? 0.5)), true)), "Array"),
-        OverlapPoint: (args) => colliderList(world, world.physics.overlapSphere(toVector(args[0], "nokta"), 0.0005, true))[0] ?? null,
-        OverlapPointAll: (args) => new VMList(colliderList(world, world.physics.overlapSphere(toVector(args[0], "nokta"), 0.0005, true)), "Array"),
-        IgnoreCollision: () => {
-            world.warnOnce("ignore-collision", `${name}.IgnoreCollision bu sürümde desteklenmiyor; çarpışmayı engellemek için Is Trigger kullanın.`);
+        OverlapCircle: (args) => colliderList(world, overlap(args[0], Math.max(0, toNumber(args[1] ?? 0.5)), maskAt(args, 2)))[0] ?? null,
+        OverlapCircleAll: (args) => new VMList(colliderList(world, overlap(args[0], Math.max(0, toNumber(args[1] ?? 0.5)), maskAt(args, 2))), "Array"),
+        OverlapPoint: (args) => colliderList(world, overlap(args[0], 0.0005, maskAt(args, 1)))[0] ?? null,
+        OverlapPointAll: (args) => new VMList(colliderList(world, overlap(args[0], 0.0005, maskAt(args, 1))), "Array"),
+        // V6: two colliders pass through each other (V5 only warned).
+        IgnoreCollision: (args) => {
+            if (world.rules < 6) {
+                world.warnOnce("ignore-collision", `${name}.IgnoreCollision bu projenin motor kurallarında desteklenmiyor; V6 kurallarına geçin (Proje ayarları → Motor kuralları) ya da Is Trigger kullanın.`);
+                return undefined;
+            }
+            const a = liveEntityOf(args[0] ?? null);
+            const b = liveEntityOf(args[1] ?? null);
+            if (!a || !b) hostError(`${name}.IgnoreCollision iki çarpıştırıcı bekliyor (biri yok edilmiş olabilir).`, "ArgumentException");
+            world.physics.ignorePair(a.id, b.id, toBool(args[2] ?? true));
             return undefined;
         },
-        IgnoreLayerCollision: () => undefined,
+        GetIgnoreCollision: (args) => {
+            const a = liveEntityOf(args[0] ?? null);
+            const b = liveEntityOf(args[1] ?? null);
+            return Boolean(a && b && world.physics.isPairIgnored(a.id, b.id));
+        },
+        // V6: the collision matrix (V5 ignored these).
+        IgnoreLayerCollision: (args) => {
+            if (world.rules < 6) return undefined;
+            const a = layerArgument(args[0], `${name}.IgnoreLayerCollision`);
+            const b = layerArgument(args[1], `${name}.IgnoreLayerCollision`);
+            setLayerCollision(world.physics.collisions, a, b, !toBool(args[2] ?? true));
+            return undefined;
+        },
+        GetIgnoreLayerCollision: (args) => world.rules >= 6 && !layersCollide(world.physics.collisions, layerArgument(args[0], `${name}.GetIgnoreLayerCollision`), layerArgument(args[1], `${name}.GetIgnoreLayerCollision`)),
+        GetLayerCollisionMask: (args) => (world.rules >= 6 ? world.physics.collisions[layerArgument(args[0], `${name}.GetLayerCollisionMask`)] : -1),
+        SetLayerCollisionMask: (args) => {
+            if (world.rules < 6) return undefined;
+            const layer = layerArgument(args[0], `${name}.SetLayerCollisionMask`);
+            const mask = Math.trunc(toNumber(args[1] ?? -1, "maske"));
+            for (let other = 0; other < MAX_LAYERS; other += 1) setLayerCollision(world.physics.collisions, layer, other, (mask & (1 << other)) !== 0);
+            return undefined;
+        },
         SyncTransforms: () => undefined,
         Simulate: () => undefined,
     }, {
@@ -507,6 +555,19 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             input.reset();
             return undefined;
         },
+        // V6: gamepad rumble or the phone's vibration (nothing happens without either).
+        Vibrate: (args) => {
+            input.vibrate(toNumber(args[0] ?? 200, "milisaniye"), args.length > 1 ? toNumber(args[1], "güç") : 1);
+            return undefined;
+        },
+    }));
+
+    // V6: Unity's Handheld.Vibrate() (a short full-strength vibration).
+    globals.set("Handheld", ns("Handheld", {}, {
+        Vibrate: () => {
+            input.vibrate(400, 1);
+            return undefined;
+        },
     }));
 
     globals.set("Physics", createPhysicsNamespace(world, "Physics"));
@@ -570,10 +631,31 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
     globals.set("RigidbodyType2D", enumNamespace("RigidbodyType2D", ["Dynamic", "Kinematic", "Static"]));
     globals.set("SendMessageOptions", enumNamespace("SendMessageOptions", ["RequireReceiver", "DontRequireReceiver"]));
     globals.set("RuntimePlatform", enumNamespace("RuntimePlatform", ["WebGLPlayer", "WindowsPlayer", "OSXPlayer", "Android", "IPhonePlayer"]));
+    // V6: the project's named layers (Project settings → Layers). Earlier rules keep V5's stand-ins
+    // (every layer, layer 0, "Default"), so old games keep hitting what they hit.
+    const layerByName = (value: VMValue | undefined, api: string) => {
+        const name = String(value ?? "");
+        const layer = layerOfName(world.layerNames, name);
+        if (layer < 0) world.warnOnce(`layer:${name}`, `${api}: '${name}' adında bir katman yok (Proje ayarları → Katmanlar).`);
+        return layer;
+    };
     globals.set("LayerMask", ns("LayerMask", {}, {
-        GetMask: () => -1,
-        NameToLayer: () => 0,
-        LayerToName: () => "Default",
+        GetMask: (args) => {
+            if (world.rules < 6) return -1;
+            const names = args.length === 1 && args[0] instanceof VMList ? args[0].items : args;
+            let mask = 0;
+            for (const name of names) {
+                const layer = layerByName(name, "LayerMask.GetMask");
+                if (layer >= 0) mask |= 1 << layer;
+            }
+            return mask;
+        },
+        NameToLayer: (args) => (world.rules < 6 ? 0 : layerByName(args[0], "LayerMask.NameToLayer")),
+        LayerToName: (args) => {
+            if (world.rules < 6) return "Default";
+            const layer = Math.trunc(toNumber(args[0] ?? 0, "katman"));
+            return layer >= 0 && layer < MAX_LAYERS ? world.layerNames[layer] ?? "" : "";
+        },
     }));
 
     globals.set("SceneManager", ns("SceneManager", {
@@ -1096,6 +1178,55 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         },
         Hide: () => {
             world.hud = null;
+            return undefined;
+        },
+    }));
+
+    // Object pools (V6): reuse deactivated copies of a prefab instead of Instantiate/Destroy.
+    const pooledPrefab = (value: VMValue | undefined, api: string): PrefabAsset => {
+        if (value instanceof PrefabHandle) return value.prefab;
+        if (typeof value === "string") {
+            const prefab = world.prefabByName(value);
+            if (prefab) return prefab;
+            const known = world.project.prefabs.map((item) => item.name).slice(0, 12).join(", ") || "yok";
+            return hostError(`${api}: '${value}' adında bir prefab yok (prefablar: ${known}).`, "ArgumentException");
+        }
+        return hostError(`${api} bir prefab adı ("Bullet") ya da Inspector'da atanmış bir prefab alanı bekliyor.`, "ArgumentException");
+    };
+    globals.set("Pool", ns("Pool", {
+        defaultCapacity: () => POOL_LIMITS.defaultCapacity,
+    }, {
+        Prewarm: (args) => world.pools.prewarm(pooledPrefab(args[0], "Pool.Prewarm"), toNumber(args[1] ?? 1, "adet")),
+        // Spawn(prefab[, position[, rotation]]); Spawn<T>(…) returns the copy's T component.
+        Spawn: (args, _refs, typeArgs) => {
+            const prefab = pooledPrefab(args[0], "Pool.Spawn");
+            const position = args[1] === undefined || args[1] === null ? undefined : toVector(args[1], "konum");
+            const rotation = args[2] instanceof VMQuat ? toQuat(args[2]) : undefined;
+            const entity = world.pools.spawn(prefab, position, rotation);
+            if (!entity) return null;
+            const type = typeArgs[0];
+            return type && type !== "GameObject" ? world.referenceAs(entity, type) : world.gameObjectHandle(entity);
+        },
+        Despawn: (args) => {
+            const entity = liveEntityOf(args[0] ?? null);
+            if (!entity) return undefined;
+            const delay = typeof args[1] === "number" ? Math.max(0, args[1]) : 0;
+            if (!world.pools.despawn(entity, delay)) {
+                world.warnOnce(`pool-despawn:${entity.name}`, `Pool.Despawn: '${entity.name}' bir havuzdan gelmedi; yalnızca kapatıldı. Havuz nesnelerini Pool.Spawn ile oluşturun.`);
+                world.setActive(entity, false);
+            }
+            return undefined;
+        },
+        Count: (args) => world.pools.count(pooledPrefab(args[0], "Pool.Count")),
+        CountInactive: (args) => world.pools.countInactive(pooledPrefab(args[0], "Pool.CountInactive")),
+        CountAll: (args) => world.pools.countAll(pooledPrefab(args[0], "Pool.CountAll")),
+        GetCapacity: (args) => world.pools.capacity(pooledPrefab(args[0], "Pool.GetCapacity")),
+        SetCapacity: (args) => {
+            world.pools.setCapacity(pooledPrefab(args[0], "Pool.SetCapacity"), toNumber(args[1] ?? POOL_LIMITS.defaultCapacity, "kapasite"));
+            return undefined;
+        },
+        Clear: (args) => {
+            world.pools.clear(pooledPrefab(args[0], "Pool.Clear"));
             return undefined;
         },
     }));

@@ -24,6 +24,25 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.35",
+        version: "v0.3.35",
+        date: "2026-10-12",
+        title: { TR: "Hanogt Engine V6", EN: "Hanogt Engine V6" },
+        desc: { TR: "Oyun motoruna katmanlar ve çarpışma tablosu, nesne havuzları, Parçacıklar V2, kural karoları, telefonda joystick ve titreşim, animasyon olayları, prefab bağlantıları ve log noktaları geldi; dışa aktarılan oyunlar daha hafif. Kullanım kılavuzunda sekiz yeni sayfa var.", EN: "The game engine gains layers and a collision matrix, object pools, Particles V2, rule tiles, a joystick and vibration on phones, animation events, prefab links and log points; exported games are lighter. The guide has eight new pages." },
+        items: [
+            { TR: "16 adlandırılmış katman ve hangi katmanların çarpışacağını seçtiğin tablo; ışınlar ve örtüşmeler katman maskesi alır.", EN: "16 named layers and a table to pick which layers collide; raycasts and overlaps take a layer mask." },
+            { TR: "Nesne havuzları: mermiler ve düşmanlar yok edilmek yerine yeniden kullanılır.", EN: "Object pools: bullets and enemies are reused instead of destroyed." },
+            { TR: "Parçacıklar V2: şekiller, zamanlı patlamalar, renk geçişi, boyut eğrisi, görsel dokular ve alt yayıcı.", EN: "Particles V2: shapes, timed bursts, color gradients, a size curve, image textures and sub-emitters." },
+            { TR: "Kenarını kendi seçen kural karoları, animasyonlu karolar ve tek yönlü platformlar.", EN: "Rule tiles that pick their own edges, animated tiles and one-way platforms." },
+            { TR: "Telefonda ayarlanabilir sanal joystick, eylemlere bağlı en fazla 4 düğme ve titreşim.", EN: "A configurable virtual joystick, up to 4 action buttons and vibration on phones." },
+            { TR: "Animasyon olayları ve eski projeleri V6 kurallarına taşıyan (ve geri alan) Motor kuralları paneli.", EN: "Animation events, and an Engine rules panel that moves old projects to the V6 rules (and back)." },
+            { TR: "Prefab bağlantıları: Uygula ve Geri döndür, değişen alanlar işaretli.", EN: "Prefab links: Apply and Revert, with changed fields marked." },
+            { TR: "Koda dokunmadan log noktaları ve betik başına süre ölçümü.", EN: "Log points without touching the code, and timings per script." },
+            { TR: "Yeni şablonlar: Mermi Fırtınası ve Tepe Koşusu; dışa aktarılan oyunlar yaklaşık 77 KB daha küçük.", EN: "New templates: Bullet Storm and Hill Run; exported games are about 77 KB smaller." },
+            { TR: "Kılavuz: editör araçları, Hanogt AI'ın düşünmesi ve API'si, grup kuralları, botlar ve AutoMod, giriş kontrolleri ve Plus ile Pro ayrıcalıkları için yeni sayfalar.", EN: "Guide: new pages on the editor's tools, Hanogt AI's thinking and API, group rules, bots and AutoMod, sign-in checks and the Plus and Pro extras." },
+        ],
+    },
+    {
         id: "v0.3.34",
         version: "v0.3.34",
         date: "2026-10-07",

@@ -2,10 +2,12 @@
 
 /** Inspector editors of the UI components: Button, Panel (Image), Progress Bar and the V4 Slider, Toggle and Input Field. */
 import { useId, useMemo } from "react";
+import type { CompiledProgram } from "@/lib/game-engine/script/compiler";
 import {
     INPUT_CONTENT_TYPES,
     PROGRESS_DIRECTIONS,
     TOGGLE_STYLES,
+    type GameComponent,
     type GameEntity,
     type UIButtonComponent,
     type UIEventTarget,
@@ -172,26 +174,28 @@ export function UIProgressBarEditor({ entity, component, disabled }: Editor<UIPr
     );
 }
 
+/** Methods of the scripts among `components` (lifecycle methods left out) that take at most `maxParams` parameters. */
+export function scriptMethodNames(components: readonly GameComponent[], program: CompiledProgram, maxParams: number): string[] {
+    const names = new Set<string>();
+    for (const item of components) {
+        if (item.type !== "script") continue;
+        const className = item.className ?? (program.behavioursByScript.get(item.scriptId) ?? [])[0];
+        for (let cls = className ? program.classes.get(className) ?? null : null; cls; cls = cls.base) {
+            for (const [name, overloads] of cls.methods) {
+                if (!LIFECYCLE.has(name) && overloads.some((method) => !method.isConstructor && !method.isStatic && method.params.length <= maxParams)) names.add(name);
+            }
+        }
+    }
+    return [...names].sort();
+}
+
 /** Script methods on an object that take no parameter or one (the UI value). */
 function useTargetMethods(entityId: string, target: UIEventTarget, maxParams: number) {
     const { store, program } = useEditor();
     const project = useEditorState(store, (state) => state.project);
     const scene = activeScene(project);
     const targetId = target.targetId ?? entityId;
-    return useMemo(() => {
-        const found = scene.objects.find((item) => item.id === targetId);
-        const names = new Set<string>();
-        for (const item of found?.components ?? []) {
-            if (item.type !== "script") continue;
-            const className = item.className ?? (program.behavioursByScript.get(item.scriptId) ?? [])[0];
-            for (let cls = className ? program.classes.get(className) ?? null : null; cls; cls = cls.base) {
-                for (const [name, overloads] of cls.methods) {
-                    if (!LIFECYCLE.has(name) && overloads.some((method) => !method.isConstructor && !method.isStatic && method.params.length <= maxParams)) names.add(name);
-                }
-            }
-        }
-        return [...names].sort();
-    }, [scene.objects, targetId, program, maxParams]);
+    return useMemo(() => scriptMethodNames(scene.objects.find((item) => item.id === targetId)?.components ?? [], program, maxParams), [scene.objects, targetId, program, maxParams]);
 }
 
 /** Target object and method of a UI event (e.g. "On Value Changed (float)"). */

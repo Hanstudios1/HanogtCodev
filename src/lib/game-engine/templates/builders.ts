@@ -37,6 +37,8 @@ export interface EntityOptions {
     rotation?: Partial<Vector3>;
     scale?: Partial<Vector3>;
     tag?: string;
+    /** Physics layer (V6). */
+    layer?: number;
     parentId?: string | null;
     active?: boolean;
 }
@@ -46,6 +48,7 @@ export function entity(name: string, components: GameComponent[], options: Entit
         id: createEngineId("entity"),
         name,
         tag: options.tag ?? "Untagged",
+        layer: options.layer ?? 0,
         parentId: options.parentId ?? null,
         active: options.active ?? true,
         components: [

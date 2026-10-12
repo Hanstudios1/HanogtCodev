@@ -13,8 +13,11 @@ import { breakout, platformer, rollABall, spaceShooter } from "./classic";
 import { clickerUi, runner3d, tilemapPlatformer } from "./v3";
 import { mazeHunt, skyTower, slingshot } from "./v4";
 import { dungeonEscape, meteorStorm, starDuel } from "./v5";
+import { bulletStorm, hillRun } from "./v6";
 
 export type TemplateId =
+    | "bullet-storm-2d"
+    | "hill-run-2d"
     | "star-duel-2d"
     | "dungeon-escape-2d"
     | "meteor-retro-2d"
@@ -51,12 +54,38 @@ export interface TemplateInfo {
     /** How the game is played (shown in the template details). */
     controls: { tr: string; en: string };
     /** Engine version that introduced the template (shown as a badge). */
-    since?: 3 | 4 | 5;
-    /** Added in the latest release (shown as "Yeni"): the V5 templates. */
+    since?: 3 | 4 | 5 | 6;
+    /** Added in the latest release (shown as "Yeni"): the V6 templates. */
     isNew?: boolean;
 }
 
 export const PROJECT_TEMPLATES: TemplateInfo[] = [
+    {
+        id: "bullet-storm-2d",
+        dimension: "2d",
+        name: { tr: "Mermi Fırtınası", en: "Bullet Storm" },
+        description: { tr: "V6 mermi yağmuru: yüzlerce mermi, düşman ve patlama nesne havuzlarından gelir (Pool), katmanlar ve çarpışma tablosu mermilerin birbirine ve kendi tarafına çarpmasını önler. Parçacıklar V2 ile halka patlamalar, kıvılcım saçan alt yayıcı ve aşağı akan yıldızlar; telefonda sanal joystick ve titreşim.", en: "A V6 bullet hell: hundreds of bullets, drones and explosions come from object pools, and layers with the collision matrix keep bullets off each other and off their own side. Ring explosions with Particles V2, a sub-emitter throwing embers and a streaming star field; the virtual joystick and vibration on phones." },
+        languages: ["C#"],
+        gradient: ["#0b1026", "#0b1026"],
+        emoji: "✦",
+        difficulty: "medium",
+        controls: { tr: "WASD / oklar / sol çubuk / joystick: uç  •  Ateş kendiliğinden  •  X / B: bomba  •  R: yeniden", en: "WASD / arrows / left stick / joystick: fly  •  Fires by itself  •  X / B: bomb  •  R: again" },
+        since: 6,
+        isNew: true,
+    },
+    {
+        id: "hill-run-2d",
+        dimension: "2d",
+        name: { tr: "Tepe Koşusu", en: "Hill Run" },
+        description: { tr: "V6 platform oyunu: zemin kural karolarıyla boyandı, her karo komşularına göre kendi kenarını seçer; koyduğun toprak bloklar da çevresini günceller. Kare kare akan sular, alttan zıplayıp üstüne konduğun tek yönlü köprüler, telefonda sanal joystick ve düğmeler.", en: "A V6 platformer: the ground is painted with rule tiles, each picking its own edges from its neighbours, and the dirt blocks you place update the tiles around them. Water that plays frame by frame, one-way bridges you jump up through and land on, and the virtual joystick and buttons on phones." },
+        languages: ["C#"],
+        gradient: ["#93c5fd", "#93c5fd"],
+        emoji: "▲",
+        difficulty: "easy",
+        controls: { tr: "← → / A D / joystick: koş  •  Space / A: zıpla  •  ↓: köprüden in  •  Ctrl / Blok: toprak koy  •  R: yeniden", en: "← → / A D / joystick: run  •  Space / A: jump  •  ↓: drop through a bridge  •  Ctrl / Block: place dirt  •  R: again" },
+        since: 6,
+        isNew: true,
+    },
     {
         id: "star-duel-2d",
         dimension: "2d",
@@ -68,7 +97,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         difficulty: "easy",
         controls: { tr: "Mavi: WASD + Space (atıl)  •  Pembe: oklar + Enter  •  Gamepad'ler sırayla  •  R: yeniden", en: "Blue: WASD + Space (dash)  •  Pink: arrows + Enter  •  Gamepads in turn  •  R: again" },
         since: 5,
-        isNew: true,
     },
     {
         id: "dungeon-escape-2d",
@@ -81,7 +109,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         difficulty: "medium",
         controls: { tr: "← → / A D / sol çubuk: koş  •  Space / gamepad A: zıpla  •  N: yeni oyun", en: "← → / A D / left stick: run  •  Space / gamepad A: jump  •  N: new game" },
         since: 5,
-        isNew: true,
     },
     {
         id: "meteor-retro-2d",
@@ -94,7 +121,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         difficulty: "starter",
         controls: { tr: "← → / A D: hareket  •  Space / Ctrl / tık: ateş  •  O: seçenekler  •  R: yeniden", en: "← → / A D: move  •  Space / Ctrl / click: fire  •  O: options  •  R: again" },
         since: 5,
-        isNew: true,
     },
     {
         id: "sky-tower-2d",
@@ -332,6 +358,8 @@ export function createProjectFromTemplate(templateId: TemplateId, name?: string)
     const info = PROJECT_TEMPLATES.find((template) => template.id === templateId) ?? PROJECT_TEMPLATES[PROJECT_TEMPLATES.length - 1];
     const projectName = (name?.trim() || info.name.tr).slice(0, 80);
     switch (info.id) {
+        case "bullet-storm-2d": return bulletStorm(projectName);
+        case "hill-run-2d": return hillRun(projectName);
         case "star-duel-2d": return starDuel(projectName);
         case "dungeon-escape-2d": return dungeonEscape(projectName);
         case "meteor-retro-2d": return meteorStorm(projectName);

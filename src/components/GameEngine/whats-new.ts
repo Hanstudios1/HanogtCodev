@@ -1,4 +1,4 @@
-/** Hanogt Engine V5, V4 and V3 feature lists and the October template update, shown in the hub and in the docs. */
+/** Hanogt Engine V6, V5, V4 and V3 feature lists and the October template update, shown in the hub and in the docs. */
 import {
     Activity,
     ArrowRightLeft,
@@ -6,19 +6,24 @@ import {
     Clapperboard,
     CloudFog,
     Eye,
+    Feather,
     Footprints,
     Gamepad2,
     Grid3x3,
     Languages,
+    Layers,
     LayoutTemplate,
     Link2,
     MousePointerClick,
     Music,
     Navigation,
     PackageOpen,
+    Recycle,
     Save,
     ScrollText,
+    Sparkles,
     SlidersHorizontal,
+    Smartphone,
     Timer,
     Trophy,
     Tv,
@@ -37,6 +42,90 @@ export interface WhatsNewItem {
     /** Docs section that explains the feature. */
     section: string;
 }
+
+export const V6_FEATURES: WhatsNewItem[] = [
+    {
+        icon: Layers,
+        title: { TR: "Katmanlar ve çarpışma tablosu", EN: "Layers and the collision matrix" },
+        text: {
+            TR: "16 adlandırılmış katman ve hangi katmanların çarpışacağını seçtiğin tablo. LayerMask.GetMask, gameObject.layer, maskeli 2D ve 3D ışınlar, IgnoreLayerCollision ve IgnoreCollision artık gerçekten çalışıyor.",
+            EN: "16 named layers and a table where you pick which layers collide. LayerMask.GetMask, gameObject.layer, masked 2D and 3D raycasts, IgnoreLayerCollision and IgnoreCollision now really work.",
+        },
+        section: "katmanlar",
+    },
+    {
+        icon: Recycle,
+        title: { TR: "Nesne havuzları", EN: "Object pools" },
+        text: {
+            TR: "Pool.Spawn ve Pool.Despawn mermileri, kıvılcımları ve düşmanları yok etmeden yeniden kullanır: Prewarm ile hazırla, gecikmeli Despawn, prefab başına üst sınır ve istatistiklerde havuz sayacı.",
+            EN: "Pool.Spawn and Pool.Despawn reuse bullets, sparks and enemies instead of destroying them: get copies ready with Prewarm, despawn after a delay, a cap per prefab and a pool counter in the stats.",
+        },
+        section: "havuzlar",
+    },
+    {
+        icon: Sparkles,
+        title: { TR: "Parçacıklar V2", EN: "Particles V2" },
+        text: {
+            TR: "Çember, koni, kutu ve kenar şekilleri; tekrar eden zamanlı patlamalar; çok duraklı renk geçişi ve boyut eğrisi; parçacıklarda görsel ve ölen parçacıktan kıvılcım saçan alt yayıcı.",
+            EN: "Circle, cone, box and edge shapes; repeating timed bursts; a multi-stop color gradient and a size curve; images on particles and a sub-emitter that throws sparks where a particle dies.",
+        },
+        section: "parcaciklar",
+    },
+    {
+        icon: Grid3x3,
+        title: { TR: "Kural karoları ve tek yönlü platformlar", EN: "Rule tiles and one-way platforms" },
+        text: {
+            TR: "Komşularına göre kendi karesini seçen kural karoları (16 ya da 47 karelik setler, atlastan tıklayarak tanımlanır), kare kare oynayan animasyonlu karolar ve üstüne basılıp alttan geçilen tek yönlü platformlar.",
+            EN: "Rule tiles that pick their own cell from their neighbours (16- or 47-cell sets, defined by clicking the atlas), animated tiles that play frame by frame and one-way platforms you land on from above and jump through from below.",
+        },
+        section: "kural-karolari",
+    },
+    {
+        icon: Smartphone,
+        title: { TR: "Sanal joystick ve titreşim", EN: "Virtual joystick and vibration" },
+        text: {
+            TR: "Telefonda analog joystick (sol ya da sağ, boyut, ölü bölge) Horizontal ve Vertical eksenlerini besler; en fazla 4 düğme istediğin eylemlere basar. Input.Vibrate gamepad'i ya da telefonu titretir.",
+            EN: "On phones an analog joystick (left or right, size, dead zone) feeds the Horizontal and Vertical axes, and up to 4 buttons press the actions you pick. Input.Vibrate rumbles the gamepad or the phone.",
+        },
+        section: "dokunmatik",
+    },
+    {
+        icon: Clapperboard,
+        title: { TR: "Animasyon olayları ve motor kuralları paneli", EN: "Animation events and the engine rules panel" },
+        text: {
+            TR: "Klip belli bir ana gelince betikteki metodu çağıran olaylar (ayak sesi, vuruş anı), Animation bileşeninde düzenlenir. Proje ayarlarındaki yeni panel eski projeleri değişiklik listesiyle V6 kurallarına taşır ve geri alabilir.",
+            EN: "Events that call a script method when a clip reaches a moment (a footstep, the instant of a hit), edited in the Animation component. A new panel in the project settings moves old projects to V6 rules with a list of changes, and can undo it.",
+        },
+        section: "animasyon-olaylari",
+    },
+    {
+        icon: Link2,
+        title: { TR: "Prefab bağlantıları", EN: "Prefab links" },
+        text: {
+            TR: "Sahnedeki kopyalar prefab'ını hatırlar: Inspector'da Prefab çubuğu, değişen alanlarda mavi işaret, değişiklikleri tüm kopyalara aktaran Uygula ve prefab'a döndüren Geri döndür.",
+            EN: "Copies in a scene remember their prefab: a Prefab bar in the Inspector, blue marks on changed fields, Apply to push changes to every copy and Revert to go back to the prefab.",
+        },
+        section: "prefab-baglantilari",
+    },
+    {
+        icon: Activity,
+        title: { TR: "Log noktaları ve betik süreleri", EN: "Log points and script timings" },
+        text: {
+            TR: "Script düzenleyicide satırın yanına tıklayıp kodu değiştirmeden mesaj ve {değer} yazdıran log noktaları; istatistik panosunda her betiğin kare başına kaç milisaniye harcadığı.",
+            EN: "Log points that print a message and {values} from a line without changing the code (click next to the line in the script editor), and how many milliseconds each script takes per frame in the stats panel.",
+        },
+        section: "hata-ayiklama",
+    },
+    {
+        icon: Feather,
+        title: { TR: "Daha hafif oynatıcı", EN: "A lighter player" },
+        text: {
+            TR: "Editörün kamera kontrolleri, gizmo'ları ve seçim araçları artık oynatıcıya girmiyor: dışa aktarılan HTML oyunları ve web paketleri, V6'nın yeni özelliklerine rağmen V5'tekinden yaklaşık 77 KB küçük.",
+            EN: "The editor's camera controls, gizmos and selection tools no longer ship in the player: exported HTML games and web packages are about 77 KB smaller than in V5, new V6 features included.",
+        },
+        section: "yayinlama",
+    },
+];
 
 export const V5_FEATURES: WhatsNewItem[] = [
     {

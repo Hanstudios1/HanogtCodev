@@ -194,17 +194,16 @@
       "src/app/about/page.tsx"
     ]
   },
-  "ab3fy3gtww": {
-    "en": "Hanogt Engine V5",
-    "tr": "Hanogt Engine V5",
+  "s04rwj57d8": {
+    "en": "Hanogt Engine V6",
+    "tr": "Hanogt Engine V6",
     "files": [
-      "src/app/about/page.tsx",
-      "src/components/ChangelogModal.tsx"
+      "src/app/about/page.tsx"
     ]
   },
-  "2ej0h2m3321": {
-    "en": "A Unity-like 2D/3D game engine that runs in your browser. V5 adds the Animator, Arcade leaderboards and achievements, in-game translations, local multiplayer, save slots, GLB models and the web package; you script in C# and C++.",
-    "tr": "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V5 ile Animator, Arcade skor tabloları ve başarımlar, oyun içi çeviri, yerel çok oyunculu, kayıt yuvaları, GLB modeller ve web paketi geldi; C# ve C++ ile script yazarsın.",
+  "hqg1wc6dud": {
+    "en": "A Unity-like 2D/3D game engine that runs in your browser. V6 adds physics layers, object pools, Particles V2, rule tiles and one-way platforms, a virtual joystick, animation events, prefab links and log points; you script in C# and C++.",
+    "tr": "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V6 ile fizik katmanları, nesne havuzları, Parçacıklar V2, kural karoları ve tek yönlü platformlar, sanal joystick, animasyon olayları, prefab bağlantıları ve log noktaları geldi; C# ve C++ ile script yazarsın.",
     "files": [
       "src/app/about/page.tsx"
     ]
@@ -2151,6 +2150,7 @@
       "src/components/Admin/AnnouncementsSection.tsx",
       "src/components/Editor/WebPreview.tsx",
       "src/components/GameEngine/EngineHub.tsx",
+      "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/HanogtAI/ArtifactPanel.tsx",
       "src/components/Social/SocialSettings.tsx",
@@ -3089,7 +3089,8 @@
     "tr": "Satır kaydırma",
     "files": [
       "src/app/editor/page.tsx",
-      "src/app/settings/page.tsx"
+      "src/app/settings/page.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "25bdx0lravw": {
@@ -3114,7 +3115,8 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/components/Editor/ShortcutsDialog.tsx",
-      "src/components/Editor/Sidebar.tsx"
+      "src/components/Editor/Sidebar.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1djpjei9v9z": {
@@ -3217,7 +3219,8 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/app/settings/page.tsx",
-      "src/components/Editor/Sidebar.tsx"
+      "src/components/Editor/Sidebar.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "rseuluishf": {
@@ -9023,7 +9026,8 @@
     "files": [
       "src/app/settings/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
-      "src/components/Admin/AnnouncementsSection.tsx"
+      "src/components/Admin/AnnouncementsSection.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "21c6r0rwy1r": {
@@ -9304,6 +9308,7 @@
     "tr": "Normal",
     "files": [
       "src/app/settings/page.tsx",
+      "src/components/GameEngine/editor/text.ts",
       "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/Plans/PricingSections.tsx",
       "src/lib/support.ts"
@@ -10742,9 +10747,9 @@
       "src/app/settings/page.tsx"
     ]
   },
-  "1kr7sdp1o1p": {
-    "en": "With a free account you can write code in {count} languages, build games with Hanogt Engine V5 and create with Hanogt AI and the community.",
-    "tr": "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V5 ile oyun yap, Hanogt AI ve toplulukla üret.",
+  "158nb44zo6t": {
+    "en": "With a free account you can write code in {count} languages, build games with Hanogt Engine V6 and create with Hanogt AI and the community.",
+    "tr": "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V6 ile oyun yap, Hanogt AI ve toplulukla üret.",
     "files": [
       "src/app/signup/page.tsx"
     ]
@@ -13598,6 +13603,7 @@
     "files": [
       "src/components/AccountSettings/copy.ts",
       "src/components/ChangelogModal.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/HanogtAI/ChatSidebar.tsx",
       "src/components/HanogtAI/HanogtAIChat.tsx",
@@ -14438,7 +14444,8 @@
     "en": "Developer API",
     "tr": "Geliştirici API'si",
     "files": [
-      "src/components/Admin/AiUsageSection.tsx"
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1wduogczyvk": {
@@ -16770,7 +16777,8 @@
     "en": "not set",
     "tr": "tanımlı değil",
     "files": [
-      "src/components/Admin/CloudHealthSection.tsx"
+      "src/components/Admin/CloudHealthSection.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "fax1uiorf2": {
@@ -22044,6 +22052,7 @@
       "src/components/Admin/StoragePanel.tsx",
       "src/components/Editor/PublishDialog.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/Social/GroupSidebar.tsx",
       "src/components/Social/group/GroupView.tsx"
     ]
@@ -24795,9 +24804,9 @@
       "src/lib/social/api.ts"
     ]
   },
-  "mqwmyzmeuf": {
-    "en": "Code editor, Hanogt Engine V5, Hanogt AI and the community: all in one account, nothing to install.",
-    "tr": "Kod editörü, Hanogt Engine V5, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
+  "4a0cb1xkj3": {
+    "en": "Code editor, Hanogt Engine V6, Hanogt AI and the community: all in one account, nothing to install.",
+    "tr": "Kod editörü, Hanogt Engine V6, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
@@ -24809,9 +24818,9 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
-  "1mtd8o91fme": {
-    "en": "Build games with Hanogt Engine V5",
-    "tr": "Hanogt Engine V5 ile oyun yap",
+  "rhzd2otocs": {
+    "en": "Build games with Hanogt Engine V6",
+    "tr": "Hanogt Engine V6 ile oyun yap",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
@@ -25246,6 +25255,13 @@
   "1titk12l5ue": {
     "en": "Privacy Policy, KVKK Information Notice and Terms of Use 5.4.",
     "tr": "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 5.4.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "ab3fy3gtww": {
+    "en": "Hanogt Engine V5",
+    "tr": "Hanogt Engine V5",
     "files": [
       "src/components/ChangelogModal.tsx"
     ]
@@ -27456,6 +27472,7 @@
     "tr": "Mesaj",
     "files": [
       "src/components/Editor/CollabChat.tsx",
+      "src/components/GameEngine/editor/text.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/Social/FriendsView.tsx",
       "src/components/Social/UserPopout.tsx"
@@ -29996,14 +30013,16 @@
     "en": "Problems panel",
     "tr": "Sorunlar paneli",
     "files": [
-      "src/components/Editor/ShortcutsDialog.tsx"
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1oli6t4ehge": {
     "en": "Search and replace in files",
     "tr": "Dosyalarda ara ve değiştir",
     "files": [
-      "src/components/Editor/ShortcutsDialog.tsx"
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1nawtb0o72j": {
@@ -30653,11 +30672,12 @@
       "src/components/Editor/WebPreview.tsx"
     ]
   },
-  "111ob4b73v8": {
-    "en": "What's new in V5",
-    "tr": "V5'te yenilikler",
+  "5z9qn17ea1": {
+    "en": "What's new in V6",
+    "tr": "V6'da yenilikler",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/editor/text.ts",
       "src/components/Guide/book-content.ts"
     ]
   },
@@ -30719,13 +30739,19 @@
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
+  "ny4o3kjcn7": {
+    "en": "Touch controls and vibration",
+    "tr": "Dokunmatik kontroller ve titreşim",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
   "t3qmutrt0f": {
     "en": "Local multiplayer",
     "tr": "Yerel çok oyunculu",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
-      "src/components/GameEngine/whats-new.ts",
-      "src/components/Guide/book-content.ts"
+      "src/components/GameEngine/whats-new.ts"
     ]
   },
   "20lujwite2q": {
@@ -30733,6 +30759,14 @@
     "tr": "Fizik ve çarpışmalar",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "17o94jvv6li": {
+    "en": "Layers and the collision matrix",
+    "tr": "Katmanlar ve çarpışma tablosu",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts"
     ]
   },
   "1odzycq1865": {
@@ -30767,6 +30801,13 @@
       "src/components/GameEngine/whats-new.ts"
     ]
   },
+  "1ltn7e6qey8": {
+    "en": "Rule tiles, animated tiles and one-way platforms",
+    "tr": "Kural karoları, animasyonlu karolar ve tek yönlü platformlar",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
   "gu65jqjugv": {
     "en": "Path finding and Nav Agent 2D",
     "tr": "Yol bulma ve Nav Agent 2D",
@@ -30780,6 +30821,21 @@
     "tr": "Prefab, Instantiate, Destroy",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "25zpa67u2wa": {
+    "en": "Prefab links: Apply and Revert",
+    "tr": "Prefab bağlantıları: Uygula ve Geri döndür",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "1ctfy4pbjyh": {
+    "en": "Object pools",
+    "tr": "Nesne havuzları",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts"
     ]
   },
   "18xfvp89ah0": {
@@ -30802,6 +30858,13 @@
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
       "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1g1c3mzesr1": {
+    "en": "Animation events",
+    "tr": "Animasyon olayları",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
   "23w0exmyhxu": {
@@ -30831,8 +30894,7 @@
     "tr": "Oyunun dilleri",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Guide/book-content.ts"
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "rup1swm6q1": {
@@ -30859,6 +30921,14 @@
       "src/components/GameEngine/whats-new.ts"
     ]
   },
+  "1sqgr8m1wq5": {
+    "en": "Particles",
+    "tr": "Parçacıklar",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
   "h4bgh4kit1": {
     "en": "Saving: PlayerPrefs and SaveSystem",
     "tr": "Kayıt: PlayerPrefs ve SaveSystem",
@@ -30878,8 +30948,7 @@
     "tr": "Skor tabloları ve başarımlar",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
-      "src/components/GameEngine/whats-new.ts",
-      "src/components/Guide/book-content.ts"
+      "src/components/GameEngine/whats-new.ts"
     ]
   },
   "1v7j0tnlfnc": {
@@ -30887,6 +30956,14 @@
     "tr": "API referansı",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "henvv25uu4": {
+    "en": "Engine rules",
+    "tr": "Motor kuralları",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "1crxp2a34j9": {
@@ -30899,6 +30976,13 @@
   "1eqakc2j2rk": {
     "en": "Security and limits",
     "tr": "Güvenlik ve sınırlar",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "gzlo7ztxo8": {
+    "en": "Debugging: log points and script timings",
+    "tr": "Hata ayıklama: log noktaları ve betik süreleri",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
@@ -30923,6 +31007,69 @@
     "tr": "using UnityEngine;\nusing UnityEngine.SceneManagement;\n\n// Ok tuşları (ya da A/D) ile yürür, Space ile zıplar ve coinleri toplar.\npublic class Oyuncu : MonoBehaviour\n{\n    public float hiz = 6f;\n    public float ziplamaGucu = 7f;\n\n    private Rigidbody2D rb;\n    private bool yerde;\n    private int skor;\n\n    void Start()\n    {\n        rb = GetComponent<Rigidbody2D>();\n        HUD.Show(\"Coinleri topla!\", 2f);\n    }\n\n    void Update()\n    {\n        float yatay = Input.GetAxisRaw(\"Horizontal\");\n        rb.velocity = new Vector2(yatay * hiz, rb.velocity.y);\n\n        if (Input.GetButtonDown(\"Jump\") && yerde)\n        {\n            rb.velocity = new Vector2(rb.velocity.x, ziplamaGucu);\n            yerde = false;\n            Audio.Play(\"jump\");\n        }\n\n        // Dünyadan düştüysek baştan başla.\n        if (transform.position.y < -10f) SceneManager.ReloadScene();\n    }\n\n    void OnCollisionStay2D(Collision2D carpisma)\n    {\n        // Zeminin normali yukarı bakıyorsa ayağımız yerde.\n        if (carpisma.GetContact(0).normal.y > 0.5f) yerde = true;\n    }\n\n    void OnTriggerEnter2D(Collider2D diger)\n    {\n        if (!diger.CompareTag(\"Coin\")) return;\n        skor++;\n        Audio.Play(\"coin\");\n        HUD.Show(\"Skor: \" + skor, 1f);\n        Destroy(diger.gameObject);\n    }\n}",
     "files": [
       "src/components/GameEngine/docs/first-game.ts"
+    ]
+  },
+  "1ef1etae10l": {
+    "en": "GetComponent<Slider>() and AddComponent<Slider>() find the UI slider.",
+    "tr": "GetComponent<Slider>() ve AddComponent<Slider>() UI kaydırıcısını bulur.",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "6iw9zc133l": {
+    "en": "Sound names match the built-in sounds whatever their case; a missing sound warns in the Console.",
+    "tr": "Ses adları büyük-küçük harf ayırmadan hazır seslere eşlenir; bulunamayan ses Konsol'da uyarı verir.",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "1nab5yyj2mn": {
+    "en": "GetComponent<Animator>() returns the Animator state machine (on an object without one, still its Animation component).",
+    "tr": "GetComponent<Animator>() Animator durum makinesini verir (Animator'ı olmayan nesnede yine Animation bileşenini).",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "1o3obq8uiei": {
+    "en": "Animation.CrossFade blends over the given time (0.3 s by default) instead of starting the clip at once.",
+    "tr": "Animation.CrossFade klibi hemen başlatmak yerine verilen sürede (varsayılan 0,3 sn) geçiş yapar.",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "1loj6q7hry": {
+    "en": "Application.systemLanguage names the player's chosen language instead of the browser's.",
+    "tr": "Application.systemLanguage tarayıcının değil, oyuncunun seçtiği dilin adını verir.",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "1jy91tk0ois": {
+    "en": "LayerMask.GetMask, NameToLayer and LayerToName use the layer names; the masks of raycasts and overlap queries apply (before, they hit every layer).",
+    "tr": "LayerMask.GetMask, NameToLayer ve LayerToName katmanların adlarını kullanır; ışın ve örtüşme sorgularındaki maskeler geçerli olur (önce her katmana çarpıyorlardı).",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "z5o8ln4rcd": {
+    "en": "gameObject.layer = n changes the object's layer (before, it was ignored).",
+    "tr": "gameObject.layer = n nesnenin katmanını değiştirir (önce yok sayılıyordu).",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "12yalcbfi1o": {
+    "en": "Physics.IgnoreLayerCollision, Physics2D.IgnoreCollision and GetLayerCollisionMask work.",
+    "tr": "Physics.IgnoreLayerCollision, Physics2D.IgnoreCollision ve GetLayerCollisionMask çalışır.",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
+    ]
+  },
+  "1u6375jofsy": {
+    "en": "Raycasts without a mask skip the layer named Ignore Raycast.",
+    "tr": "Maskesiz ışınlar Ignore Raycast adlı katmanı atlar.",
+    "files": [
+      "src/components/GameEngine/editor/EngineRulesPanel.tsx"
     ]
   },
   "jxkgt8n66v": {
@@ -32254,13 +32401,6 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
-  "1t40mmx2pqk": {
-    "en": "What's new in V4",
-    "tr": "V4'te yenilikler",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
   "2b5iypajwxv": {
     "en": "Snapping",
     "tr": "Yakalama",
@@ -32342,13 +32482,6 @@
   "y4e55qndb0": {
     "en": "Tweens / timers",
     "tr": "Tween / zamanlayıcı",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "1sqgr8m1wq5": {
-    "en": "Particles",
-    "tr": "Parçacıklar",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -33918,9 +34051,9 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
-  "1tfxgccrd4g": {
-    "en": "Touch buttons press the arrow keys, Space and LeftControl, and the gamepad's d-pad, A and X.",
-    "tr": "Dokunmatik düğmeler ok tuşlarına, Space'e ve LeftControl'e, gamepad'de de d-pad'e, A'ya ve X'e basar.",
+  "114p7e60eo": {
+    "en": "Edit the touch controls in Settings → Touch: the joystick feeds the Horizontal and Vertical axes and the buttons press the actions you pick.",
+    "tr": "Dokunmatik kontrolleri Ayarlar → Dokunmatik sekmesinde düzenleyin: joystick Horizontal ve Vertical eksenlerini besler, düğmeler seçtiğiniz eylemlere basar.",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -34561,8 +34694,7 @@
     "en": "Animator",
     "tr": "Animator",
     "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Guide/book-content.ts"
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "e8otb6ppgq": {
@@ -34832,6 +34964,941 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "19fxm6l5klw": {
+    "en": "Layers",
+    "tr": "Katmanlar",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1lfi0rwme0i": {
+    "en": "Layer",
+    "tr": "Katman",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "9ym0ypvq8d": {
+    "en": "Sort objects into layers; the table below decides which layers collide. Scripts get a mask with LayerMask.GetMask(\"Name\") and limit raycasts with it.",
+    "tr": "Nesneleri katmanlara ayırın; aşağıdaki tablo hangi katmanların çarpışacağını belirler. Betikler LayerMask.GetMask(\"Ad\") ile maske alır ve ışınları bu maskeyle sınırlar.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2652webywyj": {
+    "en": "Layer names",
+    "tr": "Katman adları",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "15i55bonb6e": {
+    "en": "(unnamed)",
+    "tr": "(adsız)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "27j5rcudp17": {
+    "en": "Name it…",
+    "tr": "Ad verin…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1h9awxskz4d": {
+    "en": "A layer name starts with a letter or digit, uses only letters, digits, spaces and _ - . and each name is used once.",
+    "tr": "Katman adı harf ya da rakamla başlar; yalnızca harf, rakam, boşluk ve _ - . içerir ve her ad bir kez kullanılır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1pv7usvyj5j": {
+    "en": "Collision matrix",
+    "tr": "Çarpışma tablosu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2atxd52gxfj": {
+    "en": "A ticked box: objects on those two layers collide and get trigger events. Untick it and they pass through each other. Only named layers appear in the table.",
+    "tr": "İşaretli kutu: o iki katmandaki nesneler çarpışır ve tetikleyici olaylarını alır. İşareti kaldırırsanız birbirlerinin içinden geçerler. Tabloda yalnızca adı olan katmanlar görünür.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1unl8v6tnh5": {
+    "en": "Everything collides",
+    "tr": "Hepsi çarpışsın",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "26pkxz1ed7n": {
+    "en": "Edit layers…",
+    "tr": "Katmanları düzenle…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2109u9fst05": {
+    "en": "Nothing",
+    "tr": "Hiçbiri",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Social/GroupSidebar.tsx"
+    ]
+  },
+  "rumk3qt638": {
+    "en": "Everything",
+    "tr": "Hepsi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "oxnho7nk8f": {
+    "en": "This project runs with V{rules} rules: layers and the table apply to physics, but LayerMask, raycast masks and setting gameObject.layer in scripts work with V6 rules.",
+    "tr": "Bu proje V{rules} kurallarıyla çalışıyor: katmanlar ve tablo fizikte geçerli, ama betiklerdeki LayerMask, ışın maskeleri ve gameObject.layer ataması V6 kurallarıyla çalışır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "kd22dpa68y": {
+    "en": "Emission",
+    "tr": "Yayım",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "o000elvr53": {
+    "en": "Start burst",
+    "tr": "Başlangıç patlaması",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2uuxm58m7c": {
+    "en": "Time (s)",
+    "tr": "Zaman (sn)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1v8lkwqnd8a": {
+    "en": "Count",
+    "tr": "Adet",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "srzei9gxe5": {
+    "en": "Cycles (0 = endless)",
+    "tr": "Tekrar (0 = sürekli)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "15i31k7g7pt": {
+    "en": "Interval (s)",
+    "tr": "Aralık (sn)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ahdmbcn94c": {
+    "en": "Add timed burst",
+    "tr": "Zamanlı patlama ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1vbb9fjurso": {
+    "en": "Shape",
+    "tr": "Şekil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1r4v9t60rmb": {
+    "en": "Point",
+    "tr": "Nokta",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "12x4cwxa3lu": {
+    "en": "Circle",
+    "tr": "Çember",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "40atij69zq": {
+    "en": "Cone",
+    "tr": "Koni",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ouyv3m9yla": {
+    "en": "Box",
+    "tr": "Kutu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1j58yhl60ij": {
+    "en": "Edge (line)",
+    "tr": "Kenar (çizgi)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "y26gzgnjuv": {
+    "en": "Radius",
+    "tr": "Yarıçap",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2cyxfd297i3": {
+    "en": "Thickness (0 = rim only)",
+    "tr": "Kalınlık (0 = yalnız kenar)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1c7vbxjuz1k": {
+    "en": "Arc (°)",
+    "tr": "Yay (°)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "226z4nrdb42": {
+    "en": "Box size",
+    "tr": "Kutu boyutu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1yt0gqcalpk": {
+    "en": "Length",
+    "tr": "Uzunluk",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Security/PasswordLab.tsx"
+    ]
+  },
+  "cbbvgz9v1i": {
+    "en": "Cone angle",
+    "tr": "Koni açısı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "15214tcv4xj": {
+    "en": "Color over lifetime",
+    "tr": "Ömür boyu renk geçişi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1rju7l1q5wi": {
+    "en": "Position (0–1)",
+    "tr": "Konum (0–1)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1d34qszb6u6": {
+    "en": "Add color stop",
+    "tr": "Renk durağı ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "4kconpc1az": {
+    "en": "Size curve",
+    "tr": "Boyut eğrisi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "23tav0qi2l4": {
+    "en": "Middle size",
+    "tr": "Orta boyut",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1qrl5oapqg6": {
+    "en": "Every particle draws this image, tinted by the particle color. Square images work best.",
+    "tr": "Her parçacık bu görseli çizer; parçacık rengi görseli boyar. Kare görseller en iyi sonucu verir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "15wizj5mcvo": {
+    "en": "Sub-emitter",
+    "tr": "Alt yayıcı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "u70qrkcnmk": {
+    "en": "Per death",
+    "tr": "Ölüm başına",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2di0pubjqpe": {
+    "en": "Create sub-emitter",
+    "tr": "Alt yayıcı oluştur",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "wax1lek727": {
+    "en": "When a particle dies, the chosen object's Particle System emits from that point. It is one level deep: the sub-emitter's own particles emit nothing when they die.",
+    "tr": "Bir parçacık öldüğünde seçili nesnenin Particle System'i o noktadan parçacık çıkarır. Tek seviyedir: alt yayıcının parçacıkları ölünce yeni bir şey çıkmaz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "gkuzni1cb3": {
+    "en": "Pool (in use / all)",
+    "tr": "Havuz (kullanımda / tümü)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1w13sn6akjn": {
+    "en": "Script time (ms / frame)",
+    "tr": "Betik süresi (ms / kare)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1mphx1znvlc": {
+    "en": "For many copies (bullets, sparks, enemies) use a pool; copies are reused instead of destroyed:",
+    "tr": "Çok sayıda kopya (mermi, parçacık, düşman) için havuz kullanın; kopyalar yok edilmez, yeniden kullanılır:",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1bfirpaon63": {
+    "en": "Tile type",
+    "tr": "Karo türü",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2ek0e7eqysv": {
+    "en": "Rule tile",
+    "tr": "Kural karosu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "q9xiauxak8": {
+    "en": "Animated",
+    "tr": "Animasyonlu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1h7bln35jpk": {
+    "en": "Neighbours",
+    "tr": "Komşular",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1uillju0st4": {
+    "en": "4 neighbours · 16 cells",
+    "tr": "4 komşu · 16 kare",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1drul5effcq": {
+    "en": "8 neighbours · 47 cells",
+    "tr": "8 komşu · 47 kare",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "87oxh1oxlz": {
+    "en": "Joins other tiles too",
+    "tr": "Başka karolara da bağlanır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2d3mtelobzl": {
+    "en": "{set}/{total} cases set",
+    "tr": "{set}/{total} durum atandı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1the8i9e09u": {
+    "en": "Edit rule cells…",
+    "tr": "Kural karelerini düzenle…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "16veo4qataj": {
+    "en": "A rule tile draws a different atlas cell depending on its neighbours: when you paint it, the tiles around it update too.",
+    "tr": "Kural karosu, komşularına göre atlastan farklı bir kare çizer: boyadığınızda çevresindeki karolar da kendini günceller.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "gx8ac2p4pt": {
+    "en": "Rule and animated tiles draw cells of the texture atlas; pick an atlas below first.",
+    "tr": "Kural ve animasyonlu karolar doku atlasındaki kareleri çizer; önce aşağıdan bir atlas seçin.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "dw43q9s6zv": {
+    "en": "Rule tile: {name}",
+    "tr": "Kural karosu: {name}",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "209uqdoomiz": {
+    "en": "Each box is a neighbour case: the middle square is this tile, filled squares are neighbours holding the same tile and empty squares are empty neighbours; faded corners don't matter. Pick a box and click the atlas cell that fits it; the selection moves to the next box.",
+    "tr": "Her kutu bir komşu durumudur: ortadaki kare bu karo, dolu kareler aynı karonun bulunduğu komşular, boş kareler boş komşulardır; soluk köşeler fark etmez. Bir kutu seçin ve atlasta o duruma uyan kareyi tıklayın; seçim sıradaki kutuya geçer.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1e30qw0lir5": {
+    "en": "Case {slot}",
+    "tr": "Durum {slot}",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "3d80g6xy5n": {
+    "en": "First cell",
+    "tr": "İlk kare",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2b3g5xsu0ow": {
+    "en": "Fill in order from the atlas",
+    "tr": "Atlastan sırayla doldur",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "12d6as3yr1z": {
+    "en": "If the atlas holds the {count} cells one after another in this order, one click sets them all.",
+    "tr": "Atlasta {count} kare yan yana ve alt alta, bu sırayla dizildiyse tek tıkla atanır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "168w2a7f390": {
+    "en": "Clear cases",
+    "tr": "Durumları temizle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "32ogdyu95k": {
+    "en": "Atlas: the clicked cell goes to the selected case",
+    "tr": "Atlas: tıklanan kare seçili duruma atanır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "tx37j1y98s": {
+    "en": "Cases without a cell draw the tile's own atlas cell.",
+    "tr": "Atanmamış durumlarda karonun kendi atlas karesi çizilir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "of97q64i5s": {
+    "en": "Frames",
+    "tr": "Kareler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1iv2xzf8kah": {
+    "en": "Atlas cell numbers, comma separated: 4, 5, 6, 7",
+    "tr": "Atlas kare numaraları, virgülle: 4, 5, 6, 7",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "qqn2ehceoe": {
+    "en": "Speed (frames/s)",
+    "tr": "Hız (kare/sn)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "15ox4qtj1zr": {
+    "en": "One-way platform",
+    "tr": "Tek yönlü platform",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "161up4d3gd1": {
+    "en": "Prefab",
+    "tr": "Prefab",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "11ow2jhrmoy": {
+    "en": "{count} linked copies in the scenes; Apply on one updates them all.",
+    "tr": "Sahnelerde bağlı {count} kopya var; birinde Uygula deyince hepsi güncellenir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "coykgnfkmt": {
+    "en": "part of {name}",
+    "tr": "{name} kopyasının parçası",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2fw2zlnly98": {
+    "en": "{count} overrides",
+    "tr": "{count} değişiklik",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "17mqwq80ox9": {
+    "en": "same as the prefab",
+    "tr": "prefab ile aynı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "5tmc5bst8m": {
+    "en": "Select",
+    "tr": "Seç",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ycqyogyy3s": {
+    "en": "Revert",
+    "tr": "Geri döndür",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1o3l4nvkz5z": {
+    "en": "Pushes this copy's changes to the prefab and its other copies; the other copies keep their own changes.",
+    "tr": "Bu kopyadaki değişiklikleri prefab'a ve diğer kopyalara aktarır; diğer kopyaların kendi değişiklikleri korunur.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "21ofisvjwk6": {
+    "en": "Drops this copy's changes and brings back the prefab's version (its position and name stay).",
+    "tr": "Bu kopyadaki değişiklikleri siler ve prefab'daki hâline döndürür (konumu ve adı kalır).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1fi3hjon86y": {
+    "en": "Prefab '{name}' updated; {count} other copies changed too.",
+    "tr": "'{name}' prefab'ı güncellendi; {count} diğer kopya da değişti.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zbm8xdga0": {
+    "en": "This copy lacks {components} components and {objects} child objects of the prefab.",
+    "tr": "Bu kopyada prefab'dan {components} bileşen ve {objects} alt nesne eksik.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "13ovzf5czik": {
+    "en": "added",
+    "tr": "eklendi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1oxouj6iirn": {
+    "en": "changed",
+    "tr": "değişti",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2alvoso56dp": {
+    "en": "Revert to prefab",
+    "tr": "Prefab'a geri döndür",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "r4lv8s5reh": {
+    "en": "Log point",
+    "tr": "Log noktası",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ymvm9csxqf": {
+    "en": "Add a log point on the cursor's line (or click the gutter left of a line)",
+    "tr": "İmleçteki satıra log noktası ekle (ya da satırın solundaki boşluğa tıklayın)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1flwe8py0ne": {
+    "en": "Log point on line {line}",
+    "tr": "Satır {line} log noktası",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2byr5532u8j": {
+    "en": "speed = {speed}, position = {transform.position}",
+    "tr": "hız = {speed}, konum = {transform.position}",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1lduyzbw0yx": {
+    "en": "Pause at the end of the frame",
+    "tr": "Kare sonunda duraklat",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "q14nncscdj": {
+    "en": "When the line runs, the frame finishes and the game pauses; continue frame by frame with Step one frame.",
+    "tr": "Satır çalışınca kare tamamlanır ve oyun duraklar; Bir kare ilerle ile adım adım devam edebilirsiniz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "lo52kiyv62": {
+    "en": "Remove the log point",
+    "tr": "Log noktasını sil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1v82kph8kc": {
+    "en": "While the game runs in the editor, the message is written to the Console every time the line runs; the code doesn't change. {expression} shows a value at that line; assignments aren't allowed. Published games skip it.",
+    "tr": "Oyun editörde çalışırken satır her çalıştığında mesaj Konsol'a yazılır; kod değişmez. {ifade} o satırdaki değeri gösterir; atama yapılamaz. Yayınlanan oyunda çalışmaz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "dux2golkbx": {
+    "en": "Changes apply when the game restarts.",
+    "tr": "Değişiklik oyunu yeniden başlatınca geçerli olur.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "tyadht5wqd": {
+    "en": "Open engine rules",
+    "tr": "Motor kurallarını aç",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2cswcx3na2a": {
+    "en": "This project runs with the newest rules (V{latest}).",
+    "tr": "Bu proje en yeni kurallarla (V{latest}) çalışıyor.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1tg65q6tqb8": {
+    "en": "This project runs with V{rules} rules: wherever a later version changed a behaviour, it behaves as in V{rules}. Most new features still work.",
+    "tr": "Bu proje V{rules} kurallarıyla çalışıyor: sonraki sürümlerde davranışı değişen yerlerde V{rules}'teki gibi davranır. Yeni özelliklerin çoğu yine de çalışır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "nakbe1aknc": {
+    "en": "What changes with the V{latest} rules:",
+    "tr": "V{latest} kurallarına geçince değişenler:",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "f2umb2ldz1": {
+    "en": "Upgrade to V{latest} rules",
+    "tr": "V{latest} kurallarına geç",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1icx5ncwy79": {
+    "en": "Try the game after upgrading; if something doesn't work as you expect, you can undo it here.",
+    "tr": "Geçtikten sonra oyunu deneyin; bir şey beklediğiniz gibi çalışmazsa buradan geri alabilirsiniz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ahfmj60k0h": {
+    "en": "The project now uses V{latest} rules.",
+    "tr": "Proje V{latest} kurallarına geçti.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1uhi5by7f7j": {
+    "en": "Upgraded from V{before} to V{rules} rules.",
+    "tr": "V{before} kurallarından V{rules} kurallarına geçildi.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "182k3pd7hp5": {
+    "en": "Undo (V{before})",
+    "tr": "Geri al (V{before})",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ddc9sfeck4": {
+    "en": "The project runs with V{before} rules again.",
+    "tr": "Proje yeniden V{before} kurallarıyla çalışıyor.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2bf7erhds5d": {
+    "en": "Upgrade engine rules",
+    "tr": "Motor kurallarını yükselt",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "6mv9wl5x9w": {
+    "en": "Undo the engine rules upgrade",
+    "tr": "Motor kuralı yükseltmesini geri al",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1d1fk3ebudf": {
+    "en": "Events",
+    "tr": "Olaylar",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "r631xzd5es": {
+    "en": "Add event",
+    "tr": "Olay ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "202ia4bzlgi": {
+    "en": "Remove event",
+    "tr": "Olayı sil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "16lwix06ok": {
+    "en": "Method name",
+    "tr": "Metot adı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2vhn6gxijx": {
+    "en": "No parameter",
+    "tr": "Parametresiz",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1zafuz9vjov": {
+    "en": "float",
+    "tr": "float",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2e4zfzek8qa": {
+    "en": "int",
+    "tr": "int",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2cdivvdzv6v": {
+    "en": "string",
+    "tr": "string",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/lib/runtimes/worker.ts"
+    ]
+  },
+  "uo5ai8lqdh": {
+    "en": "When playback reaches the time, the method with this name runs on the object's scripts (a footstep, the moment of a hit). Looping clips fire it once per loop.",
+    "tr": "Oynatma bu zamana gelince nesnedeki betiklerin bu adlı metodu çalışır (ör. ayak sesi, vuruş anı). Döngülü kliplerde her turda bir kez.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "n6chu49o1g": {
+    "en": "Touch",
+    "tr": "Dokunmatik",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1slarhwevtp": {
+    "en": "Controls shown over the game on phones and tablets. They are hidden on computers; while the game runs, try them with the mouse using the phone button of the Game view.",
+    "tr": "Telefon ve tabletlerde oyunun üstünde görünen kontroller. Bilgisayarda gizlidir; oyun çalışırken Oyun görünümündeki telefon düğmesiyle fareyle deneyebilirsiniz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "840yssm7mf": {
+    "en": "Direction control",
+    "tr": "Yön kontrolü",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "u6lwfwqncr": {
+    "en": "Virtual joystick",
+    "tr": "Sanal joystick",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "22hp4jykls1": {
+    "en": "Arrow pad (V5)",
+    "tr": "Ok tuşları (V5)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1w3m66pdr8e": {
+    "en": "Left (buttons on the right)",
+    "tr": "Solda (düğmeler sağda)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "akb635m3av": {
+    "en": "Right (buttons on the left)",
+    "tr": "Sağda (düğmeler solda)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "24hjlbzvzx7": {
+    "en": "Size (px)",
+    "tr": "Boyut (px)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2eaqc08u23h": {
+    "en": "Dead zone",
+    "tr": "Ölü bölge",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2dykh1rd5q2": {
+    "en": "The joystick feeds the Horizontal and Vertical axes as an analog stick (like every axis bound to the left stick). Pushed past half way it also presses the arrow keys, so games written with Input.GetKey work too.",
+    "tr": "Joystick, Horizontal ve Vertical eksenlerini analog olarak besler (sol çubuğa bağlı her eksen gibi). Yarıdan fazla itilince ok tuşlarına da basar; Input.GetKey ile yazılmış oyunlar da çalışır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "msuyf6svp8": {
+    "en": "Buttons",
+    "tr": "Düğmeler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "jzs1l21amv": {
+    "en": "Add button",
+    "tr": "Düğme ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "28gseuuldrv": {
+    "en": "Label",
+    "tr": "Yazı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/HanogtAI/ConnectionsManager.tsx"
+    ]
+  },
+  "139tcta39bc": {
+    "en": "no such action",
+    "tr": "böyle bir eylem yok",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1vn1r5t1cw": {
+    "en": "No buttons added: A (Space) and B (LeftControl) are shown.",
+    "tr": "Düğme eklenmedi: A (Space) ve B (LeftControl) gösterilir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1lgvpn057z2": {
+    "en": "Each button presses an input action: Input.GetButton(\"Jump\") turns true and the action's keys and gamepad buttons count as pressed too. Up to 4 buttons.",
+    "tr": "Her düğme bir giriş eylemine basar: Input.GetButton(\"Jump\") true olur, eylemin tuşları ve gamepad düğmeleri de basılı sayılır. En fazla 4 düğme.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "115p9dwkple": {
+    "en": "Show touch controls",
+    "tr": "Dokunmatik kontrolleri göster",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "dsu7xtg38d": {
+    "en": "For vibration write Input.Vibrate(200, 0.8f) in a script: it rumbles the gamepad or the phone, and does nothing when there is neither.",
+    "tr": "Titreşim için betikte Input.Vibrate(200, 0.8f) yazın: gamepad'i ya da telefonu titretir, ikisi de yoksa bir şey yapmaz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "m8oi48pg0m": {
+    "en": "You land on it from above and pass through it from below and from the sides.",
+    "tr": "Üstüne basılır; alttan zıplayınca ve yandan içinden geçilir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
   "1c2daictf4j": {
     "en": "{version} · C# · C++ · 2D · 3D",
     "tr": "{version} · C# · C++ · 2D · 3D",
@@ -35009,16 +36076,23 @@
       "src/lib/nav.ts"
     ]
   },
-  "1aulvvjq00l": {
-    "en": "Every release makes the engine more capable: what V5 brings first, then the earlier releases. Each card opens its section of the docs.",
-    "tr": "Her sürüm motoru daha yetenekli kılar: önce V5 ile gelenler, sonra önceki sürümler. Kartlar ilgili belge bölümünü açar.",
+  "272lfy84saw": {
+    "en": "Every release makes the engine more capable: what V6 brings first, then the earlier releases. Each card opens its section of the docs.",
+    "tr": "Her sürüm motoru daha yetenekli kılar: önce V6 ile gelenler, sonra önceki sürümler. Kartlar ilgili belge bölümünü açar.",
     "files": [
       "src/components/GameEngine/EngineHub.tsx"
     ]
   },
-  "17o1d85xl95": {
-    "en": "New in V5",
-    "tr": "V5 ile gelenler",
+  "kxparmv7bs": {
+    "en": "New in V6",
+    "tr": "V6 ile gelenler",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "13k9llj3pgw": {
+    "en": "V5",
+    "tr": "V5",
     "files": [
       "src/components/GameEngine/EngineHub.tsx"
     ]
@@ -35232,6 +36306,118 @@
     "tr": "Kodlar yorum satırlarıyla açıklanmıştır; değerleri değiştirip hemen oynayarak öğrenebilirsin.",
     "files": [
       "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "uaxn17yabh": {
+    "en": "16 named layers and a table where you pick which layers collide. LayerMask.GetMask, gameObject.layer, masked 2D and 3D raycasts, IgnoreLayerCollision and IgnoreCollision now really work.",
+    "tr": "16 adlandırılmış katman ve hangi katmanların çarpışacağını seçtiğin tablo. LayerMask.GetMask, gameObject.layer, maskeli 2D ve 3D ışınlar, IgnoreLayerCollision ve IgnoreCollision artık gerçekten çalışıyor.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1iebmyzsmae": {
+    "en": "Pool.Spawn and Pool.Despawn reuse bullets, sparks and enemies instead of destroying them: get copies ready with Prewarm, despawn after a delay, a cap per prefab and a pool counter in the stats.",
+    "tr": "Pool.Spawn ve Pool.Despawn mermileri, kıvılcımları ve düşmanları yok etmeden yeniden kullanır: Prewarm ile hazırla, gecikmeli Despawn, prefab başına üst sınır ve istatistiklerde havuz sayacı.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "2g8pb9cgmwu": {
+    "en": "Particles V2",
+    "tr": "Parçacıklar V2",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1nw2q9wu0bi": {
+    "en": "Circle, cone, box and edge shapes; repeating timed bursts; a multi-stop color gradient and a size curve; images on particles and a sub-emitter that throws sparks where a particle dies.",
+    "tr": "Çember, koni, kutu ve kenar şekilleri; tekrar eden zamanlı patlamalar; çok duraklı renk geçişi ve boyut eğrisi; parçacıklarda görsel ve ölen parçacıktan kıvılcım saçan alt yayıcı.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1bwu9pjimv9": {
+    "en": "Rule tiles and one-way platforms",
+    "tr": "Kural karoları ve tek yönlü platformlar",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "21uumfxqb9f": {
+    "en": "Rule tiles that pick their own cell from their neighbours (16- or 47-cell sets, defined by clicking the atlas), animated tiles that play frame by frame and one-way platforms you land on from above and jump through from below.",
+    "tr": "Komşularına göre kendi karesini seçen kural karoları (16 ya da 47 karelik setler, atlastan tıklayarak tanımlanır), kare kare oynayan animasyonlu karolar ve üstüne basılıp alttan geçilen tek yönlü platformlar.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1d2jgvxy9gb": {
+    "en": "Virtual joystick and vibration",
+    "tr": "Sanal joystick ve titreşim",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "2bfonkz8lj1": {
+    "en": "On phones an analog joystick (left or right, size, dead zone) feeds the Horizontal and Vertical axes, and up to 4 buttons press the actions you pick. Input.Vibrate rumbles the gamepad or the phone.",
+    "tr": "Telefonda analog joystick (sol ya da sağ, boyut, ölü bölge) Horizontal ve Vertical eksenlerini besler; en fazla 4 düğme istediğin eylemlere basar. Input.Vibrate gamepad'i ya da telefonu titretir.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1ovxu3nap9m": {
+    "en": "Animation events and the engine rules panel",
+    "tr": "Animasyon olayları ve motor kuralları paneli",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "3d0q7hn6t3": {
+    "en": "Events that call a script method when a clip reaches a moment (a footstep, the instant of a hit), edited in the Animation component. A new panel in the project settings moves old projects to V6 rules with a list of changes, and can undo it.",
+    "tr": "Klip belli bir ana gelince betikteki metodu çağıran olaylar (ayak sesi, vuruş anı), Animation bileşeninde düzenlenir. Proje ayarlarındaki yeni panel eski projeleri değişiklik listesiyle V6 kurallarına taşır ve geri alabilir.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1nis4fro4mw": {
+    "en": "Prefab links",
+    "tr": "Prefab bağlantıları",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "133djwxwh2v": {
+    "en": "Copies in a scene remember their prefab: a Prefab bar in the Inspector, blue marks on changed fields, Apply to push changes to every copy and Revert to go back to the prefab.",
+    "tr": "Sahnedeki kopyalar prefab'ını hatırlar: Inspector'da Prefab çubuğu, değişen alanlarda mavi işaret, değişiklikleri tüm kopyalara aktaran Uygula ve prefab'a döndüren Geri döndür.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "n1w93260e7": {
+    "en": "Log points and script timings",
+    "tr": "Log noktaları ve betik süreleri",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "m3pljn687j": {
+    "en": "Log points that print a message and {values} from a line without changing the code (click next to the line in the script editor), and how many milliseconds each script takes per frame in the stats panel.",
+    "tr": "Script düzenleyicide satırın yanına tıklayıp kodu değiştirmeden mesaj ve {değer} yazdıran log noktaları; istatistik panosunda her betiğin kare başına kaç milisaniye harcadığı.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "o28594s3lk": {
+    "en": "A lighter player",
+    "tr": "Daha hafif oynatıcı",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "12icin6u3b7": {
+    "en": "The editor's camera controls, gizmos and selection tools no longer ship in the player: exported HTML games and web packages are about 77 KB smaller than in V5, new V6 features included.",
+    "tr": "Editörün kamera kontrolleri, gizmo'ları ve seçim araçları artık oynatıcıya girmiyor: dışa aktarılan HTML oyunları ve web paketleri, V6'nın yeni özelliklerine rağmen V5'tekinden yaklaşık 77 KB küçük.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
     ]
   },
   "uslgbmj89t": {
@@ -37682,6 +38868,7 @@
     "tr": "Grup kuralları",
     "files": [
       "src/components/Groups/workspace/RulesEditor.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/Social/group/RulesView.tsx"
     ]
   },
@@ -37872,6 +39059,7 @@
     "tr": "AutoMod",
     "files": [
       "src/components/Groups/workspace/SafetySettings.tsx",
+      "src/components/Guide/book-content.ts",
       "src/lib/social/bots.ts"
     ]
   },
@@ -39102,6 +40290,62 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "n23cfip5nh": {
+    "en": "Workbench tools",
+    "tr": "Atölye araçları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1pnomlvzg3b": {
+    "en": "Every error and warning in your open files in one list; click one to jump to its line. The counter in the status bar opens it too.",
+    "tr": "Açık dosyaların bütün hata ve uyarıları tek listede; birine tıkla, satırına git. Durum çubuğundaki sayaç da paneli açar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "fomjva0gnh": {
+    "en": "Search in all files",
+    "tr": "Dosyalarda ara",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2choon2ngt2": {
+    "en": "Search every file with match case, whole word and regular expressions. \"Replace all\" asks first and undoes in one step per file.",
+    "tr": "Büyük/küçük harf, tam kelime ve düzenli ifadeyle bütün dosyalarda ara. \"Tümünü değiştir\" önce sorar; her dosyada tek adımda geri alınır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "7vzxqt5928": {
+    "en": "A snapshot is taken when you save, when you run and every 3 minutes while a file changes. Compare it with the file as it is now and restore it in one step. It stays in this browser only.",
+    "tr": "Kaydettiğinde, çalıştırdığında ve dosya değişiyorsa 3 dakikada bir anlık görüntü alınır. Bugünkü hâliyle karşılaştır, tek adımda geri yükle. Yalnızca bu tarayıcıda saklanır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1usxkee7o1s": {
+    "en": "Side panels, console, toolbar and the site menu hide away; only your code stays. Press Esc to leave.",
+    "tr": "Kenar panelleri, konsol, araç çubuğu ve site menüsü gizlenir; yalnızca kodun kalır. Esc ile çıkarsın.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1eizrdg490e": {
+    "en": "Master's touch",
+    "tr": "Usta işi",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "11g76r9auk0": {
+    "en": "Emmet abbreviations work in HTML, CSS, SCSS, Less and JSX; turn on Vim keys in the Editor settings. The console shows ANSI colors too.",
+    "tr": "HTML, CSS, SCSS, Less ve JSX'te Emmet kısaltmaları çalışır; Vim tuşlarını Editör ayarlarından açarsın. Konsol ANSI renklerini de gösterir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "1fhx8m87iv2": {
     "en": "Edit as a team",
     "tr": "Ekiple düzenle",
@@ -39158,9 +40402,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1yyprmj0w3y": {
-    "en": "Hanogt Engine V5 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
-    "tr": "Hanogt Engine V5, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
+  "x10k88buwj": {
+    "en": "Hanogt Engine V6 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
+    "tr": "Hanogt Engine V6, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -39172,9 +40416,16 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1ce8zte6byb": {
-    "en": "Star Duel (two players), Dungeon Escape and Meteor Storm (new in V5)",
-    "tr": "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru (V5 ile yeni)",
+  "5okxf3n7p3": {
+    "en": "Bullet Storm and Hill Run (new in V6)",
+    "tr": "Mermi Fırtınası ve Tepe Koşusu (V6 ile yeni)",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "28izp7rusqz": {
+    "en": "Star Duel (two players), Dungeon Escape and Meteor Storm (from V5)",
+    "tr": "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru (V5 ile gelenler)",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -39350,72 +40601,65 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "2dcuav4yd2l": {
-    "en": "The new blocks of V5",
-    "tr": "V5'in yeni blokları",
+  "19d88e8zjm7": {
+    "en": "The new blocks of V6",
+    "tr": "V6'nın yeni blokları",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1f3fq1tprhn": {
-    "en": "States such as Idle, Run and Jump with transitions driven by parameters; scripts only call SetFloat and SetTrigger.",
-    "tr": "Idle, Run, Jump gibi durumlar ve parametrelerle geçişler; betik yalnızca SetFloat ve SetTrigger der.",
+  "1v1hcdnald5": {
+    "en": "Layers and the collision matrix: pick which objects collide; limit raycasts with LayerMask.",
+    "tr": "Katmanlar ve çarpışma tablosu: hangi nesnelerin çarpışacağını sen seç; LayerMask ile ışınları sınırla.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "4uuewyhsl0": {
-    "en": "Best scores and unlocked achievements on the Arcade with Leaderboard.Submit and Achievements.Unlock.",
-    "tr": "Leaderboard.Submit ve Achievements.Unlock ile Arcade'de en iyi skorlar ve açılan başarımlar.",
+  "okdhid2eas": {
+    "en": "Object pools: Pool.Spawn and Pool.Despawn reuse bullets instead of destroying them.",
+    "tr": "Nesne havuzları: Pool.Spawn ve Pool.Despawn mermileri yok etmeden yeniden kullanır.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1xd5n3y34n3": {
-    "en": "A string table and Localization.Get: the game opens in the player's language.",
-    "tr": "Dil tablosu ve Localization.Get: oyun, oyuncunun dilinde açılır.",
+  "fi16fcsq4r": {
+    "en": "Particles V2: shapes, timed bursts, color gradients and sub-emitters.",
+    "tr": "Parçacıklar V2: şekiller, zamanlı patlamalar, renk geçişi ve alt yayıcı.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "l9c3uh4no": {
-    "en": "Up to four players on one screen with Player Input: the two halves of the keyboard and gamepads.",
-    "tr": "Player Input ile aynı ekranda dört oyuncuya kadar: klavyenin iki yarısı ve gamepad'ler.",
+  "idp9yir3ax": {
+    "en": "Rule tiles, animated tiles and one-way platforms.",
+    "tr": "Kural karoları, animasyonlu karolar ve tek yönlü platformlar.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1fxijvt78cq": {
-    "en": "SaveSystem",
-    "tr": "SaveSystem",
+  "1nsisvty4s7": {
+    "en": "A virtual joystick, action buttons and Input.Vibrate on phones.",
+    "tr": "Telefonda sanal joystick, eylem düğmeleri ve Input.Vibrate.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "bq59heyh3w": {
-    "en": "Save your own classes to save slots and load them back in one line.",
-    "tr": "Kendi sınıflarını kayıt yuvalarına tek satırla kaydet ve geri yükle.",
+  "1xkpwrhyknx": {
+    "en": "Animation events, prefab links (Apply / Revert), log points and script timings.",
+    "tr": "Animasyon olayları, prefab bağlantıları (Uygula / Geri döndür), log noktaları ve betik süreleri.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1xf4nbw4jwv": {
-    "en": "3D models and the web package",
-    "tr": "3D modeller ve web paketi",
+  "1bybvhg4u4n": {
+    "en": "New templates: Bullet Storm and Hill Run. Older projects keep their own rules; Settings → Project → Engine rules moves them to the V6 rules.",
+    "tr": "Yeni şablonlar: Mermi Fırtınası ve Tepe Koşusu. Eski projeler kendi kurallarıyla çalışır; Ayarlar → Proje → Motor kuralları onları V6 kurallarına taşır.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "x6xbfg7k6s": {
-    "en": "Upload GLB models; host your game on your own site as a ZIP that installs like an app.",
-    "tr": "GLB modeller yükle; oyununu ZIP olarak kendi sitende yayınla, uygulama gibi yüklensin.",
-    "files": [
-      "src/components/Guide/book-content.ts"
-    ]
-  },
-  "wpiuzax6oz": {
-    "en": "New templates: Star Duel, Dungeon Escape and Meteor Storm. Screen effects gained color grading, chromatic aberration, pixelation and CRT.",
-    "tr": "Yeni şablonlar: Yıldız Düellosu, Zindan Kaçışı ve Meteor Yağmuru. Ekran efektlerine renk düzenleme, kromatik sapma, pikselleştirme ve CRT eklendi.",
+  "2ehlk92gnec": {
+    "en": "What V5 brought is all still there: the Animator, leaderboards and achievements, game languages, local multiplayer, SaveSystem, GLB models and the web package.",
+    "tr": "V5 ile gelenler de aynen sürüyor: Animator, skor tabloları ve başarımlar, oyunun dilleri, yerel çok oyunculu, SaveSystem, GLB modeller ve web paketi.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -40186,6 +41430,129 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "35y4a2h6s0": {
+    "en": "Thinking & settings",
+    "tr": "Düşünme ve ayarlar",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1o2ody8uvsh": {
+    "en": "On hard questions Hanogt AI thinks before it answers. Its thinking, the knowledge sources it read and the checks that ran show in the \"Thought for N s\" panel above the answer. Thinking stays in this browser and is never sent back with later messages.",
+    "tr": "Zor sorularda Hanogt AI yanıtlamadan önce düşünür. Düşüncesi, okuduğu bilgi kaynakları ve çalışan denetimler yanıtın üstündeki \"N sn düşündü\" panelinde görünür. Düşünme yalnızca bu tarayıcıda kalır, sonraki mesajlarla geri gönderilmez.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2b2zynbee7x": {
+    "en": "Thinking: Auto (for code, security and long questions), On or Off; you can hide the panel.",
+    "tr": "Düşünme: Otomatik (kodda, güvenlikte ve uzun sorularda), Açık ya da Kapalı; paneli gizleyebilirsin.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "245899szxg0": {
+    "en": "Personal instructions, tone, length, answer language and expertise level.",
+    "tr": "Kişisel talimatlar, üslup, uzunluk, yanıt dili ve uzmanlık düzeyi.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "17luow6hzj8": {
+    "en": "Creativity: Precise, Balanced or Creative.",
+    "tr": "Yaratıcılık: Hassas, Dengeli ya da Yaratıcı.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "ztkqw90fn": {
+    "en": "Code: comment language, code style and your preferred languages; changes as the whole file or a diff.",
+    "tr": "Kod: yorum dili, kod stili, tercih ettiğin diller; değişiklikler tam dosya ya da fark olarak.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "s9fzzj1phi": {
+    "en": "Private chats: with keeping chats off, new chats are never stored.",
+    "tr": "Gizli sohbet: sohbetleri saklama kapalıyken yeni sohbetler hiç kaydedilmez.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1658yryb5gd": {
+    "en": "Export your settings, import them on another device or reset them section by section.",
+    "tr": "Ayarları dışa aktar, başka bir cihazda içe aktar ya da bölüm bölüm sıfırla.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "i6m32qabn7": {
+    "en": "Your own keys & the API",
+    "tr": "Kendi anahtarın ve API",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1orp1cdczar": {
+    "en": "Connections with your own keys",
+    "tr": "Kendi anahtarınla bağlantılar",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2a4fcsiwckx": {
+    "en": "Connect {plus} AI providers with your own API keys on Plus and {pro} on Pro, then pick the model in the chat. These messages count in your Hanogt AI allowance too.",
+    "tr": "Plus'ta {plus}, Pro'da {pro} yapay zekâ sağlayıcısını kendi API anahtarınla bağla ve sohbette modeli seç. Bu mesajlar da Hanogt AI hakkından düşer.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "j0tvg1zg29": {
+    "en": "Create {plus} API keys on Plus and {pro} on Pro and call Hanogt AI from your own app through an OpenAI-compatible endpoint. Every request uses the same allowance as the chat.",
+    "tr": "Plus'ta {plus}, Pro'da {pro} API anahtarı oluştur; Hanogt AI'ı OpenAI uyumlu uç noktayla kendi uygulamandan çağır. Her istek sohbetle aynı haktan düşer.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2bye4wa48lb": {
+    "en": "Hanogt AI in groups",
+    "tr": "Gruplarda Hanogt AI",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "ytmd666tg3": {
+    "en": "Type /ai or mention @Hanogt AI in a Hanogt Social group. The answer counts against the asker's allowance, and its length follows the asker's plan.",
+    "tr": "Hanogt Social gruplarında /ai yaz ya da @Hanogt AI'dan bahset. Yanıt soranın hakkından düşer; uzunluğu soranın planına göredir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1o1whqcygoq": {
+    "en": "Key chest",
+    "tr": "Anahtar sandığı",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "voes0muib5": {
+    "en": "An API key is shown only once, when you create it. Never share it or put it in browser code; if you lose it, revoke it and create a new one.",
+    "tr": "API anahtarı yalnızca oluşturduğun anda bir kez görünür. Kimseyle paylaşma, tarayıcı koduna koyma; kaybedersen iptal edip yenisini oluştur.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1q492cbeged": {
+    "en": "API and connections",
+    "tr": "API ve bağlantılar",
+    "files": [
+      "src/components/Guide/book-content.ts",
+      "src/components/HanogtAI/AiApiPage.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
   "h9yprr9ls1": {
     "en": "Limits",
     "tr": "Sınırlar",
@@ -40303,6 +41670,62 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "nk01o2idop": {
+    "en": "Writing messages",
+    "tr": "Mesaj yazmak",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "14d3qopombu": {
+    "en": "Mention someone with @, link a channel with # and see the commands with /.",
+    "tr": "@ ile birinden bahset, # ile kanala bağlantı ver, / ile komutları gör.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "11r9fqp4qrr": {
+    "en": "Emoji and GIF pickers; Markdown and highlighted code blocks.",
+    "tr": "Emoji ve GIF seçici; Markdown ve renkli kod blokları.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "ytpm4ewffd": {
+    "en": "Reply, react, forward, star or pin. You can star {free} messages on Free, {plus} on Plus and {pro} on Pro.",
+    "tr": "Yanıtla, tepki ver, ilet, yıldızla ya da sabitle. Ücretsiz planda {free}, Plus'ta {plus}, Pro'da {pro} mesaj yıldızlanır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1ppgpcwzrc5": {
+    "en": "A message can be {free} characters long on Free, {plus} on Plus and {pro} on Pro.",
+    "tr": "Bir mesaj Ücretsiz planda {free}, Plus'ta {plus}, Pro'da {pro} karakter olabilir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "wpg7588lve": {
+    "en": "Send pictures, video, sound, PDFs, archives or code files: {freeFile} MB a file and {freeAll} MB in all on Free, {plusFile} MB and {plusAll} MB on Plus, {proFile} MB and {proAll} GB on Pro. Deleting the message gives the space back.",
+    "tr": "Resim, video, ses, PDF, arşiv ya da kod dosyası gönder: Ücretsiz planda dosya başına {freeFile} MB ve toplam {freeAll} MB, Plus'ta {plusFile} MB ve {plusAll} MB, Pro'da {proFile} MB ve {proAll} GB. Mesajı silince yer geri gelir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "9qsjnelcqx": {
+    "en": "Settings chest",
+    "tr": "Ayar sandığı",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "27f7q70n9cm": {
+    "en": "Change read receipts, the typing indicator, Enter to send, text size and notifications in the Social settings.",
+    "tr": "Social ayarlarından okundu bilgisini, yazıyor göstergesini, Enter ile göndermeyi, yazı boyutunu ve bildirimleri değiştir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "1ynyf8grtz0": {
     "en": "Press \"Create group\" on the left rail and pick a template: Blank group, Study group, Game jam, Open-source project, Classroom or Hackathon team.",
     "tr": "Soldaki rayda \"Grup oluştur\"a bas ve bir şablon seç: Boş grup, Çalışma grubu, Game jam, Açık kaynak proje, Sınıf ya da Hackathon takımı.",
@@ -40331,6 +41754,104 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "daoks6a5y1": {
+    "en": "Every group has a Discord-like Rules section: at the top of the sidebar, up to {count} rules, point by point. Each rule has a title and an optional description.",
+    "tr": "Her grubun Discord'daki gibi bir Kurallar bölümü var: kenar çubuğunun en üstünde, madde madde en fazla {count} kural. Her kuralın bir başlığı ve isteğe bağlı bir açıklaması olur.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1v3gezkx187": {
+    "en": "Open \"Group rules\" in the group settings; add the suggested rules or write your own and order them with the arrows.",
+    "tr": "Grup ayarlarında \"Grup kuralları\"nı aç; önerilen kuralları ekle ya da kendin yaz, oklarla sırala.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "42fgq75oov": {
+    "en": "With \"Members accept the rules before they chat\" on, members can't post, react, send files or join the voice channel until they accept the rules.",
+    "tr": "\"Üyeler sohbet etmeden önce kuralları kabul etsin\" açıksa üyeler kuralları kabul etmeden yazamaz, tepki veremez, dosya gönderemez ve sesli kanala katılamaz.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1laccxh57pt": {
+    "en": "After changing the rules you can choose \"Ask everyone to accept the rules again\". The invite page shows the rules too.",
+    "tr": "Kuralları değiştirince \"Herkes kuralları yeniden kabul etsin\" diyebilirsin. Davet sayfası da kuralları gösterir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "j0035gpyu4": {
+    "en": "Ready-made rules",
+    "tr": "Hazır kurallar",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "pqxa3r9003": {
+    "en": "Groups made from a template start with seven rules in the group's language and rule screening on.",
+    "tr": "Şablonla kurulan gruplar grubun dilinde yedi kuralla ve kural onayı açık başlar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2c3cshwgkzw": {
+    "en": "Bots & AutoMod",
+    "tr": "Botlar ve AutoMod",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1aljwcyqmq3": {
+    "en": "The Hanogt Security Bot is in every group and can't be removed. Type its commands with /; /help lists the ones you can use.",
+    "tr": "Hanogt Security Bot her grupta vardır ve çıkarılamaz. Komutlarını / ile yaz; /yardim kullanabileceklerini listeler.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "xa9f5sh17c": {
+    "en": "Everyone: /rules, /report, /warnings, /ai.",
+    "tr": "Herkes: /kurallar, /rapor, /uyarilar, /ai.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1kdobynjaoz": {
+    "en": "Moderators: /warn, /mute, /unmute, /kick, /purge, /slowmode.",
+    "tr": "Moderatörler: /uyar, /sustur, /sesiac, /at, /temizle, /yavasmod.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1pg8no2er33": {
+    "en": "Admins and the owner: /ban. They can also add custom commands and a welcome message in the group settings.",
+    "tr": "Yöneticiler ve sahip: /yasakla. Grup ayarlarından özel komutlar ve bir karşılama mesajı da eklerler.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "8va5f8rnra": {
+    "en": "Stops a message before it is sent: swearing (spellings like s1kt1r too), slang, the group's banned words, repeats and spam, mass mentions, links, capitals and personal data. It can also warn, and mute for a while after a set number of warnings.",
+    "tr": "Mesajı gönderilmeden önce durdurur: küfür (s1kt1r gibi yazımlar dahil), argo, grubun yasaklı kelimeleri, tekrar ve spam, toplu bahsetme, bağlantılar, büyük harf ve kişisel veriler. İstersen uyarı verir; belli sayıda uyarıdan sonra süreli susturur.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "43pnu4rb5v": {
+    "en": "The guard's word",
+    "tr": "Bekçinin sözü",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "gn4ej1q8ps": {
+    "en": "The owner is always exempt from AutoMod; choose which roles are exempt and which checks are on in the group settings.",
+    "tr": "Sahip AutoMod'dan her zaman muaftır; hangi rollerin muaf olacağını ve hangi kuralların açık olacağını grup ayarlarından seçersin.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "2eynge882r3": {
     "en": "Status dots",
     "tr": "Durum noktaları",
@@ -40345,30 +41866,51 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1picjb70ay": {
-    "en": "Voice calls",
-    "tr": "Sesli arama",
+  "ysicds93td": {
+    "en": "Calls & voice channels",
+    "tr": "Aramalar ve sesli kanallar",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "2133tpwkyvn": {
-    "en": "Call a friend from the direct message screen and group members from the group chat.",
-    "tr": "Arkadaşını direkt mesaj ekranından, grup üyelerini grup sohbetinden ara.",
+  "1pbpy6n1svv": {
+    "en": "Call a friend from the direct message screen. The browser asks for microphone access; you can check it from the lock icon in the address bar.",
+    "tr": "Arkadaşını direkt mesaj ekranından ara. Tarayıcı mikrofon izni ister; adres çubuğundaki kilit simgesinden kontrol edebilirsin.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "23dcmg6pe6g": {
-    "en": "The browser asks for microphone access; you can check it from the lock icon in the address bar.",
-    "tr": "Tarayıcı mikrofon izni ister; adres çubuğundaki kilit simgesinden kontrol edebilirsin.",
+  "jhiu0yty2c": {
+    "en": "The full view shows both of you with speaking rings; Esc or Minimize goes back to the bar and the call carries on.",
+    "tr": "Tam görünümde iki kişi de konuşma halkalarıyla görünür; Esc ya da Küçült ile çubuğa dönersin, arama sürer.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1qiaaqq7shg": {
-    "en": "Peer-to-peer via WebRTC; never recorded by Hanogt.",
-    "tr": "WebRTC ile eşten eşe; Hanogt tarafından kaydedilmez.",
+  "xmjey696hv": {
+    "en": "Share your screen from a computer; the other side opens it with \"Watch\". Phones can't share their screen.",
+    "tr": "Bilgisayarda ekranını paylaş; karşı taraf \"İzle\" ile açar. Telefonlarda ekran paylaşımı yok.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "g5pa1vhttx": {
+    "en": "Every group has a voice channel for up to 5 people; join it and control your microphone and sound from the panel.",
+    "tr": "Her grubun en fazla 5 kişilik bir sesli kanalı var; katıl, mikrofonunu ve sesini panelden yönet.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1qzdiu77ai3": {
+    "en": "Peer to peer",
+    "tr": "Eşten eşe",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "g24trbnji4": {
+    "en": "Sound and screen travel between the browsers over WebRTC (through a relay server when a network needs one); Hanogt records none of it.",
+    "tr": "Ses ve ekran WebRTC ile tarayıcılar arasında gider (ağ gerektirirse bir aktarma sunucusundan geçerek); Hanogt hiçbirini kaydetmez.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -40546,6 +42088,48 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "1hg8zkt03e8": {
+    "en": "Sign-in checks",
+    "tr": "Giriş kontrolleri",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1lg6deufyap": {
+    "en": "If you added a password to your account, it is asked for after every Google sign-in, and so is your code when two-step verification is on. Someone who takes over your Google account still can't get into yours alone.",
+    "tr": "Hesabına bir parola eklediysen Google ile her girişten sonra bu parola da sorulur; iki adımlı doğrulama açıksa kodu da. Google hesabını ele geçiren biri tek başına hesabına giremez.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "x4gec3kdyf": {
+    "en": "Sensitive actions such as setting your first password or deleting your account need a sign-in within the last 30 minutes.",
+    "tr": "İlk parolanı koymak ya da hesabını silmek gibi hassas işlemler son 30 dakika içinde giriş yapmış olmanı ister.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "fz1p5vyohv": {
+    "en": "Account Settings → Privacy & Security → Sessions: \"Sign out all other sessions\" ends your sessions on other devices. Changing your password ends them too.",
+    "tr": "Hesap Ayarları → Gizlilik ve Güvenlik → Oturumlar: \"Diğer tüm oturumları kapat\" öbür cihazlardaki oturumları kapatır. Parolanı değiştirince de kapanırlar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1jpjjzrlyt1": {
+    "en": "Lost key",
+    "tr": "Kayıp anahtar",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "28f6o2jlcqc": {
+    "en": "Forgot the password? Send a request from the verification page. Once the team is sure the account is yours, they remove the password step and signing in with Google is enough again.",
+    "tr": "Parolanı unuttuysan doğrulama sayfasından bir istek gönder. Ekip hesabın sana ait olduğundan emin olunca parola şartını kaldırır; Google ile giriş yeniden yeter.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "21ae1un7enr": {
     "en": "Your account is yours",
     "tr": "Hesabın senin",
@@ -40553,9 +42137,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "sqxbhbrm9": {
-    "en": "My Account, Profile, Status, Privacy & Security, Notifications, Messaging, Appearance, Editor and Data sections.",
-    "tr": "Hesabım, Profil, Durum, Gizlilik ve Güvenlik, Bildirimler, Mesajlaşma, Görünüm, Editör ve Veri bölümleri.",
+  "k22g1oqcat": {
+    "en": "My Account, Profile, Status, Privacy & Security, Notifications, Messaging, Appearance, Editor, Hanogt AI and Data sections. Search the menu on the left; save changes from the bar at the bottom or with Ctrl+S.",
+    "tr": "Hesabım, Profil, Durum, Gizlilik ve Güvenlik, Bildirimler, Mesajlaşma, Görünüm, Editör, Hanogt AI ve Veri bölümleri. Soldaki menüde ara; değişiklikleri alttaki çubuktan ya da Ctrl+S ile kaydet.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -40675,6 +42259,69 @@
   "g3k6if8pgm": {
     "en": "Yearly billing costs 10 months. Change or cancel your subscription with \"Manage subscription\" on the Plans page; you can ask for a refund within 14 days of the first payment.",
     "tr": "Yıllık ödemede 10 ayın ücreti alınır. Aboneliğini Planlar sayfasındaki \"Aboneliği yönet\"ten değiştirebilir ya da iptal edebilirsin; ilk ödemeden sonraki 14 gün içinde iade isteyebilirsin.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "8wdj5ciz2l": {
+    "en": "Plus & Pro extras",
+    "tr": "Plus ve Pro ayrıcalıkları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "endtdtnknf": {
+    "en": "Nothing was taken away from the Free plan. Plus and Pro add these on top:",
+    "tr": "Ücretsiz plandan hiçbir şey kısılmadı. Plus ve Pro bunların üstüne şunları ekler:",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "fvxvtxzv7v": {
+    "en": "Bigger runs on the server: {free} characters a file on Free, {plus} on Plus, {pro} on Pro; input and output grow too.",
+    "tr": "Sunucuda daha büyük çalıştırmalar: dosya başına Ücretsiz {free}, Plus {plus}, Pro {pro} karakter; girdi ve çıktı da büyür.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "hrzuq7ufqy": {
+    "en": "Longer Hanogt AI answers in groups: up to {free}, {plus} or {pro} characters by the asker's plan.",
+    "tr": "Gruplarda daha uzun Hanogt AI yanıtları: soranın planına göre {free}, {plus} ya da {pro} karaktere kadar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1djwwu9q490": {
+    "en": "Team editing sessions of {plusHours} hours and {plusFiles} files on Plus, {proHours} hours and {proFiles} files on Pro.",
+    "tr": "Ekiple düzenleme oturumları Plus'ta {plusHours} saat ve {plusFiles} dosya, Pro'da {proHours} saat ve {proFiles} dosya.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "yidw343gya": {
+    "en": "Badge-free game exports from Hanogt Engine (HTML and web package).",
+    "tr": "Hanogt Engine'den rozetsiz oyun dışa aktarma (HTML ve web paketi).",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "26drfi1zj6r": {
+    "en": "Longer messages, more file space and stars, bigger groups; longer answers and more room to think in Hanogt AI.",
+    "tr": "Daha uzun mesajlar, daha çok dosya alanı ve yıldız, daha büyük gruplar; Hanogt AI'da daha uzun yanıtlar ve daha çok düşünme payı.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "sa8ltmsp8q": {
+    "en": "If your plan goes down",
+    "tr": "Plan düşerse",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "211j5o05xna": {
+    "en": "Nothing is deleted: what is over the new limit is kept (extra AI connections are switched off), and you can't add more until you're back under it.",
+    "tr": "Hiçbir şey silinmez: yeni sınırın üstünde kalanlar saklanır (fazla yapay zekâ bağlantıları kapanır); sınırın altına inene kadar yenisi eklenmez.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -41213,16 +42860,6 @@
     "files": [
       "src/components/HanogtAI/AiApiPage.tsx",
       "src/components/HanogtAI/AiSettingsPage.tsx"
-    ]
-  },
-  "1q492cbeged": {
-    "en": "API and connections",
-    "tr": "API ve bağlantılar",
-    "files": [
-      "src/components/HanogtAI/AiApiPage.tsx",
-      "src/components/HanogtAI/ChatSidebar.tsx",
-      "src/components/HanogtAI/HanogtAIChat.tsx",
-      "src/lib/ai/knowledge.ts"
     ]
   },
   "12bg5poy9y6": {
@@ -43880,13 +45517,6 @@
   "354nmlovwn": {
     "en": "Label (optional)",
     "tr": "Etiket (isteğe bağlı)",
-    "files": [
-      "src/components/HanogtAI/ConnectionsManager.tsx"
-    ]
-  },
-  "28gseuuldrv": {
-    "en": "Label",
-    "tr": "Etiket",
     "files": [
       "src/components/HanogtAI/ConnectionsManager.tsx"
     ]
@@ -49111,13 +50741,6 @@
       "src/components/Security/PasswordLab.tsx"
     ]
   },
-  "1yt0gqcalpk": {
-    "en": "Length",
-    "tr": "Uzunluk",
-    "files": [
-      "src/components/Security/PasswordLab.tsx"
-    ]
-  },
   "13xykr3e7l9": {
     "en": "Symbols",
     "tr": "Sembol",
@@ -51303,13 +52926,6 @@
   "pb9g5p61w": {
     "en": "Only @mentions",
     "tr": "Yalnızca @bahsetmeler",
-    "files": [
-      "src/components/Social/GroupSidebar.tsx"
-    ]
-  },
-  "2109u9fst05": {
-    "en": "Nothing",
-    "tr": "Hiçbiri",
     "files": [
       "src/components/Social/GroupSidebar.tsx"
     ]
@@ -54845,24 +56461,24 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1vpzeycq2o": {
-    "en": "[Game Engine](/game-engine) (Hanogt Engine V5) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Star Duel, Dungeon Escape, Meteor Storm, Sky Tower, Maze Hunt, Slingshot Master, Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense, Neon Arena (C++), Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, joints, Camera, Light, Tilemap, Animation, Animator, Player Input, Audio Source, UI and Script components in the **Inspector**, and upload GLB 3D models. Select several objects (Shift + drag or Ctrl+A) to edit them together.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `SaveSystem.Save()`, `Localization.Get()`, `Leaderboard.Submit()`…\n4. Test with **Play**, read errors with line numbers in the console and follow variables live in the **Watch** panel.\n5. **Publish to the Arcade** (with leaderboards and achievements), host it on your own site as a **web package (ZIP · PWA)** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
-    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V5) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Yıldız Düellosu, Zindan Kaçışı, Meteor Yağmuru, Gök Kulesi, Labirent Avı, Sapan Ustası, Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması, Neon Arena (C++), Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, eklemler, Kamera, Işık, Tilemap, Animasyon, Animator, Player Input, Ses Kaynağı, UI ve Script bileşenlerini düzenle; GLB 3D model yükleyebilirsin. Birden çok nesneyi seçip (Shift + sürükle ya da Ctrl+A) birlikte düzenleyebilirsin.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `SaveSystem.Save()`, `Localization.Get()`, `Leaderboard.Submit()`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör, **İzle** panelinde değişkenleri canlı takip et.\n5. **Arcade'de yayınla** (skor tabloları ve başarımlarla), **web paketi (ZIP · PWA)** olarak kendi sitende yayınla ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
+  "1yvnb6vyx0y": {
+    "en": "[Game Engine](/game-engine) (Hanogt Engine V6) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Bullet Storm, Hill Run, Star Duel, Dungeon Escape, Meteor Storm, Sky Tower, Maze Hunt, Slingshot Master, Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense, Neon Arena (C++), Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, joints, Camera, Light, Tilemap, Animation, Animator, Player Input, Audio Source, UI and Script components in the **Inspector**, and upload GLB 3D models. Select several objects (Shift + drag or Ctrl+A) to edit them together.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `SaveSystem.Save()`, `Localization.Get()`, `Leaderboard.Submit()`, `Pool.Spawn()`, `LayerMask.GetMask()`…\n4. Test with **Play**, read errors with line numbers in the console, follow variables live in the **Watch** panel and add log points to lines without changing the code.\n5. **Publish to the Arcade** (with leaderboards and achievements), host it on your own site as a **web package (ZIP · PWA)** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
+    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V6) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Mermi Fırtınası, Tepe Koşusu, Yıldız Düellosu, Zindan Kaçışı, Meteor Yağmuru, Gök Kulesi, Labirent Avı, Sapan Ustası, Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması, Neon Arena (C++), Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, eklemler, Kamera, Işık, Tilemap, Animasyon, Animator, Player Input, Ses Kaynağı, UI ve Script bileşenlerini düzenle; GLB 3D model yükleyebilirsin. Birden çok nesneyi seçip (Shift + sürükle ya da Ctrl+A) birlikte düzenleyebilirsin.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `SaveSystem.Save()`, `Localization.Get()`, `Leaderboard.Submit()`, `Pool.Spawn()`, `LayerMask.GetMask()`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör, **İzle** panelinde değişkenleri canlı takip et; kodu değiştirmeden satıra log noktası ekle.\n5. **Arcade'de yayınla** (skor tabloları ve başarımlarla), **web paketi (ZIP · PWA)** olarak kendi sitende yayınla ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "2d57qvc2xbt": {
-    "en": "What's new in Hanogt Engine V5?",
-    "tr": "Hanogt Engine V5'te neler var?",
+  "1uzzxehb91g": {
+    "en": "What's new in Hanogt Engine V6?",
+    "tr": "Hanogt Engine V6'da neler var?",
     "files": [
       "src/lib/ai/knowledge.ts",
       "src/lib/faq.ts"
     ]
   },
-  "vz8stz6jx": {
-    "en": "**Hanogt Engine V5** (project schema v5) adds building blocks for character animation, saving, translating and sharing games. Older projects are migrated automatically when opened, and games made with earlier versions keep playing with their own rules.\n• **Animator state machine:** states such as Idle, Run and Jump, parameters (bool, float, int, trigger), transitions and Any State; scripts only call `animator.SetFloat(\"speed\", speed)` or `SetTrigger(\"attack\")`. The Animator tab of the bottom panel shows the current state live while the game runs.\n• **Leaderboards and achievements:** define them under Settings → Arcade and report with `Leaderboard.Submit(\"score\", score)` and `Achievements.Unlock(\"first-win\")`. The Arcade keeps the best scores of signed-in players; the server checks bounds and the minimum play time, and leaderboards are marked \"unverified\".\n• **Game languages:** a string table under Settings → Languages, `Localization.Get(\"key\")`, localization keys on UI and CSV for translators.\n• **Local multiplayer:** up to four players on one screen with Player Input, using the two halves of the keyboard and gamepads.\n• **SaveSystem and JsonUtility:** save your own classes with `SaveSystem.Save(\"slot1\", data)` and load them with `Load<T>()`; 20 slots.\n• **3D models (GLB):** up to 300 KB, with their own materials and textures; they share storage with audio files.\n• **Screen effects V2:** color grading, tint, chromatic aberration, pixelation and CRT; change them during the game with `ScreenEffects`.\n• **Web package (ZIP · PWA):** host the game on your own site or on itch.io; it installs as an app and plays offline.\n• **Three new templates:** Star Duel (two players), Dungeon Escape and Meteor Storm.\nEverything V4 brought (input actions and gamepads, Character Controller 2D, camera follow, A* path finding, joints, Slider/Toggle/Input Field, audio files and music, the Watch panel) and V3's features (tilemaps, animation and Tween, fog and screen effects) are still there. See the [Engine docs](/game-engine/docs) or try a template in the [Game Engine](/game-engine).",
-    "tr": "**Hanogt Engine V5** (proje şeması v5) oyunlara karakter animasyonu, kayıt, çeviri ve paylaşım için yeni yapı taşları getirir. Eski projeler açılırken otomatik taşınır; önceki sürümlerle yapılan oyunlar kendi kurallarıyla aynı şekilde çalışmaya devam eder.\n• **Animator durum makinesi:** Idle, Run, Jump gibi durumlar, parametreler (bool, float, int, trigger), geçişler ve Her Durum; betik yalnızca `animator.SetFloat(\"speed\", hız)` ya da `SetTrigger(\"attack\")` der. Alt paneldeki Animator sekmesi oyun çalışırken geçerli durumu canlı gösterir.\n• **Skor tabloları ve başarımlar:** Ayarlar → Arcade'de tanımla, `Leaderboard.Submit(\"score\", skor)` ve `Achievements.Unlock(\"first-win\")` ile bildir. Arcade'de giriş yapan oyuncuların en iyi skorları saklanır; sunucu sınırları ve en kısa oynama süresini denetler, tablolar \"doğrulanmamış\" olarak gösterilir.\n• **Oyunun dilleri:** Ayarlar → Diller'de dil tablosu, `Localization.Get(\"anahtar\")`, UI'da dil anahtarı ve CSV ile çeviri.\n• **Yerel çok oyunculu:** Player Input ile aynı ekranda dört oyuncuya kadar; klavyenin iki yarısı ve gamepad'ler.\n• **SaveSystem ve JsonUtility:** kendi sınıflarını `SaveSystem.Save(\"slot1\", veri)` ile kaydet, `Load<T>()` ile geri yükle; 20 yuva.\n• **3D modeller (GLB):** en fazla 300 KB, kendi malzemeleri ve dokularıyla; ses dosyalarıyla aynı depolama alanına sayılır.\n• **Ekran efektleri V2:** renk düzenleme, renk filtresi, kromatik sapma, pikselleştirme ve CRT; `ScreenEffects` ile oyun sırasında değiştir.\n• **Web paketi (ZIP · PWA):** oyunu kendi sitende ya da itch.io'da yayınla; uygulama olarak yüklenir, çevrim dışı da oynanır.\n• **Üç yeni şablon:** Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru.\nV4'ün getirdikleri (giriş eylemleri ve gamepad, Character Controller 2D, kamera takibi, A* yol bulma, eklemler, Slider/Toggle/Input Field, ses dosyaları ve müzik, İzle paneli) ve V3'ünkiler (tilemap, animasyon ve Tween, sis ve ekran efektleri) aynen sürüyor. Detaylar için [Motor belgeleri](/game-engine/docs)'ne bak ya da [Oyun Motoru](/game-engine)'nda bir şablonla dene.",
+  "1m44fjhg1x0": {
+    "en": "**Hanogt Engine V6** (project schema v6) brings performance and order for bigger games, controls for phones and debugging tools. Older projects are migrated automatically when opened, and games made with earlier versions keep playing with their own rules; Settings → Project → Engine rules moves them to the V6 rules with a list of changes (and can undo it).\n• **Layers and the collision matrix:** 16 named layers and a table where you pick which layers collide; `LayerMask.GetMask(\"Ground\")`, `gameObject.layer`, masked raycasts and `Physics.IgnoreLayerCollision`.\n• **Object pools:** `Pool.Prewarm(\"Bullet\", 30)`, `Pool.Spawn(\"Bullet\", position)`, `Pool.Despawn(obj, 2f)`; copies are reused instead of destroyed.\n• **Particles V2:** circle, cone, box and edge shapes, repeating timed bursts, a multi-stop color gradient, a size curve, images on particles and a sub-emitter that throws sparks where a particle dies.\n• **Tilemaps:** rule tiles that pick their own cell from their neighbours (16- or 47-cell sets), animated tiles and one-way platforms.\n• **Touch controls:** a virtual joystick (feeding the Horizontal/Vertical axes), up to 4 buttons that press actions and `Input.Vibrate(ms, strength)`.\n• **Animation events:** a clip calls a script method when it reaches a moment.\n• **Prefab links:** copies in a scene remember their prefab; Apply and Revert, with changed fields marked.\n• **Debugging:** log points without changing the code (optionally pausing at the end of the frame) and milliseconds per script in the stats.\n• **Two new templates:** Bullet Storm and Hill Run; exported games are lighter too.\nEverything V5 brought (the Animator, leaderboards and achievements, game languages, local multiplayer, SaveSystem, GLB models, screen effects V2, the web package) and the features of earlier versions are still there. See the [Engine docs](/game-engine/docs) or try a template in the [Game Engine](/game-engine).",
+    "tr": "**Hanogt Engine V6** (proje şeması v6) büyük oyunlar için performans ve düzen, mobil için kontroller ve hata ayıklama araçları getirir. Eski projeler açılırken otomatik taşınır; önceki sürümlerle yapılan oyunlar kendi kurallarıyla çalışmaya devam eder, Ayarlar → Proje → Motor kuralları onları değişiklik listesiyle V6 kurallarına taşır (geri alınabilir).\n• **Katmanlar ve çarpışma tablosu:** 16 adlandırılmış katman, hangi katmanların çarpışacağını seçtiğin tablo; `LayerMask.GetMask(\"Ground\")`, `gameObject.layer`, maskeli ışınlar ve `Physics.IgnoreLayerCollision`.\n• **Nesne havuzları:** `Pool.Prewarm(\"Bullet\", 30)`, `Pool.Spawn(\"Bullet\", konum)`, `Pool.Despawn(nesne, 2f)`; kopyalar yok edilmez, yeniden kullanılır.\n• **Parçacıklar V2:** çember, koni, kutu ve kenar şekilleri, tekrar eden zamanlı patlamalar, çok duraklı renk geçişi, boyut eğrisi, parçacık görseli ve ölen parçacıktan kıvılcım saçan alt yayıcı.\n• **Tilemap:** komşularına göre kendi karesini seçen kural karoları (16 ya da 47 karelik setler), animasyonlu karolar ve tek yönlü platformlar.\n• **Dokunmatik kontroller:** sanal joystick (Horizontal/Vertical eksenlerini besler), eyleme basan en fazla 4 düğme ve `Input.Vibrate(ms, güç)`.\n• **Animasyon olayları:** klip belli bir ana gelince betikteki metodu çağırır.\n• **Prefab bağlantıları:** sahnedeki kopyalar prefab'ını hatırlar; Uygula ve Geri döndür, değişen alanlar işaretli.\n• **Hata ayıklama:** kodu değiştirmeden log noktaları (istersen kare sonunda duraklatır) ve istatistiklerde betik başına milisaniye.\n• **İki yeni şablon:** Mermi Fırtınası ve Tepe Koşusu; dışa aktarılan oyunlar da daha hafif.\nV5'in getirdikleri (Animator, skor tabloları ve başarımlar, oyunun dilleri, yerel çok oyunculu, SaveSystem, GLB modeller, ekran efektleri V2, web paketi) ve önceki sürümlerinkiler aynen sürüyor. Detaylar için [Motor belgeleri](/game-engine/docs)'ne bak ya da [Oyun Motoru](/game-engine)'nda bir şablonla dene.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -56845,6 +58461,20 @@
       "src/lib/faq.ts"
     ]
   },
+  "2sdw7viy6l": {
+    "en": "Why am I asked for my password after signing in with Google?",
+    "tr": "Google ile giriş yaptıktan sonra neden şifrem soruluyor?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "1mgltcazxd8": {
+    "en": "If you added a password to your account, it is asked for after every Google sign-in, and so is your verification code when two-step verification is on. That way someone who takes over your Google account still can't get into your Hanogt account alone. If you forgot the password, send a request from the verification page; once the team is sure the account is yours, they remove the password requirement and signing in with Google is enough again. You'll find the reply under My tickets on the Feedback page.",
+    "tr": "Hesabınıza bir şifre eklediyseniz Google ile her girişten sonra bu şifre de istenir; iki adımlı doğrulama açıksa doğrulama kodunuz da. Böylece Google hesabınızı ele geçiren biri tek başına Hanogt hesabınıza giremez. Şifrenizi unuttuysanız doğrulama sayfasından bir istek gönderin; ekip hesabın size ait olduğundan emin olunca şifre şartını kaldırır ve Google ile giriş yeniden yeterli olur. Yanıtı Geri Bildirim sayfasındaki Taleplerim bölümünde görürsünüz.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
   "8a19rjjlu0": {
     "en": "Will Security Bot ban my account automatically?",
     "tr": "Security Bot hesabımı otomatik olarak kalıcı engeller mi?",
@@ -57034,6 +58664,20 @@
       "src/lib/faq.ts"
     ]
   },
+  "2bjn40ampah": {
+    "en": "Can I go back to an earlier version of a file?",
+    "tr": "Bir dosyanın önceki hâline dönebilir miyim?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "iod7t5gihj": {
+    "en": "Yes. The Code Editor takes a snapshot of a file when you save, when you run and every 3 minutes while it changes (up to 30 per file). From the history panel you can compare a snapshot with the file as it is now and restore it in one step; Ctrl+Z undoes the restore. This history is kept only in the browser you use and is never sent to the cloud; you can turn it off or clear it in the Editor settings.",
+    "tr": "Evet. Kod Editörü kaydettiğinizde, çalıştırdığınızda ve dosya değişiyorsa 3 dakikada bir dosyanın anlık görüntüsünü alır (dosya başına en fazla 30). Geçmiş panelinden bir görüntüyü bugünkü dosyayla karşılaştırıp tek adımda geri yükleyebilirsiniz; geri yükleme Ctrl+Z ile geri alınır. Bu geçmiş yalnızca kullandığınız tarayıcıda saklanır, buluta gönderilmez; Editör ayarlarından kapatabilir ya da temizleyebilirsiniz.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
   "12d8umeujuj": {
     "en": "How do I publish my code to Hanogt Media from the editor?",
     "tr": "Kodumu editörden Hanogt Media'da nasıl yayınlarım?",
@@ -57076,6 +58720,20 @@
       "src/lib/faq.ts"
     ]
   },
+  "1src0fni2wm": {
+    "en": "What is the \"Thought for N s\" panel above an answer?",
+    "tr": "Yanıtın üstündeki \"N sn düşündü\" paneli nedir?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "6vka04yo62": {
+    "en": "On hard questions Hanogt AI thinks before it answers. The panel shows the model's thinking, the knowledge sources it read and the checks that ran. In the Hanogt AI settings you can set thinking to Auto (for code, security and long questions), On or Off, and hide the panel. Thinking makes an answer a little slower but more accurate in code. It is kept only in your browser and never sent back to the model with later messages.",
+    "tr": "Zor sorularda Hanogt AI yanıtlamadan önce düşünür. Panel modelin düşünmesini, okuduğu bilgi kaynaklarını ve çalışan denetimleri gösterir. Hanogt AI ayarlarında düşünmeyi Otomatik (kod, güvenlik ve uzun sorularda), Açık ya da Kapalı yapabilir, paneli gizleyebilirsiniz. Düşünme yanıtı biraz geciktirir ama kodda daha isabetli sonuç verir. Yalnızca tarayıcınızda saklanır ve sonraki mesajlarla modele geri gönderilmez.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
   "15vxpa83mie": {
     "en": "Where do my game scripts run?",
     "tr": "Oyun scriptlerim nerede çalışıyor?",
@@ -57090,9 +58748,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "1hnf8xy8r9w": {
-    "en": "Hanogt Engine V5 brings the Animator state machine for character animation, leaderboards and achievements on the Arcade, a string table that translates a game into several languages, local multiplayer for up to four players on one screen, SaveSystem with save slots, GLB 3D models, new screen effects such as color grading, chromatic aberration, pixelation and a CRT look, and a web package (ZIP · PWA) for hosting a game on your own site; the Star Duel, Dungeon Escape and Meteor Storm templates are new too. V4 brought gamepads, Character Controller 2D, camera follow, A* path finding, joints and audio files. Projects saved with earlier versions are moved to V5 automatically when you open them, and older games play as they did.",
-    "tr": "Hanogt Engine V5; karakter animasyonu için Animator durum makinesi, Arcade'de skor tabloları ve başarımlar, oyunu birden çok dile çeviren dil tablosu, aynı ekranda dört oyuncuya kadar yerel çok oyunculu, kayıt yuvalarıyla SaveSystem, GLB 3D modeller, renk düzenleme, kromatik sapma, pikselleştirme ve CRT gibi yeni ekran efektleri ve oyunu kendi sitende yayınlamak için web paketi (ZIP · PWA) getiriyor; Yıldız Düellosu, Zindan Kaçışı ve Meteor Yağmuru şablonları da yeni. V4'te gamepad, Character Controller 2D, kamera takibi, A* yol bulma, eklemler ve ses dosyaları gelmişti. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V5'e taşınır ve eski oyunlar eskisi gibi çalışır.",
+  "1euhoa1413d": {
+    "en": "Hanogt Engine V6 brings named physics layers with a collision matrix that decides which layers collide, object pools (Pool) that reuse bullets and enemies, Particles V2 with shapes, timed bursts, color gradients and sub-emitters, rule tiles, animated tiles and one-way platforms, a virtual joystick, action buttons and vibration on phones, animation events, an engine rules panel that moves old projects to the V6 rules, prefab links (Apply / Revert), log points and per-script timings; the Bullet Storm and Hill Run templates are new and exported games are lighter. V5 brought the Animator state machine for character animation, leaderboards and achievements on the Arcade, a string table that translates a game into several languages, local multiplayer for up to four players on one screen, SaveSystem with save slots, GLB 3D models, new screen effects such as color grading, chromatic aberration, pixelation and a CRT look, and a web package (ZIP · PWA) for hosting a game on your own site. Projects saved with earlier versions are moved to V6 automatically when you open them, and older games keep playing by their own rules.",
+    "tr": "Hanogt Engine V6; adlandırılmış fizik katmanları ve hangi katmanların çarpışacağını seçtiğin çarpışma tablosu, mermi ve düşmanları yeniden kullanan nesne havuzları (Pool), şekiller, zamanlı patlamalar, renk geçişi ve alt yayıcıyla Parçacıklar V2, kural karoları, animasyonlu karolar ve tek yönlü platformlar, telefonda sanal joystick, eylem düğmeleri ve titreşim, animasyon olayları, eski projeleri V6 kurallarına taşıyan motor kuralları paneli, prefab bağlantıları (Uygula / Geri döndür), log noktaları ve betik başına süre ölçümü getiriyor; Mermi Fırtınası ve Tepe Koşusu şablonları da yeni, dışa aktarılan oyunlar daha hafif. V5'te ise karakter animasyonu için Animator durum makinesi, Arcade'de skor tabloları ve başarımlar, oyunu birden çok dile çeviren dil tablosu, aynı ekranda dört oyuncuya kadar yerel çok oyunculu, kayıt yuvalarıyla SaveSystem, GLB 3D modeller, renk düzenleme, kromatik sapma, pikselleştirme ve CRT gibi yeni ekran efektleri ve oyunu kendi sitende yayınlamak için web paketi (ZIP · PWA) gelmişti. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V6'ya taşınır ve eski oyunlar kendi kurallarıyla eskisi gibi çalışır.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -57149,6 +58807,20 @@
   "1conv8eoymn": {
     "en": "Press New group on the Groups page and pick a template in the three-step wizard (blank, study group, game dev, open source, classroom, hackathon). The group opens with starter files, a ready Rules section at the top of the channel list and a pinned welcome message; if the group asks for it, members accept the rules before they join the chat. Invite friends directly or share an invite link that expires, has a usage limit and can be revoked any time. Group chat has pins, reactions, @mentions and search; files can be renamed, downloaded as a ZIP and opened in the editor.",
     "tr": "Gruplar sayfasında Yeni grup'a basın ve üç adımlı sihirbazda bir şablon seçin (boş, çalışma grubu, oyun geliştirme, açık kaynak, sınıf, hackathon). Grup başlangıç dosyaları, kanal listesinin en üstünde hazır bir Kurallar bölümü ve sabitlenmiş bir karşılama mesajıyla açılır; grup isterse üyeler sohbete katılmadan önce kuralları kabul eder. Arkadaşlarınızı doğrudan davet edebilir ya da süreli, kullanım sınırlı ve istediğiniz an iptal edebileceğiniz bir davet bağlantısı paylaşabilirsiniz. Grup sohbetinde sabitleme, tepkiler, @bahsetme ve arama; dosyalarda yeniden adlandırma, ZIP indirme ve editörde açma vardır.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "sbpmd3ftsc": {
+    "en": "What do AutoMod and the Security Bot do in groups?",
+    "tr": "Gruplarda AutoMod ve Security Bot ne yapar?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "1qjm94iw557": {
+    "en": "The Hanogt Security Bot is in every group and can't be removed. /rules, /report and /warnings are open to everyone; /warn, /mute, /kick, /purge and /slowmode to moderators; /ban to admins and the owner. Admins add custom commands and a welcome message in the group settings. AutoMod checks a message before it is sent: swearing, slang, the group's banned words, repeats and spam, mass mentions, links, capitals and personal data. In the group settings you choose which checks are on, whether a warning is given, after how many warnings someone is muted for a while and which roles are exempt; the group owner always is.",
+    "tr": "Hanogt Security Bot her grupta bulunur ve çıkarılamaz. /kurallar, /rapor ve /uyarilar herkese; /uyar, /sustur, /at, /temizle ve /yavasmod moderatörlere; /yasakla yöneticilere ve sahibe açıktır. Yöneticiler grup ayarlarından özel komutlar ve bir karşılama mesajı ekler. AutoMod mesajı gönderilmeden önce denetler: küfür, argo, grubun yasaklı kelimeleri, tekrar ve spam, toplu bahsetme, bağlantılar, büyük harf ve kişisel veriler. Hangi denetimlerin açık olacağını, uyarı verilip verilmeyeceğini, kaç uyarıdan sonra süreli susturulacağını ve hangi rollerin muaf olduğunu grup ayarlarından seçersiniz; grup sahibi her zaman muaftır.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -57333,6 +59005,48 @@
     "tr": "Erken erişim (Pro ve ekip)",
     "files": [
       "src/lib/features.ts"
+    ]
+  },
+  "ul2ifsytlb": {
+    "en": "Bullet Storm",
+    "tr": "Mermi Fırtınası",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1aa7ltt08he": {
+    "en": "A V6 bullet hell: hundreds of bullets, drones and explosions come from object pools, and layers with the collision matrix keep bullets off each other and off their own side. Ring explosions with Particles V2, a sub-emitter throwing embers and a streaming star field; the virtual joystick and vibration on phones.",
+    "tr": "V6 mermi yağmuru: yüzlerce mermi, düşman ve patlama nesne havuzlarından gelir (Pool), katmanlar ve çarpışma tablosu mermilerin birbirine ve kendi tarafına çarpmasını önler. Parçacıklar V2 ile halka patlamalar, kıvılcım saçan alt yayıcı ve aşağı akan yıldızlar; telefonda sanal joystick ve titreşim.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "156x141yk70": {
+    "en": "WASD / arrows / left stick / joystick: fly  •  Fires by itself  •  X / B: bomb  •  R: again",
+    "tr": "WASD / oklar / sol çubuk / joystick: uç  •  Ateş kendiliğinden  •  X / B: bomba  •  R: yeniden",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "18ich7d34xs": {
+    "en": "Hill Run",
+    "tr": "Tepe Koşusu",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1f3ihc5g9r": {
+    "en": "A V6 platformer: the ground is painted with rule tiles, each picking its own edges from its neighbours, and the dirt blocks you place update the tiles around them. Water that plays frame by frame, one-way bridges you jump up through and land on, and the virtual joystick and buttons on phones.",
+    "tr": "V6 platform oyunu: zemin kural karolarıyla boyandı, her karo komşularına göre kendi kenarını seçer; koyduğun toprak bloklar da çevresini günceller. Kare kare akan sular, alttan zıplayıp üstüne konduğun tek yönlü köprüler, telefonda sanal joystick ve düğmeler.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "2l4e3inv8e": {
+    "en": "← → / A D / joystick: run  •  Space / A: jump  •  ↓: drop through a bridge  •  Ctrl / Block: place dirt  •  R: again",
+    "tr": "← → / A D / joystick: koş  •  Space / A: zıpla  •  ↓: köprüden in  •  Ctrl / Blok: toprak koy  •  R: yeniden",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "dj5ow4qzk6": {
@@ -58890,9 +60604,9 @@
       "src/lib/plans.ts"
     ]
   },
-  "hjdtd37eh2": {
-    "en": "The code editor, Hanogt Engine V5, the Arcade, Media and Hanogt Social",
-    "tr": "Kod editörü, Hanogt Engine V5, Arcade, Media ve Hanogt Social",
+  "1pbrez6pzsj": {
+    "en": "The code editor, Hanogt Engine V6, the Arcade, Media and Hanogt Social",
+    "tr": "Kod editörü, Hanogt Engine V6, Arcade, Media ve Hanogt Social",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -61467,13 +63181,6 @@
   "2crxo2ta1pb": {
     "en": "array",
     "tr": "dizi",
-    "files": [
-      "src/lib/runtimes/worker.ts"
-    ]
-  },
-  "2cdivvdzv6v": {
-    "en": "string",
-    "tr": "metin",
     "files": [
       "src/lib/runtimes/worker.ts"
     ]

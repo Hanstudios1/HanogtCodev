@@ -8,7 +8,7 @@
  */
 import { lerpColor, sampleClip, wrapClipTime } from "../animation";
 import { conjugateQuat, mulQuat, normalizeQuat, quatFromEulerDeg, type Quat } from "../math";
-import type { AnimationClip, AnimationComponent, GameComponent, Vector3 } from "../types";
+import type { AnimationClip, AnimationComponent, AnimationEvent, GameComponent, Vector3 } from "../types";
 
 /** The parts of a runtime entity an animation (or tween) may change. */
 export interface AnimatedTarget {
@@ -22,6 +22,43 @@ export interface AnimatedTarget {
     setLocalPosition(position: Vector3): void;
     setLocalRotation(rotation: Quat): void;
     setLocalScale(scale: Vector3): void;
+}
+
+/** Most animation events one update may fire (a huge time step can't flood the scripts). */
+const MAX_EVENTS_PER_UPDATE = 64;
+
+/**
+ * Animation events (V6) the playhead passes when the clip's (unwrapped) time
+ * goes from `from` to `to`, in order: those after `from` up to and including
+ * `to` (and those at 0 when the clip starts). An event fires each time the
+ * clip reaches its time: once for "once" clips, every lap for "loop", going
+ * forward and coming back for "pingPong".
+ */
+export function passedAnimationEvents(clip: Pick<AnimationClip, "duration" | "wrap" | "events">, from: number, to: number): AnimationEvent[] {
+    const events = clip.events;
+    if (!events?.length || !(to > from)) return [];
+    const duration = Math.max(1e-4, clip.duration);
+    const passes = (at: number) => (at > from || (at === 0 && from === 0)) && at <= to;
+    const hits: Array<{ at: number; order: number; event: AnimationEvent }> = [];
+    events.forEach((event, order) => {
+        if (!event.method) return;
+        const time = Math.min(Math.max(0, event.time), duration);
+        if (clip.wrap === "once") {
+            if (passes(time)) hits.push({ at: time, order, event });
+            return;
+        }
+        const period = clip.wrap === "pingPong" ? duration * 2 : duration;
+        // pingPong passes a time going forward and again coming back (the turning points once).
+        const starts = clip.wrap === "pingPong" && time > 0 && time < duration ? [time, period - time] : [time];
+        for (const start of starts) {
+            for (let k = Math.max(0, Math.floor((from - start) / period)); hits.length < MAX_EVENTS_PER_UPDATE; k += 1) {
+                const at = start + k * period;
+                if (at > to) break;
+                if (passes(at)) hits.push({ at, order, event });
+            }
+        }
+    });
+    return hits.sort((a, b) => a.at - b.at || a.order - b.order).slice(0, MAX_EVENTS_PER_UPDATE).map((hit) => hit.event);
 }
 
 const ZERO: Vector3 = { x: 0, y: 0, z: 0 };
@@ -125,6 +162,8 @@ export class AnimationPlayer {
     private appliedScale: Vector3 = ONE;
     private baseScale: Vector3 | null = null;
     private fade: Fade | null = null;
+    /** Animation events (V6) the last update passed, in order (the world runs them). */
+    firedEvents: AnimationEvent[] = [];
 
     constructor(component: AnimationComponent) {
         this.component = component;
@@ -210,10 +249,13 @@ export class AnimationPlayer {
 
     /** Advances playback; returns the name of a clip that just finished (wrap "once"). */
     update(target: AnimatedTarget, deltaTime: number): string | null {
+        this.firedEvents = [];
         if (!this.playing || !this.clip) return null;
+        const before = this.time;
         this.time += deltaTime * this.speed * this.stateSpeed * this.component.speed;
         if (this.fade) this.fade.elapsed += deltaTime;
         const { time, finished } = wrapClipTime(this.clip, this.time);
+        if (this.clip.events?.length) this.firedEvents = passedAnimationEvents(this.clip, before, this.time);
         this.apply(target, time);
         if (this.fade && this.fade.elapsed >= this.fade.duration) this.fade = null;
         if (!finished) return null;

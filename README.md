@@ -12,7 +12,7 @@ Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi
 - Hanogt Media'da proje yayımlama, lisans seçimi, indirme, beğeni, yorum, bildirim ve popüler proje keşfi
 - Davet/rol yönetimli grup çalışma alanı, ortak dosyalar, gerçek zamanlı sohbet, bire bir WebRTC araması ve sesli mesaj
 - Tek Çalıştır komutuyla en fazla sekiz farklı dildeki dosyayı bağımsız işler olarak paralel çalıştırma
-- Hanogt Engine v2: Unity benzeri editör (hiyerarşi, Inspector, Proje paneli, Konsol), three.js tabanlı WebGL render, OBB/SAT fiziği, C#/C++ scriptleri tarayıcıda yorumlayan HanogtScript sanal makinesi, hazır şablonlar ve tek dosya HTML dışa aktarma
+- Hanogt Engine V6: Unity benzeri editör (hiyerarşi, Inspector, Proje paneli, Konsol), three.js tabanlı WebGL render, OBB/SAT fiziği, C#/C++ scriptleri tarayıcıda yorumlayan HanogtScript sanal makinesi, hazır şablonlar ve tek dosya HTML dışa aktarma
 - Hanogt Arcade: motorla yapılan oyunları yayınlama, tarayıcıda oynama, beğeni, oynanma sayacı ve remiks
 - Hanogt News: 20'yi aşkın kaynaktan canlı yapay zeka, yazılım, oyun ve uygulama haberleri; animasyonlu akış, yorumlar ve topluluk oylarıyla (Elo) yapay zeka arenası
 - Güvenlik Merkezi: tarayıcıda çalışan Kod Danışmanı, Parola Laboratuvarı (k-anonim sızıntı kontrolü), Bağlantı Kontrolü ve Security Bot v6
@@ -71,7 +71,7 @@ firebase deploy --only firestore:rules,firestore:indexes,storage
 
 ## Hanogt Engine kapsamı
 
-Hanogt Engine v2 tarayıcıda çalışan, nesne-bileşen tabanlı bir 2D/3D oyun motoru ve editörüdür; Unity'nin yerine geçtiği iddia edilmez. C# ve C++ scriptleri `eval` veya `new Function` ile çalıştırılmaz: HanogtScript sanal makinesi kaynağı ayrıştırır ve yalnız motor API'lerine erişebilen, kare başına komut bütçeli bir yorumlayıcıda çalıştırır (sonsuz döngüler durdurulur, hatalar satır numarasıyla gösterilir). Desteklenen alt küme; sınıflar, kalıtım, özellikler, lambda, LINQ, koleksiyonlar, coroutine, `ref/out`, `std::vector`/`std::cout` ve Unity benzeri yaşam döngüsü ile API'leri (Input, Physics, Time, PlayerPrefs, SceneManager vb.) kapsar. Tam .NET/STL, dosya sistemi, ağ, yansıma ve işaretçi aritmetiği desteklenmez. Oyunlar tek dosya HTML olarak dışa aktarılabilir veya Arcade'de yayınlanabilir; yerel/mağaza derlemesi ayrı araç zinciri gerektirir.
+Hanogt Engine V6 tarayıcıda çalışan, nesne-bileşen tabanlı bir 2D/3D oyun motoru ve editörüdür; Unity'nin yerine geçtiği iddia edilmez. C# ve C++ scriptleri `eval` veya `new Function` ile çalıştırılmaz: HanogtScript sanal makinesi kaynağı ayrıştırır ve yalnız motor API'lerine erişebilen, kare başına komut bütçeli bir yorumlayıcıda çalıştırır (sonsuz döngüler durdurulur, hatalar satır numarasıyla gösterilir). Desteklenen alt küme; sınıflar, kalıtım, özellikler, lambda, LINQ, koleksiyonlar, coroutine, `ref/out`, `std::vector`/`std::cout` ve Unity benzeri yaşam döngüsü ile API'leri (Input, Physics, Time, PlayerPrefs, SceneManager vb.) kapsar. Tam .NET/STL, dosya sistemi, ağ, yansıma ve işaretçi aritmetiği desteklenmez. Oyunlar tek dosya HTML olarak dışa aktarılabilir veya Arcade'de yayınlanabilir; yerel/mağaza derlemesi ayrı araç zinciri gerektirir.
 
 WebRTC'nin kurumsal ağlarda güvenilir çalışması için `TURN_SERVER_URL` ve `TURN_SHARED_SECRET` ile coturn TURN REST kimlik bilgilerini tanımlayın. STUN tek başına her NAT yapısında yeterli değildir.
 

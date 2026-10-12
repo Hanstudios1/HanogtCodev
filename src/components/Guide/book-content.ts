@@ -210,12 +210,13 @@ export const PAGES: BookPage[] = [
         chapter: "engine",
         title: { TR: "Oyun motoru", EN: "The game engine" },
         blocks: [
-            { type: "p", text: { TR: "Hanogt Engine V5, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.", EN: "Hanogt Engine V5 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components." } },
+            { type: "p", text: { TR: "Hanogt Engine V6, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.", EN: "Hanogt Engine V6 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components." } },
             { type: "p", text: { TR: "Oyun Motoru sayfasında bir şablonla başla:", EN: "Start from a template on the Game Engine page:" } },
             {
                 type: "list",
                 items: [
-                    { TR: "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru (V5 ile yeni)", EN: "Star Duel (two players), Dungeon Escape and Meteor Storm (new in V5)" },
+                    { TR: "Mermi Fırtınası ve Tepe Koşusu (V6 ile yeni)", EN: "Bullet Storm and Hill Run (new in V6)" },
+                    { TR: "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru (V5 ile gelenler)", EN: "Star Duel (two players), Dungeon Escape and Meteor Storm (from V5)" },
                     { TR: "Gök Kulesi, Labirent Avı ve Sapan Ustası (V4 ile gelenler)", EN: "Sky Tower, Maze Hunt and Slingshot Master (from V4)" },
                     { TR: "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++)", EN: "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++)" },
                     { TR: "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile gelenler)", EN: "Tilemap Adventure, Clicker Factory and Foggy Runner (from V3)" },
@@ -266,16 +267,22 @@ export const PAGES: BookPage[] = [
     },
     {
         chapter: "engine",
-        title: { TR: "V5'in yeni blokları", EN: "The new blocks of V5" },
+        title: { TR: "V6'nın yeni blokları", EN: "The new blocks of V6" },
         blocks: [
-            { type: "item", icon: "🎞️", name: { TR: "Animator", EN: "Animator" }, text: { TR: "Idle, Run, Jump gibi durumlar ve parametrelerle geçişler; betik yalnızca SetFloat ve SetTrigger der.", EN: "States such as Idle, Run and Jump with transitions driven by parameters; scripts only call SetFloat and SetTrigger." } },
-            { type: "item", icon: "🏆", name: { TR: "Skor tabloları ve başarımlar", EN: "Leaderboards and achievements" }, text: { TR: "Leaderboard.Submit ve Achievements.Unlock ile Arcade'de en iyi skorlar ve açılan başarımlar.", EN: "Best scores and unlocked achievements on the Arcade with Leaderboard.Submit and Achievements.Unlock." } },
-            { type: "item", icon: "🌍", name: { TR: "Oyunun dilleri", EN: "Game languages" }, text: { TR: "Dil tablosu ve Localization.Get: oyun, oyuncunun dilinde açılır.", EN: "A string table and Localization.Get: the game opens in the player's language." } },
-            { type: "item", icon: "🎮", name: { TR: "Yerel çok oyunculu", EN: "Local multiplayer" }, text: { TR: "Player Input ile aynı ekranda dört oyuncuya kadar: klavyenin iki yarısı ve gamepad'ler.", EN: "Up to four players on one screen with Player Input: the two halves of the keyboard and gamepads." } },
-            { type: "item", icon: "💾", name: { TR: "SaveSystem", EN: "SaveSystem" }, text: { TR: "Kendi sınıflarını kayıt yuvalarına tek satırla kaydet ve geri yükle.", EN: "Save your own classes to save slots and load them back in one line." } },
-            { type: "item", icon: "🧊", name: { TR: "3D modeller ve web paketi", EN: "3D models and the web package" }, text: { TR: "GLB modeller yükle; oyununu ZIP olarak kendi sitende yayınla, uygulama gibi yüklensin.", EN: "Upload GLB models; host your game on your own site as a ZIP that installs like an app." } },
-            { type: "p", text: { TR: "Yeni şablonlar: Yıldız Düellosu, Zindan Kaçışı ve Meteor Yağmuru. Ekran efektlerine renk düzenleme, kromatik sapma, pikselleştirme ve CRT eklendi.", EN: "New templates: Star Duel, Dungeon Escape and Meteor Storm. Screen effects gained color grading, chromatic aberration, pixelation and CRT." } },
-            { type: "link", href: "/game-engine/docs#yenilikler", label: { TR: "V5'te yenilikler", EN: "What's new in V5" } },
+            {
+                type: "list",
+                items: [
+                    { TR: "Katmanlar ve çarpışma tablosu: hangi nesnelerin çarpışacağını sen seç; LayerMask ile ışınları sınırla.", EN: "Layers and the collision matrix: pick which objects collide; limit raycasts with LayerMask." },
+                    { TR: "Nesne havuzları: Pool.Spawn ve Pool.Despawn mermileri yok etmeden yeniden kullanır.", EN: "Object pools: Pool.Spawn and Pool.Despawn reuse bullets instead of destroying them." },
+                    { TR: "Parçacıklar V2: şekiller, zamanlı patlamalar, renk geçişi ve alt yayıcı.", EN: "Particles V2: shapes, timed bursts, color gradients and sub-emitters." },
+                    { TR: "Kural karoları, animasyonlu karolar ve tek yönlü platformlar.", EN: "Rule tiles, animated tiles and one-way platforms." },
+                    { TR: "Telefonda sanal joystick, eylem düğmeleri ve Input.Vibrate.", EN: "A virtual joystick, action buttons and Input.Vibrate on phones." },
+                    { TR: "Animasyon olayları, prefab bağlantıları (Uygula / Geri döndür), log noktaları ve betik süreleri.", EN: "Animation events, prefab links (Apply / Revert), log points and script timings." },
+                ],
+            },
+            { type: "p", text: { TR: "Yeni şablonlar: Mermi Fırtınası ve Tepe Koşusu. Eski projeler kendi kurallarıyla çalışır; Ayarlar → Proje → Motor kuralları onları V6 kurallarına taşır.", EN: "New templates: Bullet Storm and Hill Run. Older projects keep their own rules; Settings → Project → Engine rules moves them to the V6 rules." } },
+            { type: "p", text: { TR: "V5 ile gelenler de aynen sürüyor: Animator, skor tabloları ve başarımlar, oyunun dilleri, yerel çok oyunculu, SaveSystem, GLB modeller ve web paketi.", EN: "What V5 brought is all still there: the Animator, leaderboards and achievements, game languages, local multiplayer, SaveSystem, GLB models and the web package." } },
+            { type: "link", href: "/game-engine/docs#yenilikler", label: { TR: "V6'da yenilikler", EN: "What's new in V6" } },
         ],
     },
     {

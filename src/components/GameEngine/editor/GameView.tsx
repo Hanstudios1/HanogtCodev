@@ -16,8 +16,18 @@ function StatsPanel({ controlRef }: { controlRef: MutableRefObject<GamePlayer | 
     const { t } = useEditor();
     const [stats, setStats] = useState<PlayerStats | null>(null);
     useEffect(() => {
-        const timer = window.setInterval(() => setStats(controlRef.current?.getStats() ?? null), 500);
-        return () => window.clearInterval(timer);
+        // V6: script timings are measured only while the panel is open (the player may start after it).
+        let player = controlRef.current;
+        player?.setProfiling(true);
+        const timer = window.setInterval(() => {
+            player = controlRef.current;
+            player?.setProfiling(true);
+            setStats(player?.getStats() ?? null);
+        }, 500);
+        return () => {
+            window.clearInterval(timer);
+            player?.setProfiling(false);
+        };
     }, [controlRef]);
     if (!stats) return null;
     const fpsColor = stats.fps >= 50 ? "text-lime-300" : stats.fps >= 30 ? "text-amber-300" : "text-red-300";
@@ -28,6 +38,7 @@ function StatsPanel({ controlRef }: { controlRef: MutableRefObject<GamePlayer | 
         [t("statsBodies"), String(stats.bodies)],
         [t("statsTweens"), `${stats.tweens} / ${stats.timers}`],
         [t("statsParticles"), String(stats.particles)],
+        ...(stats.pooled.total ? [[t("statsPooled"), `${stats.pooled.active} / ${stats.pooled.total}`] as [string, string]] : []),
         [t("statsDrawCalls"), String(stats.drawCalls)],
         [t("statsTriangles"), stats.triangles.toLocaleString()],
     ];
@@ -42,12 +53,25 @@ function StatsPanel({ controlRef }: { controlRef: MutableRefObject<GamePlayer | 
                     </div>
                 ))}
             </dl>
+            {stats.scripts.length ? (
+                <>
+                    <p className="mt-1.5 border-t border-white/10 pt-1 text-zinc-500">{t("statsScriptTime")}</p>
+                    <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5">
+                        {stats.scripts.slice(0, 8).map((script) => (
+                            <div key={script.name} className="contents">
+                                <dt className="max-w-[9rem] truncate text-zinc-400" title={script.name}>{script.name}</dt>
+                                <dd className={`text-right ${script.ms >= 4 ? "text-red-300" : script.ms >= 1 ? "text-amber-300" : "text-zinc-200"}`}>{script.ms.toFixed(2)} ms</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </>
+            ) : null}
         </div>
     );
 }
 
 /** Runs the game (play mode). The project snapshot is fixed for the session. */
-export function GameView({ project, program, sceneId, controlRef, onLog, onState, muted, showStats }: {
+export function GameView({ project, program, sceneId, controlRef, onLog, onState, muted, showStats, touchPreview = false }: {
     project: GameProjectDocument;
     program: CompiledProgram;
     sceneId: string;
@@ -56,6 +80,8 @@ export function GameView({ project, program, sceneId, controlRef, onLog, onState
     onState: (state: PlayerState) => void;
     muted: boolean;
     showStats: boolean;
+    /** Shows the touch controls even without a touch screen (V6). */
+    touchPreview?: boolean;
 }) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const callbacks = useRef({ onLog, onState });
@@ -91,6 +117,10 @@ export function GameView({ project, program, sceneId, controlRef, onLog, onState
     useEffect(() => {
         controlRef.current?.setMuted(muted);
     }, [muted, controlRef]);
+
+    useEffect(() => {
+        controlRef.current?.setTouchControls(touchPreview ? true : "auto");
+    }, [touchPreview, controlRef, project]);
 
     return (
         <div className="absolute inset-0 bg-black">

@@ -1,4 +1,4 @@
-/** Shared GPU resources: primitive geometries, sprite shapes, textures and editor icons. */
+/** Shared GPU resources: primitive geometries, sprite shapes, textures, background gradients and models. */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadAudioBytes } from "../audio-store";
@@ -15,10 +15,59 @@ export interface LoadedModel {
 
 type ModelEntry = { status: "loading" | "failed" } | { status: "ready"; model: LoadedModel };
 
+/**
+ * A flat sprite outline (convex, or star-shaped around the origin) as a
+ * triangle fan from its center, with uv = position like three's
+ * ShapeGeometry. Building it here keeps three's curve and path classes out
+ * of the player bundle.
+ */
+function polygonGeometry(points: ReadonlyArray<readonly [number, number]>): THREE.BufferGeometry {
+    const positions = [0, 0, 0];
+    const uvs = [0, 0];
+    for (const [x, y] of points) {
+        positions.push(x, y, 0);
+        uvs.push(x, y);
+    }
+    const indices: number[] = [];
+    for (let index = 0; index < points.length; index += 1) indices.push(0, index + 1, ((index + 1) % points.length) + 1);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setIndex(indices);
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute("normal", new THREE.Float32BufferAttribute(positions.map((_, index) => (index % 3 === 2 ? 1 : 0)), 3));
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    return geometry;
+}
+
+/** The rounded square's outline: straight sides and quadratic corners of 8 segments each. */
+function roundedSquareOutline(radius: number): Array<[number, number]> {
+    const half = 0.5;
+    const points: Array<[number, number]> = [];
+    // Each side ends where a corner starts: [side end, corner control, corner end].
+    const corners: Array<[[number, number], [number, number], [number, number]]> = [
+        [[half - radius, -half], [half, -half], [half, -half + radius]],
+        [[half, half - radius], [half, half], [half - radius, half]],
+        [[-half + radius, half], [-half, half], [-half, half - radius]],
+        [[-half, -half + radius], [-half, -half], [-half + radius, -half]],
+    ];
+    for (const [start, control, end] of corners) {
+        points.push(start);
+        for (let step = 1; step <= 8; step += 1) {
+            const t = step / 8;
+            const a = (1 - t) * (1 - t);
+            const b = 2 * (1 - t) * t;
+            const c = t * t;
+            points.push([a * start[0] + b * control[0] + c * end[0], a * start[1] + b * control[1] + c * end[1]]);
+        }
+    }
+    // The last corner ends at the bottom side's start; the fan closes the outline back to the first point.
+    return points;
+}
+
 export class RenderAssets {
     private readonly geometries = new Map<string, THREE.BufferGeometry>();
     private readonly textures = new Map<string, { texture: THREE.Texture; dataUrl: string; filter: string }>();
-    private readonly icons = new Map<string, THREE.Texture>();
+    /** Background gradients drawn on a canvas. */
+    private readonly gradients = new Map<string, THREE.Texture>();
     private textureAssets = new Map<string, TextureAsset>();
     private modelAssets = new Map<string, ModelAsset>();
     private readonly models = new Map<string, ModelEntry>();
@@ -133,7 +182,7 @@ export class RenderAssets {
         const key = `sprite:${shape}`;
         let geometry = this.geometries.get(key);
         if (geometry) return geometry;
-        const polygon = (points: Array<[number, number]>) => new THREE.ShapeGeometry(new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y))));
+        const polygon = polygonGeometry;
         switch (shape) {
             case "circle":
                 geometry = new THREE.CircleGeometry(0.5, 48);
@@ -157,21 +206,9 @@ export class RenderAssets {
                     return [Math.cos(angle) * radius, Math.sin(angle) * radius] as [number, number];
                 }));
                 break;
-            case "roundedSquare": {
-                const r = 0.14;
-                const s = new THREE.Shape();
-                s.moveTo(-0.5 + r, -0.5);
-                s.lineTo(0.5 - r, -0.5);
-                s.quadraticCurveTo(0.5, -0.5, 0.5, -0.5 + r);
-                s.lineTo(0.5, 0.5 - r);
-                s.quadraticCurveTo(0.5, 0.5, 0.5 - r, 0.5);
-                s.lineTo(-0.5 + r, 0.5);
-                s.quadraticCurveTo(-0.5, 0.5, -0.5, 0.5 - r);
-                s.lineTo(-0.5, -0.5 + r);
-                s.quadraticCurveTo(-0.5, -0.5, -0.5 + r, -0.5);
-                geometry = new THREE.ShapeGeometry(s, 8);
+            case "roundedSquare":
+                geometry = polygon(roundedSquareOutline(0.14));
                 break;
-            }
             default:
                 geometry = new THREE.PlaneGeometry(1, 1);
         }
@@ -179,92 +216,9 @@ export class RenderAssets {
         return geometry;
     }
 
-    /** Editor billboard icons drawn on a canvas (no image files needed). */
-    icon(kind: "camera" | "light" | "audio" | "particles" | "empty" | "text" | "ui"): THREE.Texture {
-        const cached = this.icons.get(kind);
-        if (cached) return cached;
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 64;
-        const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-        const palette: Record<string, string> = { camera: "#60a5fa", light: "#fbbf24", audio: "#34d399", particles: "#f472b6", empty: "#a1a1aa", text: "#c084fc", ui: "#c084fc" };
-        ctx.fillStyle = "rgba(9,9,11,0.78)";
-        ctx.beginPath();
-        ctx.arc(32, 32, 29, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = palette[kind];
-        ctx.fillStyle = palette[kind];
-        ctx.lineWidth = 4;
-        ctx.lineCap = "round";
-        switch (kind) {
-            case "camera":
-                ctx.fillRect(14, 22, 26, 20);
-                ctx.beginPath();
-                ctx.moveTo(40, 32);
-                ctx.lineTo(51, 23);
-                ctx.lineTo(51, 41);
-                ctx.closePath();
-                ctx.fill();
-                break;
-            case "light":
-                ctx.beginPath();
-                ctx.arc(32, 32, 8, 0, Math.PI * 2);
-                ctx.fill();
-                for (let index = 0; index < 8; index += 1) {
-                    const angle = (index / 8) * Math.PI * 2;
-                    ctx.beginPath();
-                    ctx.moveTo(32 + Math.cos(angle) * 13, 32 + Math.sin(angle) * 13);
-                    ctx.lineTo(32 + Math.cos(angle) * 20, 32 + Math.sin(angle) * 20);
-                    ctx.stroke();
-                }
-                break;
-            case "audio":
-                ctx.fillRect(16, 26, 8, 12);
-                ctx.beginPath();
-                ctx.moveTo(24, 26);
-                ctx.lineTo(34, 18);
-                ctx.lineTo(34, 46);
-                ctx.lineTo(24, 38);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(36, 32, 10, -0.8, 0.8);
-                ctx.stroke();
-                break;
-            case "particles":
-                for (const [x, y, r] of [[24, 24, 5], [40, 22, 4], [32, 38, 6], [44, 40, 3], [20, 40, 3]]) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, r, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                break;
-            case "text":
-                ctx.font = "bold 34px sans-serif";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("T", 32, 34);
-                break;
-            case "ui":
-                ctx.strokeRect(15, 21, 34, 22);
-                ctx.fillRect(21, 29, 22, 6);
-                break;
-            default:
-                ctx.beginPath();
-                ctx.moveTo(32, 16);
-                ctx.lineTo(48, 32);
-                ctx.lineTo(32, 48);
-                ctx.lineTo(16, 32);
-                ctx.closePath();
-                ctx.stroke();
-        }
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.colorSpace = THREE.SRGBColorSpace;
-        this.icons.set(kind, texture);
-        return texture;
-    }
-
     gradient(top: string, bottom: string): THREE.Texture {
         const key = `gradient:${top}:${bottom}`;
-        const cached = this.icons.get(key);
+        const cached = this.gradients.get(key);
         if (cached) return cached;
         const canvas = document.createElement("canvas");
         canvas.width = 4;
@@ -278,23 +232,19 @@ export class RenderAssets {
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         // Keep a handful of gradients at most.
-        if (this.icons.size > 40) {
-            for (const [name, value] of this.icons) {
-                if (name.startsWith("gradient:")) {
-                    value.dispose();
-                    this.icons.delete(name);
-                    break;
-                }
-            }
+        if (this.gradients.size > 40) {
+            const [oldest, value] = this.gradients.entries().next().value as [string, THREE.Texture];
+            value.dispose();
+            this.gradients.delete(oldest);
         }
-        this.icons.set(key, texture);
+        this.gradients.set(key, texture);
         return texture;
     }
 
     dispose() {
         for (const geometry of this.geometries.values()) geometry.dispose();
         for (const entry of this.textures.values()) entry.texture.dispose();
-        for (const texture of this.icons.values()) texture.dispose();
+        for (const texture of this.gradients.values()) texture.dispose();
         for (const entry of this.models.values()) {
             if (entry.status !== "ready") continue;
             entry.model.scene.traverse((child) => {
@@ -309,7 +259,7 @@ export class RenderAssets {
         }
         this.geometries.clear();
         this.textures.clear();
-        this.icons.clear();
+        this.gradients.clear();
         this.models.clear();
     }
 }

@@ -25,6 +25,7 @@ import type { CharacterMotor } from "./character";
 import type { NavAgentState } from "./nav-agent";
 import type { ParticleEmitter } from "./particles";
 import { createBodyRuntime, type BodyRuntime, type PhysicsEntity } from "./physics";
+import type { PoolMembership } from "./pools";
 
 export type WaitState =
     | { kind: "frame" }
@@ -105,6 +106,8 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     readonly id: string;
     name: string;
     tag: string;
+    /** Physics layer 0–15 (V6). */
+    layer: number;
     activeSelf: boolean;
     parent: RuntimeEntity | null = null;
     readonly children: RuntimeEntity[] = [];
@@ -139,6 +142,8 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     /** Queued for destruction at the end of the current phase. */
     pendingDestroy = false;
     persistent = false;
+    /** The pool a copy made by Pool.Spawn / Pool.Prewarm belongs to (V6). */
+    pool: PoolMembership | null = null;
     /** Bumped when a render-relevant property changes (renderer rebuilds visuals). */
     renderVersion = 0;
     readonly instanceId = instanceCounter++;
@@ -156,6 +161,7 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
         this.id = source.id;
         this.name = source.name;
         this.tag = source.tag || "Untagged";
+        this.layer = source.layer ?? 0;
         this.activeSelf = source.active;
         this.components = source.components;
         const transform = source.components.find((component): component is TransformComponent => component.type === "transform");

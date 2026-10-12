@@ -32,6 +32,7 @@ import {
     Scale3d,
     Settings2,
     SlidersHorizontal,
+    Smartphone,
     Square,
     StepForward,
     Terminal,
@@ -48,13 +49,14 @@ import { useI18n } from "@/lib/i18n";
 import { useMyPlan } from "@/lib/plan-client";
 import { PLAN_UNBRANDED_EXPORT } from "@/lib/plans";
 import type { GamePlayer, PlayerState } from "@/lib/game-engine/player/game-player";
-import type { GizmoMode, SnapSettings } from "@/lib/game-engine/render/renderer";
+import type { GizmoMode, SnapSettings } from "@/lib/game-engine/render/editor-renderer";
 import { compileScripts } from "@/lib/game-engine/script/compiler";
 import type { LogEntry } from "@/lib/game-engine/runtime/world";
 import { ENGINE_VERSION, ENGINE_VERSION_LABEL, type GameEntity, type GameProjectDocument } from "@/lib/game-engine/types";
 import ConsolePanel from "./ConsolePanel";
 import { EditorContext, type ConsoleEntry, type EditorContextValue } from "./context";
 import { PublishDialog, SettingsDialog, captureThumbnail, type SettingsTab } from "./Dialogs";
+import { OPEN_SETTINGS_EVENT } from "./settings-events";
 import { GamePreview, GameView } from "./GameView";
 import HierarchyPanel, { CLIPBOARD_KEY, copyEntitiesToClipboard } from "./HierarchyPanel";
 import { exportStandaloneHtml } from "./html-export";
@@ -239,6 +241,8 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const [layout, setLayout] = useState({ left: 260, right: 320, bottom: 230 });
     const [snapPrefs, setSnapPrefs] = useState<SnapPreferences>(DEFAULT_SNAP);
     const [showStats, setShowStats] = useState(false);
+    /** Shows the on-screen touch controls in play mode on a computer too (V6), to try the joystick with the mouse. */
+    const [touchPreview, setTouchPreview] = useState(false);
     const [mobilePanel, setMobilePanel] = useState<null | "hierarchy" | "inspector" | "project" | "console" | "watch" | "animator">(null);
     const importInput = useRef<HTMLInputElement | null>(null);
     const playing = session !== null;
@@ -450,6 +454,17 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         };
         window.addEventListener(OPEN_LOCALIZATION_EVENT, onOpenLocalization);
         return () => window.removeEventListener(OPEN_LOCALIZATION_EVENT, onOpenLocalization);
+    }, []);
+
+    // "Edit layers…" in the Inspector and other links into Project settings (V6).
+    useEffect(() => {
+        const onOpenSettings = (event: Event) => {
+            const tab = (event as CustomEvent<{ tab?: SettingsTab }>).detail?.tab;
+            if (tab) setSettingsTab(tab);
+            setSettingsOpen(true);
+        };
+        window.addEventListener(OPEN_SETTINGS_EVENT, onOpenSettings);
+        return () => window.removeEventListener(OPEN_SETTINGS_EVENT, onOpenSettings);
     }, []);
 
     // ------------------------------------------------------------------
@@ -727,6 +742,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                             <TabButton active={view === "scene"} onClick={() => setView("scene")}><Move3d className="h-3.5 w-3.5" />{t("scene")}</TabButton>
                             <TabButton active={view === "game"} onClick={() => setView("game")}><Play className="h-3.5 w-3.5" />{t("game")}</TabButton>
                             {playing ? <IconButton icon={Activity} label={t("stats")} size="sm" active={showStats} onClick={() => setShowStats(!showStats)} /> : null}
+                            {playing && session?.project.settings.touchControls ? <IconButton icon={Smartphone} label={t("touchShow")} size="sm" active={touchPreview} onClick={() => setTouchPreview(!touchPreview)} /> : null}
                             <div className="flex-1" />
                             {playing ? <span className="flex items-center gap-1.5 rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-100"><span className={cx("h-1.5 w-1.5 rounded-full", playerState === "paused" ? "bg-amber-300" : "animate-pulse bg-emerald-400")} />{playerState === "paused" ? t("pause") : t("playingNote")}</span> : null}
                             {!program.ok ? <button type="button" onClick={() => setBottomTab("console")} className="flex items-center gap-1 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-red-200"><X className="h-3 w-3" />{t("compileErrors")}</button> : null}
@@ -750,6 +766,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                                         onState={(state) => setPlayerState(state)}
                                         muted={muted}
                                         showStats={showStats}
+                                        touchPreview={touchPreview}
                                     />
                                 </div>
                             ) : view === "game" ? <GamePreview project={project} scene={scene} /> : null}

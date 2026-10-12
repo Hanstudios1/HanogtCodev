@@ -1,41 +1,20 @@
 "use client";
 
 /** Inspector of the Tilemap component: palette, painting tools, atlas and collision settings. */
-import { Brush, Eraser, Paintbrush, Pipette, Plus, RectangleHorizontal, Trash2 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { ArrowUpToLine, Brush, Eraser, Film, Grid3x3, Paintbrush, Pipette, Plus, RectangleHorizontal, Trash2 } from "lucide-react";
 import { countTiles, eraseTileKey, isTileKey, nextTileKey, tilemapSize, TILEMAP_LIMITS } from "@/lib/game-engine/tilemap";
 import type { TileDefinition, TilemapComponent } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { TextureSelect, useComponentEdit, type Editor } from "./inspector-fields";
 import { useEditorState } from "./store";
+import { TileKindFields } from "./TileKindEditor";
 import { useTilePainter, type TileTool } from "./tile-painter";
+import { TileSwatch, type TileAtlasView } from "./tile-swatch";
 import { Button, Checkbox, ColorInput, FieldRow, NumberInput, SliderInput, TextInput, Toggle, cx, inputClass } from "./ui";
 
+export { atlasCellStyle, TileSwatch } from "./tile-swatch";
+
 const NEW_TILE_COLORS = ["#f97316", "#8b5cf6", "#ec4899", "#14b8a6", "#eab308", "#ef4444", "#3b82f6", "#84cc16"];
-
-/** CSS that shows one cell of an atlas texture (palette swatches). */
-export function atlasCellStyle(dataUrl: string, columns: number, rows: number, frame: number): CSSProperties {
-    const column = frame % columns;
-    const row = Math.floor(frame / columns);
-    return {
-        backgroundImage: `url("${dataUrl}")`,
-        backgroundSize: `${columns * 100}% ${rows * 100}%`,
-        backgroundPosition: `${columns > 1 ? (column / (columns - 1)) * 100 : 0}% ${rows > 1 ? (row / (rows - 1)) * 100 : 0}%`,
-        imageRendering: "pixelated",
-    };
-}
-
-/** Small square showing what a palette tile looks like. */
-export function TileSwatch({ tile, atlas, className }: { tile: TileDefinition; atlas: { dataUrl: string; columns: number; rows: number } | null; className?: string }) {
-    const textured = atlas && tile.frame >= 0;
-    return (
-        <span
-            aria-hidden="true"
-            className={cx("block rounded-[4px] border border-black/30", className)}
-            style={textured ? { ...atlasCellStyle(atlas.dataUrl, atlas.columns, atlas.rows, Math.min(tile.frame, atlas.columns * atlas.rows - 1)), backgroundColor: tile.color } : { background: `linear-gradient(180deg, ${tile.color}, ${tile.color}cc)` }}
-        />
-    );
-}
 
 export const TILE_TOOLS: Array<{ tool: TileTool; icon: typeof Brush; label: "toolPaint" | "toolErase" | "toolRect" | "toolPick" }> = [
     { tool: "paint", icon: Paintbrush, label: "toolPaint" },
@@ -55,7 +34,7 @@ export default function TilemapEditor({ entity, component, disabled }: Editor<Ti
     const selected = palette.find((tile) => tile.key === brush) ?? null;
     const painting = painter.active && painter.entityId === entity.id;
     const atlasTexture = textures.find((texture) => texture.id === component.atlas.textureId) ?? null;
-    const atlas = atlasTexture ? { dataUrl: atlasTexture.dataUrl, columns: component.atlas.columns, rows: component.atlas.rows } : null;
+    const atlas: TileAtlasView | null = atlasTexture ? { dataUrl: atlasTexture.dataUrl, columns: component.atlas.columns, rows: component.atlas.rows, width: atlasTexture.width, height: atlasTexture.height } : null;
     const frameCount = component.atlas.columns * component.atlas.rows;
     const size = tilemapSize(component);
 
@@ -136,12 +115,19 @@ export default function TilemapEditor({ entity, component, disabled }: Editor<Ti
                             role="radio"
                             aria-checked={brush === tile.key}
                             aria-label={tile.name}
-                            title={`${tile.name} (${tile.key})${tile.solid ? "" : " · decor"}`}
+                            title={`${tile.name} (${tile.key})${tile.solid ? "" : " · decor"}${tile.rule ? ` · ${t("tileKindRule")}` : ""}${tile.animation ? ` · ${t("tileKindAnimated")}` : ""}${tile.oneWay ? ` · ${t("tileOneWay")}` : ""}`}
                             onClick={() => tilePainter.set({ brush: tile.key, tool: painter.tool === "erase" || painter.tool === "pick" ? "paint" : painter.tool })}
                             className={cx("relative grid aspect-square place-items-center rounded-md border p-1 transition", brush === tile.key ? "border-indigo-300 bg-indigo-500/20 ring-1 ring-indigo-300/60" : "border-white/10 bg-white/[0.03] hover:border-white/25")}
                         >
                             <TileSwatch tile={tile} atlas={atlas} className="h-full w-full" />
                             <span className="absolute bottom-0 right-0.5 font-mono text-[9px] font-bold text-white drop-shadow">{tile.key}</span>
+                            {tile.rule || tile.animation || tile.oneWay ? (
+                                <span className="absolute left-0.5 top-0.5 flex gap-px rounded-[3px] bg-black/60 p-px text-white" aria-hidden="true">
+                                    {tile.rule ? <Grid3x3 className="h-2.5 w-2.5" /> : null}
+                                    {tile.animation ? <Film className="h-2.5 w-2.5" /> : null}
+                                    {tile.oneWay ? <ArrowUpToLine className="h-2.5 w-2.5" /> : null}
+                                </span>
+                            ) : null}
                         </button>
                     ))}
                     <button type="button" disabled={disabled || palette.length >= TILEMAP_LIMITS.maxPalette} onClick={addTile} title={t("addTile")} aria-label={t("addTile")} className="grid aspect-square place-items-center rounded-md border border-dashed border-white/20 text-zinc-400 hover:border-indigo-400/60 hover:text-white disabled:opacity-40">
@@ -167,7 +153,8 @@ export default function TilemapEditor({ entity, component, disabled }: Editor<Ti
                     </FieldRow>
                     <FieldRow label="Color"><ColorInput value={selected.color} disabled={disabled} onChange={(color) => updateTile(selected.key, "color", (tile) => { tile.color = color; })} /></FieldRow>
                     <FieldRow label={t("tileSolid")}><Toggle checked={selected.solid} disabled={disabled} onChange={(value) => updateTile(selected.key, "solid", (tile) => { tile.solid = value; })} /></FieldRow>
-                    {atlas ? (
+                    <TileKindFields tile={selected} atlas={atlas} frameCount={frameCount} disabled={disabled} update={(field, recipe) => updateTile(selected.key, field, recipe)} />
+                    {atlas && !selected.animation ? (
                         <FieldRow label={t("tileFrame")}>
                             <div className="flex items-center gap-1.5">
                                 <label className="flex items-center gap-1 text-[11px] text-zinc-400">

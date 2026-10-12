@@ -27,6 +27,7 @@ import {
     worldTRS,
     type EntityPreset,
 } from "@/lib/game-engine/scene";
+import { applyInstance, linkToPrefab, revertInstance, unlinkPrefab } from "@/lib/game-engine/prefab-links";
 import { cloneJson } from "@/lib/game-engine/schema";
 import { newScriptSource } from "@/lib/game-engine/templates";
 import { fillTiles, setTileKey } from "@/lib/game-engine/tilemap";
@@ -288,6 +289,8 @@ export function createPrefabFromEntity(project: GameProjectDocument, entityId: s
     if (!subtree.length) return null;
     const prefab = prefabFromEntities(cloneJson(subtree), uniqueName(subtree[0].name, project.prefabs.map((item) => item.name)));
     project.prefabs.push(prefab);
+    // V6: the object becomes an instance of its new prefab.
+    linkToPrefab(subtree, prefab);
     touch(project);
     return prefab.id;
 }
@@ -299,25 +302,28 @@ export function instantiatePrefab(project: GameProjectDocument, prefabId: string
     const clones = cloneEntitiesWithNewIds(cloneJson(prefab.entities), null);
     clones[0].parentId = null;
     clones[0].name = uniqueName(prefab.name, scene.objects.map((entity) => entity.name));
+    linkToPrefab(clones, prefab);
     getTransform(clones[0]).position = { ...position };
     scene.objects.push(...clones);
     touch(project);
     return clones[0].id;
 }
 
-/** Overwrites a prefab with the current state of a scene instance. */
-export function applyPrefab(project: GameProjectDocument, prefabId: string, entityId: string) {
-    const prefab = project.prefabs.find((item) => item.id === prefabId);
-    const scene = activeScene(project);
-    const subtree = collectSubtree(scene.objects, entityId);
-    if (!prefab || !subtree.length) return;
-    const updated = prefabFromEntities(cloneJson(subtree), prefab.name);
-    prefab.entities = updated.entities;
+/** Apply (V6): the instance's changes go to the prefab and its other instances; returns how many others changed. */
+export function applyPrefabInstance(project: GameProjectDocument, rootId: string): number {
+    const updated = applyInstance(project, activeScene(project).id, rootId);
     touch(project);
+    return updated;
+}
+
+/** Revert (V6): the instance drops its overrides. */
+export function revertPrefabInstance(project: GameProjectDocument, rootId: string) {
+    if (revertInstance(project, activeScene(project).id, rootId)) touch(project);
 }
 
 export function deletePrefab(project: GameProjectDocument, prefabId: string) {
     project.prefabs = project.prefabs.filter((item) => item.id !== prefabId);
+    unlinkPrefab(project, prefabId);
     const clear = (entities: GameEntity[]) => {
         for (const entity of entities) {
             for (const component of entity.components) {

@@ -52,7 +52,7 @@ import LivePreview from "./hub/LivePreview";
 import SceneSketch from "./hub/SceneSketch";
 import { DIFFICULTY_LABEL, TemplateBadges } from "./hub/TemplateBadges";
 import TemplateDrawer from "./hub/TemplateDrawer";
-import { TEMPLATE_UPDATE, V3_FEATURES, V4_FEATURES, V5_FEATURES, type WhatsNewItem } from "./whats-new";
+import { TEMPLATE_UPDATE, V3_FEATURES, V4_FEATURES, V5_FEATURES, V6_FEATURES, type WhatsNewItem } from "./whats-new";
 
 /*
  * Hanogt Engine's home: a hero with a game running live in the real engine,
@@ -100,11 +100,12 @@ const C = {
     previewOf: { TR: "{name} önizlemesi", EN: "{name} preview" },
     newsTitle: { TR: "Yenilikler", EN: "What's new" },
     newsText: {
-        TR: "Her sürüm motoru daha yetenekli kılar: önce V5 ile gelenler, sonra önceki sürümler. Kartlar ilgili belge bölümünü açar.",
-        EN: "Every release makes the engine more capable: what V5 brings first, then the earlier releases. Each card opens its section of the docs.",
+        TR: "Her sürüm motoru daha yetenekli kılar: önce V6 ile gelenler, sonra önceki sürümler. Kartlar ilgili belge bölümünü açar.",
+        EN: "Every release makes the engine more capable: what V6 brings first, then the earlier releases. Each card opens its section of the docs.",
     },
     newsTabs: { TR: "Sürümler", EN: "Releases" },
-    newsV5: { TR: "V5 ile gelenler", EN: "New in V5" },
+    newsV6: { TR: "V6 ile gelenler", EN: "New in V6" },
+    newsV5: { TR: "V5", EN: "V5" },
     newsV4: { TR: "V4", EN: "V4" },
     newsUpdate: { TR: "Ekim şablonları", EN: "October templates" },
     newsV3: { TR: "V3", EN: "V3" },
@@ -347,6 +348,7 @@ function TemplateGallery({ locale, onPreview, onStart }: { locale: "tr" | "en"; 
 // ---------------------------------------------------------------------------
 
 const RELEASES: Array<{ id: string; label: keyof typeof C; items: WhatsNewItem[] }> = [
+    { id: "v6", label: "newsV6", items: V6_FEATURES },
     { id: "v5", label: "newsV5", items: V5_FEATURES },
     { id: "v4", label: "newsV4", items: V4_FEATURES },
     { id: "october", label: "newsUpdate", items: TEMPLATE_UPDATE },

@@ -6,9 +6,12 @@
 export const API_MEMBERS: Record<string, string[]> = {
     Debug: ["Log(message)", "LogWarning(message)", "LogError(message)", "LogFormat(format, args)", "DrawLine(start, end, color, duration)", "DrawRay(start, dir, color, duration)", "Assert(condition, message)", "Break()"],
     Time: ["deltaTime", "fixedDeltaTime", "time", "timeScale", "unscaledDeltaTime", "unscaledTime", "realtimeSinceStartup", "frameCount", "timeSinceLevelLoad"],
-    Input: ["GetJoystickNames()", "GetKey(KeyCode.Space)", "GetKeyDown(KeyCode.Space)", "GetKeyUp(KeyCode.Space)", "GetAxis(\"Horizontal\")", "GetAxisRaw(\"Horizontal\")", "GetButton(\"Jump\")", "GetButtonDown(\"Jump\")", "GetButtonUp(\"Jump\")", "GetMouseButton(0)", "GetMouseButtonDown(0)", "GetMouseButtonUp(0)", "mousePosition", "mouseScrollDelta", "anyKey", "anyKeyDown", "touchCount", "GetTouch(0)", "inputString"],
-    Physics: ["Raycast(origin, direction, out hit, maxDistance)", "RaycastAll(origin, direction, maxDistance)", "Linecast(start, end)", "SphereCast(origin, radius, direction, out hit, maxDistance)", "OverlapSphere(center, radius)", "CheckSphere(center, radius)", "OverlapBox(center, halfExtents)", "gravity"],
-    Physics2D: ["Raycast(origin, direction, distance)", "Linecast(start, end)", "OverlapCircle(point, radius)", "OverlapCircleAll(point, radius)", "OverlapPoint(point)", "OverlapBox(point, size, angle)", "CircleCast(origin, radius, direction, distance)", "gravity"],
+    Input: ["GetJoystickNames()", "GetKey(KeyCode.Space)", "GetKeyDown(KeyCode.Space)", "GetKeyUp(KeyCode.Space)", "GetAxis(\"Horizontal\")", "GetAxisRaw(\"Horizontal\")", "GetButton(\"Jump\")", "GetButtonDown(\"Jump\")", "GetButtonUp(\"Jump\")", "GetMouseButton(0)", "GetMouseButtonDown(0)", "GetMouseButtonUp(0)", "mousePosition", "mouseScrollDelta", "anyKey", "anyKeyDown", "touchCount", "GetTouch(0)", "inputString", "Vibrate(200, 1f)"],
+    Handheld: ["Vibrate()"],
+    Physics: ["Raycast(origin, direction, out hit, maxDistance)", "Raycast(origin, direction, out hit, maxDistance, layerMask)", "RaycastAll(origin, direction, maxDistance)", "Linecast(start, end)", "SphereCast(origin, radius, direction, out hit, maxDistance)", "OverlapSphere(center, radius)", "OverlapSphere(center, radius, layerMask)", "CheckSphere(center, radius)", "OverlapBox(center, halfExtents)", "IgnoreLayerCollision(layer1, layer2, true)", "GetIgnoreLayerCollision(layer1, layer2)", "IgnoreCollision(colliderA, colliderB, true)", "AllLayers", "DefaultRaycastLayers", "gravity"],
+    Physics2D: ["Raycast(origin, direction, distance)", "Raycast(origin, direction, distance, layerMask)", "RaycastAll(origin, direction, distance, layerMask)", "Linecast(start, end)", "OverlapCircle(point, radius)", "OverlapCircle(point, radius, layerMask)", "OverlapCircleAll(point, radius)", "OverlapPoint(point)", "OverlapBox(point, size, angle)", "CircleCast(origin, radius, direction, distance)", "IgnoreLayerCollision(layer1, layer2, true)", "GetIgnoreLayerCollision(layer1, layer2)", "GetLayerCollisionMask(layer)", "SetLayerCollisionMask(layer, mask)", "IgnoreCollision(colliderA, colliderB, true)", "AllLayers", "gravity"],
+    LayerMask: ["GetMask(\"Ground\", \"Enemy\")", "NameToLayer(\"Enemy\")", "LayerToName(layer)"],
+    Pool: ["Prewarm(\"Bullet\", 20)", "Spawn(\"Bullet\", position)", "Spawn(\"Bullet\", position, rotation)", "Spawn<Bullet>(\"Bullet\", position)", "Despawn(gameObject)", "Despawn(gameObject, 2f)", "Count(\"Bullet\")", "CountInactive(\"Bullet\")", "CountAll(\"Bullet\")", "SetCapacity(\"Bullet\", 300)", "GetCapacity(\"Bullet\")", "Clear(\"Bullet\")"],
     GameObject: ["Find(\"Name\")", "FindWithTag(\"Player\")", "FindGameObjectWithTag(\"Player\")", "FindGameObjectsWithTag(\"Enemy\")", "CreatePrimitive(PrimitiveType.Cube)", "Instantiate(original, position, rotation)", "Destroy(obj, delay)"],
     SceneManager: ["LoadScene(\"SceneName\")", "LoadScene(0)", "FadeToScene(\"SceneName\", 0.5f)", "ReloadScene()", "GetActiveScene()", "sceneCountInBuildSettings"],
     Application: ["Quit()", "targetFrameRate", "isPlaying", "platform", "isMobilePlatform", "productName", "engineVersion"],
@@ -41,7 +44,7 @@ export const API_MEMBERS: Record<string, string[]> = {
     HUD: ["Show(\"Mesaj\", seconds)", "Hide()"],
     Resources: ["Load(\"PrefabName\")"],
     transform: ["position", "localPosition", "rotation", "localRotation", "eulerAngles", "localEulerAngles", "localScale", "lossyScale", "forward", "right", "up", "parent", "root", "childCount", "Translate(x, y, z)", "Rotate(x, y, z)", "RotateAround(point, axis, angle)", "LookAt(target)", "SetParent(parent)", "GetChild(index)", "Find(\"Child\")", "TransformPoint(p)", "InverseTransformPoint(p)", "TransformDirection(d)", "SetPositionAndRotation(position, rotation)", "DetachChildren()"],
-    gameObject: ["name", "tag", "activeSelf", "activeInHierarchy", "transform", "SetActive(false)", "GetComponent<Rigidbody>()", "AddComponent<Rigidbody>()", "CompareTag(\"Player\")", "SendMessage(\"Method\")"],
+    gameObject: ["name", "tag", "layer", "activeSelf", "activeInHierarchy", "transform", "SetActive(false)", "GetComponent<Rigidbody>()", "AddComponent<Rigidbody>()", "CompareTag(\"Player\")", "SendMessage(\"Method\")"],
 };
 
 export const TYPE_MEMBERS: Record<string, string[]> = {
@@ -65,7 +68,7 @@ export const TYPE_MEMBERS: Record<string, string[]> = {
     PlayerInput: ["GetAxis(\"Horizontal\")", "GetAxisRaw(\"Horizontal\")", "GetButton(\"Jump\")", "GetButtonDown(\"Jump\")", "GetButtonUp(\"Jump\")", "GetKey(KeyCode.Space)", "playerIndex", "player", "currentControlScheme", "gamepad", "hasGamepad", "devices", "SwitchCurrentControlScheme(\"Gamepad\")", "ActivateInput()", "DeactivateInput()"],
     Tweener: ["SetEase(Ease.OutQuad)", "SetDelay(seconds)", "SetLoops(-1, LoopType.Yoyo)", "OnComplete(() => { })", "OnUpdate(() => { })", "Pause()", "Play()", "Restart()", "Kill()", "Complete()", "WaitForCompletion()", "isPlaying", "isComplete"],
     AudioSource: ["Play()", "PlayOneShot(clip)", "Stop()", "volume", "pitch", "clip", "isPlaying"],
-    ParticleSystem: ["Play()", "Stop()", "Pause()", "Clear()", "Emit(count)", "isPlaying", "particleCount", "main"],
+    ParticleSystem: ["Play()", "Stop()", "Pause()", "Clear()", "Emit(count)", "isPlaying", "particleCount", "main", "shape", "shapeType", "radius", "radiusThickness", "arc", "midSize", "subEmitterCount", "startColor", "startSize", "gravityModifier"],
     Camera: ["fieldOfView", "orthographicSize", "orthographic", "backgroundColor", "ScreenToWorldPoint(position)", "WorldToScreenPoint(position)", "ScreenPointToRay(position)", "ViewportToWorldPoint(position)", "Shake(0.3f, 0.25f)", "StopShake()"],
     CharacterController2D: ["Move(direction)", "Jump()", "CancelJump()", "Stop()", "isGrounded", "isJumping", "isFalling", "velocity", "facing", "jumpsLeft", "moveSpeed", "jumpHeight", "maxJumps", "acceleration", "airControl", "coyoteTime", "jumpBuffer", "useInput"],
     CameraFollow: ["target", "offset", "smoothTime", "deadZone", "lookAhead", "useBounds", "SetBounds(min, max)", "SnapToTarget()", "Shake(0.3f, 0.25f)"],
@@ -108,4 +111,5 @@ export const GLOBAL_SUGGESTIONS = [
     "Vector2", "Vector3", "Quaternion", "Color", "PlayerPrefs", "Audio", "HUD", "Resources", "KeyCode", "ForceMode", "ForceMode2D", "Space",
     "WaitForSeconds", "WaitUntil", "Instantiate", "Destroy", "StartCoroutine", "Invoke", "InvokeRepeating", "GetComponent", "transform", "gameObject",
     "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem", "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput", "SaveSystem", "JsonUtility", "Leaderboard", "Achievements",
+    "LayerMask", "Pool", "Handheld",
 ];

@@ -80,6 +80,7 @@ export class GamePlayer {
     private disposed = false;
     private stepOnce = false;
     private fpsSmoothed = 0;
+    private profiling = false;
     private frameMsSmoothed = 0;
 
     constructor(readonly container: HTMLElement, options: GamePlayerOptions) {
@@ -111,6 +112,9 @@ export class GamePlayer {
             showFps: settings.showFps,
             touchControls: options.touchControls ?? (settings.touchControls ? "auto" : false),
             onVirtualKey: (key, down) => this.input.setVirtualKey(key, down),
+            touchLayout: settings.touchLayout,
+            onTouchStick: (x, y) => this.input.setTouchStick(x, y),
+            onTouchAction: (action, down, button) => this.input.setTouchAction(action, down, button),
             textures: options.project.textures,
             onInput: (id, text, phase) => this.world.uiInput(id, text, phase),
             onFocusChange: (id) => this.world.setFocusedInput(id),
@@ -132,7 +136,7 @@ export class GamePlayer {
     }
 
     private createWorld() {
-        return new RuntimeWorld({
+        const world = new RuntimeWorld({
             project: this.options.project,
             program: this.program,
             sceneId: this.options.sceneId,
@@ -149,6 +153,14 @@ export class GamePlayer {
                 this.options.onQuit?.();
             },
         });
+        world.profiling = this.profiling;
+        return world;
+    }
+
+    /** Per-script timing for the stats overlay (V6); it costs a little, so only while the overlay is open. */
+    setProfiling(enabled: boolean) {
+        this.profiling = enabled;
+        this.world.profiling = enabled;
     }
 
     get playerState() {
@@ -193,6 +205,7 @@ export class GamePlayer {
             entities: world.entities.values(),
             debugLines: world.debugLines,
             cameraShake: world.cameraShakeOffset(),
+            time: world.time,
         };
     }
 
@@ -294,6 +307,11 @@ export class GamePlayer {
 
     setMuted(muted: boolean) {
         this.audio.setMuted(muted);
+    }
+
+    /** Shows the on-screen controls always (true), on touch screens ("auto") or never (false); the editor previews them with it. */
+    setTouchControls(mode: boolean | "auto") {
+        this.overlay.setTouchControls(this.options.project.settings.touchControls ? mode : false);
     }
 
     toggleFullscreen() {

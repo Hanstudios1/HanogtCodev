@@ -10,10 +10,11 @@ const { PROJECT_TEMPLATES, createProjectFromTemplate } = await load("lib/game-en
 const { createBlankProject, createEmptyScene } = await load("lib/game-engine/scene.ts");
 const { createScriptComponent, createTransform } = await load("lib/game-engine/components.ts");
 
+const V6_TEMPLATES = ["bullet-storm-2d", "hill-run-2d"];
 const V5_TEMPLATES = ["star-duel-2d", "dungeon-escape-2d", "meteor-retro-2d"];
 const V4_TEMPLATES = ["sky-tower-2d", "maze-hunt-2d", "slingshot-2d"];
-/** The newest templates first: V5, V4, then the October 2026 games. */
-const RECENT_TEMPLATES = [...V5_TEMPLATES, ...V4_TEMPLATES, "runner-2d", "flappy-2d", "pong-2d", "snake-2d", "rpg-topdown-2d", "obstacle-course-3d", "tower-defense-2d", "arena-2d"];
+/** The newest templates first: V6, V5, V4, then the October 2026 games. */
+const RECENT_TEMPLATES = [...V6_TEMPLATES, ...V5_TEMPLATES, ...V4_TEMPLATES, "runner-2d", "flappy-2d", "pong-2d", "snake-2d", "rpg-topdown-2d", "obstacle-course-3d", "tower-defense-2d", "arena-2d"];
 
 /** Deterministic Math.random for one test (the engine's Random uses it unless a script seeds it). */
 function seeded(seed, run) {
@@ -77,10 +78,10 @@ function projectWithScripts(scripts, dimension = "2d") {
 // Catalog
 // ---------------------------------------------------------------------------
 
-test("the recent templates are in the catalog and listed first; the V5 ones are marked new", () => {
+test("the recent templates are in the catalog and listed first; the V6 ones are marked new", () => {
     const ids = PROJECT_TEMPLATES.map((info) => info.id);
     assert.deepEqual(ids.slice(0, RECENT_TEMPLATES.length), RECENT_TEMPLATES);
-    assert.deepEqual(PROJECT_TEMPLATES.filter((info) => info.isNew).map((info) => info.id), V5_TEMPLATES);
+    assert.deepEqual(PROJECT_TEMPLATES.filter((info) => info.isNew).map((info) => info.id), V6_TEMPLATES);
     for (const id of RECENT_TEMPLATES) {
         const info = PROJECT_TEMPLATES.find((item) => item.id === id);
         assert.ok(info.name.tr && info.name.en && info.description.tr && info.description.en, `${id} has copy`);
@@ -1058,7 +1059,7 @@ test("the V5 templates speak Turkish and English, report to the Arcade and use V
         const info = PROJECT_TEMPLATES.find((item) => item.id === id);
         assert.equal(info.since, 5);
         const project = normalizeProject(createProjectFromTemplate(id));
-        assert.equal(project.settings.rules, 5, `${id} runs with the V5 rules`);
+        assert.ok(project.settings.rules >= 5, `${id} runs with the V5 rules or newer`);
         assert.deepEqual(project.settings.localization.languages, ["tr", "en"]);
         for (const entry of project.settings.localization.entries) assert.ok(entry.values.tr && entry.values.en, `${id}: ${entry.key} in both languages`);
         assert.ok(project.settings.arcade.leaderboards.length >= 1 && project.settings.arcade.achievements.length >= 3, `${id} has leaderboards and achievements`);
@@ -1293,4 +1294,238 @@ test("meteor storm: the options switch the CRT and pixel look, pause the game an
     assert.equal(next.game.world.effects.pixelate.enabled, true);
     assert.equal(next.game.find("CrtToggle").components.find((component) => component.type === "uiToggle").isOn, false, "and shown in the menu");
     assert.deepEqual(next.game.problems(), []);
+});
+
+// ---------------------------------------------------------------------------
+// V6 templates
+// ---------------------------------------------------------------------------
+
+const Tiles = await load("lib/game-engine/tilemap.ts");
+const { layersCollide } = await load("lib/game-engine/layers.ts");
+const { HILL_COINS } = await load("lib/game-engine/templates/v6.ts");
+
+test("the V6 templates are marked since 6 and use V6 features: pools, layers, Particles V2, rule tiles, one-way bridges and the joystick", () => {
+    for (const id of V6_TEMPLATES) {
+        assert.equal(PROJECT_TEMPLATES.find((item) => item.id === id).since, 6);
+        const project = normalizeProject(createProjectFromTemplate(id));
+        assert.equal(project.settings.rules, 6, `${id} runs with the V6 rules`);
+        assert.equal(project.settings.touchLayout.stick, "joystick", `${id} has the virtual joystick on phones`);
+    }
+    const storm = normalizeProject(createProjectFromTemplate("bullet-storm-2d"));
+    const layers = storm.settings.layers;
+    assert.deepEqual(layers.names.slice(1, 5), ["Player", "Enemy", "PlayerShot", "EnemyShot"]);
+    assert.ok(layersCollide(layers.collisions, 1, 4) && layersCollide(layers.collisions, 2, 3) && layersCollide(layers.collisions, 1, 2), "the ship meets enemy shots and enemies; enemies meet the ship's shots");
+    assert.ok(!layersCollide(layers.collisions, 4, 4) && !layersCollide(layers.collisions, 2, 4) && !layersCollide(layers.collisions, 1, 3), "bullets skip each other and their own side");
+    const prefabLayers = Object.fromEntries(storm.prefabs.map((item) => [item.name, item.entities[0].layer]));
+    assert.deepEqual(prefabLayers, { Shot: 3, EnemyShot: 4, Drone: 2, RingDrone: 2, Boss: 2, Boom: 0 });
+    const code = storm.scripts.map((item) => item.content).join("\n");
+    for (const call of ["Pool.Spawn<Bullet>", "Pool.Despawn(gameObject, lifetime)", "Pool.Prewarm", "Pool.SetCapacity", "LayerMask.GetMask", "LayerMask.NameToLayer", "Input.Vibrate"]) assert.ok(code.includes(call), `uses ${call}`);
+    const particles = [...storm.scenes[0].objects, ...storm.prefabs.flatMap((item) => item.entities)].flatMap((item) => item.components).filter((component) => component.type === "particleSystem");
+    assert.deepEqual([...new Set(particles.map((component) => component.shape))].sort(), ["circle", "cone", "edge", "point"]);
+    assert.ok(particles.some((component) => component.bursts.length && component.colorStops.length >= 3 && component.midSize !== null && component.subEmitterId), "a burst with a gradient, a size curve and a sub-emitter");
+
+    const hills = normalizeProject(createProjectFromTemplate("hill-run-2d"));
+    const tilemaps = Object.fromEntries(hills.scenes[0].objects.filter((item) => item.components.some((component) => component.type === "tilemap")).map((item) => [item.name, item.components.find((component) => component.type === "tilemap")]));
+    const dirt = tilemaps.Ground.palette.find((tile) => tile.key === "#");
+    assert.deepEqual([dirt.rule.neighbors, dirt.rule.frames.length], [4, 16], "the ground is a 16-cell rule tile");
+    assert.deepEqual(tilemaps.Water.palette[0].animation, { frames: [16, 17, 18, 19], fps: 6 });
+    assert.ok(tilemaps.Water.isTrigger);
+    assert.ok(tilemaps.Platforms.palette[0].oneWay, "the bridges are one-way platforms");
+    assert.equal(hills.textures.length, 1, "one pixel-art atlas");
+    assert.deepEqual(hills.settings.touchLayout.buttons.map((button) => button.action), ["Jump", "Fire1"]);
+});
+
+/** Holds the arrow keys toward `dir` (−1, 0, 1). */
+function steer(game, dir) {
+    game.world.input.setVirtualKey("RightArrow", dir > 0);
+    game.world.input.setVirtualKey("LeftArrow", dir < 0);
+}
+
+test("bullet storm: an autopilot clears both waves and the boss while the pools recycle hundreds of bullets", () => {
+    const game = startWorld(createProjectFromTemplate("bullet-storm-2d"));
+    game.step(1);
+    game.fields("Ship").invincible = true;
+    const ship = game.find("Ship");
+    const enemies = () => [...game.world.entities.values()].filter((item) => item.activeInHierarchy && item.tag === "Enemy");
+    let busiest = 0;
+    let frames = 0;
+    for (; frames < 4000 && !game.find("WinPanel").activeSelf; frames += 1) {
+        // Sit under the nearest drone: the ship fires by itself.
+        const list = enemies();
+        const target = list.reduce((best, item) => (!best || Math.abs(item.world.position.x - ship.world.position.x) < Math.abs(best.world.position.x - ship.world.position.x) ? item : best), null);
+        const dx = target ? target.world.position.x - ship.world.position.x : 0;
+        steer(game, Math.abs(dx) > 0.15 ? Math.sign(dx) : 0);
+        game.step(1);
+        busiest = Math.max(busiest, Number(/Mermi: (\d+)/.exec(game.text("BulletText"))[1]));
+    }
+    steer(game, 0);
+    const state = game.fields("GameManager");
+    assert.equal(game.find("WinPanel").activeSelf, true, `won in ${frames} frames`);
+    assert.equal(state.dronesDown, 12, "5 + 6 drones and the boss");
+    assert.equal(state.score, 5 * 100 + 3 * 100 + 3 * 150 + 2000);
+    assert.match(game.text("WinText"), /Puan: 3250/);
+    const pools = game.world.pools;
+    const prefab = (name) => game.project.prefabs.find((item) => item.name === name);
+    assert.ok(state.shotsFired > 400, `the drones fired ${state.shotsFired} bullets`);
+    assert.ok(busiest > 100, `up to ${busiest} bullets at once`);
+    assert.ok(pools.countAll(prefab("EnemyShot")) < state.shotsFired / 2, `${pools.countAll(prefab("EnemyShot"))} copies served ${state.shotsFired} shots`);
+    assert.ok(pools.countAll(prefab("Shot")) <= 60, "the ship's shots come from a small pool too");
+    assert.ok(pools.countAll(prefab("Boom")) >= 1 && pools.countAll(prefab("Boom")) <= 6, "explosions are pooled");
+    assert.equal(game.findAll("EnemyShot(Clone)").length, pools.countAll(prefab("EnemyShot")), "the pooled copies are all there is: nothing was instantiated or destroyed");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("bullet storm: drones never hit themselves (matrix), hits cost lives with a grace period and vibration, the bomb clears nearby bullets", () => {
+    const game = startWorld(createProjectFromTemplate("bullet-storm-2d"));
+    const vibrations = [];
+    game.world.input.haptics = (milliseconds, strength) => {
+        vibrations.push([milliseconds, strength]);
+        return "none";
+    };
+    // Park the ship on the far left before the first wave comes: its shots miss, and the drones fire from inside themselves.
+    const ship = game.find("Ship");
+    ship.setWorldPosition({ x: -8.3, y: -3.6, z: 0 });
+    game.step(1);
+    game.fields("Ship").invincible = true;
+    game.step(300);
+    const state = game.fields("GameManager");
+    const drones = [...game.world.entities.values()].filter((item) => item.activeInHierarchy && item.tag === "Enemy");
+    assert.equal(drones.length, 5);
+    assert.ok(state.shotsFired >= 30, `${state.shotsFired} bullets left the drones`);
+    for (const drone of drones) assert.equal(drone.behaviours[0].object.fields.health, 6, "EnemyShot × Enemy is off: no drone took its own bullets");
+
+    // The bomb: only enemy bullets near the ship go back to the pool.
+    ship.setWorldPosition({ x: 0, y: 1, z: 0 });
+    game.step(20);
+    const before = Number(/Mermi: (\d+)/.exec(game.text("BulletText"))[1]);
+    game.press("X");
+    const after = Number(/Mermi: (\d+)/.exec(game.text("BulletText"))[1]);
+    assert.ok(after < before, `the bomb cleared bullets (${before} → ${after})`);
+    assert.equal(game.text("LivesText"), "Can: 3   Bomba: 1");
+
+    // Without invincibility, standing still under fire costs a life at most every 1.6 s; the third hit ends the run.
+    game.fields("Ship").invincible = false;
+    ship.setWorldPosition({ x: 0, y: -3.6, z: 0 });
+    const hits = [];
+    for (let frame = 0; frame < 3000 && !game.find("OverPanel").activeSelf; frame += 1) {
+        const lives = state.lives;
+        game.step(1);
+        if (state.lives < lives) hits.push(game.world.time);
+    }
+    assert.equal(game.find("OverPanel").activeSelf, true, "the run ended");
+    assert.equal(hits.length, 3);
+    for (let index = 1; index < hits.length; index += 1) assert.ok(hits[index] - hits[index - 1] >= 1.55, "a grace period after each hit");
+    assert.deepEqual(vibrations, [[150, 0.7], [150, 0.7], [150, 0.7]], "every hit asks for a vibration");
+    assert.match(game.text("OverText"), /^Puan: \d+/);
+    assert.deepEqual(game.problems(), []);
+});
+
+/** Runs Hill Run like a player: run, jump over pits and onto the hill, then jump up through the bridges. */
+const HILL_ROUTE = [
+    ["run", -6.3], ["jumpTo", -4.5],
+    ["run", -1.2], ["jumpTo", 4],
+    ["run", 8.6], ["jumpTo", 11],
+    ["run", 13.3], ["jumpTo", 17.5],
+    ["to", 20.5], ["jumpTo", 20.5],
+    ["to", 21.6], ["jumpTo", 24.5],
+    ["to", 26.5], ["jumpTo", 26.5],
+    ["run", 30],
+];
+
+function runHills(game) {
+    const player = game.find("Player");
+    const input = game.world.input;
+    const landings = [];
+    for (const [kind, value] of HILL_ROUTE) {
+        let airborne = false;
+        for (let frame = 0; frame < 600 && !game.find("WinPanel").activeSelf; frame += 1) {
+            const x = xy(player).x;
+            if (kind === "run") {
+                if (x >= value) break;
+                steer(game, 1);
+            } else if (kind === "to") {
+                if (Math.abs(x - value) < 0.3) {
+                    steer(game, 0);
+                    if (Math.abs(player.body.velocity.x) < 0.2) break;
+                } else steer(game, Math.sign(value - x));
+            } else {
+                // Jump (holding the button for a full jump) and steer to the landing spot.
+                steer(game, Math.abs(value - x) > 0.25 ? Math.sign(value - x) : 0);
+                input.setVirtualKey("Space", frame < 60);
+                if (!player.motor.grounded) airborne = true;
+                if (airborne && player.motor.grounded) {
+                    landings.push(Math.round((xy(player).y - 0.45) * 10) / 10 + 0);
+                    break;
+                }
+            }
+            game.step(1);
+        }
+        input.setVirtualKey("Space", false);
+        game.step(1);
+    }
+    steer(game, 0);
+    return landings;
+}
+
+test("hill run: the autopilot runs the trail, jumps up through the one-way bridges to the flag and takes every coin", () => {
+    const storage = memoryStorage();
+    const game = startWorld(createProjectFromTemplate("hill-run-2d"), { storage });
+    game.step(5);
+    const landings = runHills(game);
+    assert.deepEqual(landings, [0, 0, 2, 0, 3, 6, 9], "onto the step, over the pit, up the hill, over the second pit, then bridge after bridge from below");
+    assert.equal(game.find("WinPanel").activeSelf, true, "reached the flag");
+    const state = game.fields("GameManager");
+    assert.equal(state.coins, HILL_COINS.length);
+    assert.equal(state.falls, 0);
+    assert.match(game.text("WinText"), /Coin: 9\/9.*Rekor: \d+\.\d sn/s);
+    assert.ok(savedPrefs(storage)["hill.best"] > 5, "the best time is saved");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("hill run: rule tiles show their edges and redraw around a placed block; bridges let you drop down; water sends you back", () => {
+    const game = startWorld(createProjectFromTemplate("hill-run-2d"));
+    game.step(5);
+    const ground = game.find("Ground").components.find((component) => component.type === "tilemap");
+    const dirt = ground.palette.find((tile) => tile.key === "#");
+    const frame = (x, y) => Tiles.tileFrameAt(ground, x, y, Tiles.tileAt(ground, x, y));
+    const R = Tiles.RULE4;
+    assert.equal(frame(-10, -4), R.N | R.E | R.S | R.W, "inside the hill: every side joins");
+    assert.equal(frame(-10, -2), R.E | R.S | R.W, "the top row has grass (no neighbour above)");
+    assert.equal(frame(-5, -1), R.E | R.S, "the corner of the step up");
+    assert.equal(frame(-16, -2), R.E | R.S, "next to the stone wall (another tile) the dirt shows its edge");
+
+    // Fire1 puts a block in front of the hiker: the block and the tile under it redraw.
+    const player = game.find("Player");
+    const before = frame(-12, -2);
+    game.press("LeftControl");
+    const placed = Tiles.tileAt(ground, -12, -1);
+    assert.equal(placed?.key, dirt.key, "a dirt block in front of the feet");
+    assert.equal(frame(-12, -1), R.S, "it joins the ground below");
+    assert.equal(before, R.E | R.S | R.W);
+    assert.equal(frame(-12, -2), R.N | R.E | R.S | R.W, "and the ground under it loses its grass");
+    assert.equal(game.text("BlockText"), "Blok: 2");
+
+    // Stand on the first bridge, then press down: the hiker drops through to the ground.
+    player.setWorldPosition({ x: 20.5, y: 3.6, z: 0 });
+    game.step(30);
+    assert.ok(Math.abs(xy(player).y - 3.45) < 0.05 && player.motor.grounded, "standing on the bridge");
+    game.world.input.setVirtualKey("DownArrow", true);
+    game.step(3);
+    game.world.input.setVirtualKey("DownArrow", false);
+    game.step(60);
+    assert.ok(Math.abs(xy(player).y - 0.45) < 0.05, `dropped through to the ground (y=${xy(player).y})`);
+    game.step(30);
+
+    // Walking into the first pit's water: back to the start, with a vibration request.
+    const vibrations = [];
+    game.world.input.haptics = (milliseconds) => {
+        vibrations.push(milliseconds);
+        return "none";
+    };
+    player.setWorldPosition({ x: 1, y: 0.5, z: 0 });
+    game.step(60);
+    assert.equal(game.fields("GameManager").falls, 1);
+    assert.ok(xy(player).x < -10, "back at the start");
+    assert.deepEqual(vibrations, [120]);
+    assert.deepEqual(game.problems(), []);
 });

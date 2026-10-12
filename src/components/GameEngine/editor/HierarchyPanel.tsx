@@ -373,7 +373,8 @@ export default function HierarchyPanel() {
                                     className="h-5 min-w-0 flex-1 rounded border border-indigo-400/60 bg-zinc-950 px-1 text-[12px] text-white outline-none"
                                 />
                             ) : (
-                                <span className="min-w-0 flex-1 truncate">{entity.name}</span>
+                                // Prefab instances (V6) show in blue, like Unity's.
+                                <span className={cx("min-w-0 flex-1 truncate", entity.prefab && "text-sky-300")} title={entity.prefab ? t("prefabLabel") : undefined}>{entity.name}</span>
                             )}
                             {hasScript ? <FileCode className="h-3 w-3 shrink-0 text-emerald-400/70" aria-label="Script" /> : null}
                             <button

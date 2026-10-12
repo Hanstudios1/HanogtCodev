@@ -4,7 +4,7 @@
  * the occupied rectangle: the first string is its top row and `origin` is the
  * cell coordinate of its bottom-left corner.
  */
-import type { TileDefinition, TilemapComponent } from "./types";
+import type { RuleTile, TileDefinition, TilemapComponent } from "./types";
 
 export const EMPTY_TILE = ".";
 
@@ -202,31 +202,168 @@ export interface SolidTile {
     key: string;
     /** Faces that border an empty (or non-solid) cell. Contacts only push out through these. */
     open: { left: boolean; right: boolean; bottom: boolean; top: boolean };
+    /** V6: bodies only land on it from above (only its top face is open). */
+    oneWay: boolean;
 }
 
 /**
  * Solid tiles that can be touched from outside (every tile with at least one
  * open face). Interior tiles are skipped; physics only needs the surface.
+ * One-way tiles (V6) don't close their neighbours' faces and only offer their
+ * top, when nothing solid sits on it.
  */
 export function solidTiles(tilemap: Pick<TilemapComponent, "rows" | "origin" | "palette">): SolidTile[] {
-    const solidKeys = new Set(tilemap.palette.filter((tile) => tile.solid).map((tile) => tile.key));
-    if (!solidKeys.size) return [];
+    const solidKeys = new Set(tilemap.palette.filter((tile) => tile.solid && !tile.oneWay).map((tile) => tile.key));
+    const oneWayKeys = new Set(tilemap.palette.filter((tile) => tile.solid && tile.oneWay).map((tile) => tile.key));
+    if (!solidKeys.size && !oneWayKeys.size) return [];
     const { width, height } = tilemapSize(tilemap);
+    // 1 = solid, 2 = one-way.
     const solid = new Uint8Array(width * height);
     for (let row = 0; row < height; row += 1) {
         const text = tilemap.rows[row];
-        for (let column = 0; column < text.length; column += 1) if (solidKeys.has(text[column])) solid[row * width + column] = 1;
+        for (let column = 0; column < text.length; column += 1) {
+            if (solidKeys.has(text[column])) solid[row * width + column] = 1;
+            else if (oneWayKeys.has(text[column])) solid[row * width + column] = 2;
+        }
     }
     const at = (column: number, row: number) => column >= 0 && column < width && row >= 0 && row < height && solid[row * width + column] === 1;
+    const any = (column: number, row: number) => column >= 0 && column < width && row >= 0 && row < height && solid[row * width + column] !== 0;
     const output: SolidTile[] = [];
     for (let row = 0; row < height; row += 1) {
         for (let column = 0; column < width; column += 1) {
-            if (!solid[row * width + column]) continue;
-            // Rows run top to bottom, so the cell above is row - 1.
+            const cell = solid[row * width + column];
+            if (!cell) continue;
+            const x = tilemap.origin.x + column;
+            const y = tilemap.origin.y + height - 1 - row;
+            if (cell === 2) {
+                // Rows run top to bottom, so the cell above is row - 1.
+                if (!any(column, row - 1)) output.push({ x, y, key: tilemap.rows[row][column], open: { left: false, right: false, bottom: false, top: true }, oneWay: true });
+                continue;
+            }
             const open = { left: !at(column - 1, row), right: !at(column + 1, row), bottom: !at(column, row + 1), top: !at(column, row - 1) };
             if (!open.left && !open.right && !open.bottom && !open.top) continue;
-            output.push({ x: tilemap.origin.x + column, y: tilemap.origin.y + height - 1 - row, key: tilemap.rows[row][column], open });
+            output.push({ x, y, key: tilemap.rows[row][column], open, oneWay: false });
         }
     }
     return output;
+}
+
+// ---------------------------------------------------------------------------
+// Rule tiles, animated tiles and one-way tiles (V6)
+// ---------------------------------------------------------------------------
+
+/** Neighbour bits of a 4-neighbour rule tile: slot = the sum of the joined sides. */
+export const RULE4 = { N: 1, E: 2, S: 4, W: 8 } as const;
+
+/** Neighbour bits of an 8-neighbour (blob) rule tile, clockwise from north. */
+export const RULE8 = { N: 1, NE: 2, E: 4, SE: 8, S: 16, SW: 32, W: 64, NW: 128 } as const;
+
+/** Drops the corners whose two sides don't both join (they can't change the picture). */
+export function reduceBlobMask(mask: number): number {
+    let value = mask & 255;
+    const corner = (bit: number, a: number, b: number) => {
+        if (!((value & a) && (value & b))) value &= ~bit;
+    };
+    corner(RULE8.NE, RULE8.N, RULE8.E);
+    corner(RULE8.SE, RULE8.S, RULE8.E);
+    corner(RULE8.SW, RULE8.S, RULE8.W);
+    corner(RULE8.NW, RULE8.N, RULE8.W);
+    return value;
+}
+
+/** The 47 masks of a blob tileset in ascending order: slot i of an 8-neighbour rule tile is BLOB_MASKS[i]. */
+export const BLOB_MASKS: readonly number[] = Array.from({ length: 256 }, (_, mask) => mask).filter((mask) => reduceBlobMask(mask) === mask);
+
+const BLOB_SLOT = new Map(BLOB_MASKS.map((mask, slot) => [mask, slot]));
+
+/** Slots of a rule tile with `neighbors` neighbours (16 or 47). */
+export function ruleSlotCount(neighbors: 4 | 8): number {
+    return neighbors === 8 ? BLOB_MASKS.length : 16;
+}
+
+/** The neighbour mask (bits of RULE4 / RULE8) a slot stands for. */
+export function ruleSlotMask(neighbors: 4 | 8, slot: number): number {
+    return neighbors === 8 ? BLOB_MASKS[slot] ?? 0 : slot;
+}
+
+type RuleGrid = Pick<TilemapComponent, "rows" | "origin">;
+
+/** Which slot a rule tile at (x, y) uses, from the neighbours that join it. */
+export function ruleTileSlot(tilemap: RuleGrid, x: number, y: number, tile: Pick<TileDefinition, "key" | "rule">): number {
+    const rule = tile.rule;
+    if (!rule) return 0;
+    const joins = (dx: number, dy: number) => {
+        const key = tileKeyAt(tilemap, x + dx, y + dy);
+        return key !== null && (rule.matchAny || key === tile.key);
+    };
+    if (rule.neighbors === 4) return (joins(0, 1) ? RULE4.N : 0) | (joins(1, 0) ? RULE4.E : 0) | (joins(0, -1) ? RULE4.S : 0) | (joins(-1, 0) ? RULE4.W : 0);
+    const mask = (joins(0, 1) ? RULE8.N : 0) | (joins(1, 1) ? RULE8.NE : 0) | (joins(1, 0) ? RULE8.E : 0) | (joins(1, -1) ? RULE8.SE : 0)
+        | (joins(0, -1) ? RULE8.S : 0) | (joins(-1, -1) ? RULE8.SW : 0) | (joins(-1, 0) ? RULE8.W : 0) | (joins(-1, 1) ? RULE8.NW : 0);
+    return BLOB_SLOT.get(reduceBlobMask(mask)) ?? 0;
+}
+
+/**
+ * The atlas frame a cell draws at `time` seconds: a rule tile's slot frame, an
+ * animated tile's current frame, else the tile's own frame (-1 = plain colour).
+ */
+export function tileFrameAt(tilemap: RuleGrid, x: number, y: number, tile: TileDefinition, time = 0): number {
+    if (tile.rule) {
+        const frame = tile.rule.frames[ruleTileSlot(tilemap, x, y, tile)];
+        return frame !== undefined && frame >= 0 ? frame : tile.frame;
+    }
+    if (tile.animation && tile.animation.frames.length) return animatedTileFrame(tile.animation, time);
+    return tile.frame;
+}
+
+export function animatedTileFrame(animation: { frames: readonly number[]; fps: number }, time: number): number {
+    const frames = animation.frames;
+    if (!frames.length) return -1;
+    const index = Math.floor(Math.max(0, time) * Math.max(0.01, animation.fps)) % frames.length;
+    return frames[index];
+}
+
+/** Frames of a rule tile laid out one after another in the atlas from `start` (the "fill from the atlas" button). */
+export function consecutiveRuleFrames(neighbors: 4 | 8, start: number): number[] {
+    return Array.from({ length: ruleSlotCount(neighbors) }, (_, slot) => start + slot);
+}
+
+/** The atlas frame a palette swatch shows: a rule tile's lone case (what one painted tile draws), an animated tile's first frame, else the tile's frame. */
+export function tilePreviewFrame(tile: TileDefinition): number {
+    if (tile.rule) {
+        const lone = tile.rule.frames[0];
+        if (lone !== undefined && lone >= 0) return lone;
+        return tile.frame >= 0 ? tile.frame : tile.rule.frames.find((frame) => frame >= 0) ?? -1;
+    }
+    if (tile.animation?.frames.length) return tile.animation.frames[0];
+    return tile.frame;
+}
+
+/**
+ * The 3×3 picture of a rule slot (top row first, the tile itself in the
+ * middle): true = a joined neighbour, false = an empty one, null = a corner
+ * that doesn't matter for this slot.
+ */
+export function ruleSlotPattern(neighbors: 4 | 8, slot: number): Array<boolean | null> {
+    const mask = ruleSlotMask(neighbors, slot);
+    if (neighbors === 4) {
+        return [null, Boolean(mask & RULE4.N), null, Boolean(mask & RULE4.W), true, Boolean(mask & RULE4.E), null, Boolean(mask & RULE4.S), null];
+    }
+    const corner = (bit: number, a: number, b: number) => ((mask & a) && (mask & b) ? Boolean(mask & bit) : null);
+    return [
+        corner(RULE8.NW, RULE8.N, RULE8.W), Boolean(mask & RULE8.N), corner(RULE8.NE, RULE8.N, RULE8.E),
+        Boolean(mask & RULE8.W), true, Boolean(mask & RULE8.E),
+        corner(RULE8.SW, RULE8.S, RULE8.W), Boolean(mask & RULE8.S), corner(RULE8.SE, RULE8.S, RULE8.E),
+    ];
+}
+
+/** A rule tile's frames for the other neighbour count: every case keeps the frame of the case with the same sides. */
+export function convertRuleFrames(rule: RuleTile, neighbors: 4 | 8): number[] {
+    if (rule.neighbors === neighbors) return [...rule.frames];
+    const sides = (mask: number) => (mask & RULE8.N ? RULE4.N : 0) | (mask & RULE8.E ? RULE4.E : 0) | (mask & RULE8.S ? RULE4.S : 0) | (mask & RULE8.W ? RULE4.W : 0);
+    if (neighbors === 8) return BLOB_MASKS.map((mask) => rule.frames[sides(mask)] ?? -1);
+    // 8 → 4: the case with those sides and every corner between them filled.
+    return Array.from({ length: 16 }, (_, mask4) => {
+        const blob = reduceBlobMask((mask4 & RULE4.N ? RULE8.N : 0) | (mask4 & RULE4.E ? RULE8.E : 0) | (mask4 & RULE4.S ? RULE8.S : 0) | (mask4 & RULE4.W ? RULE8.W : 0) | RULE8.NE | RULE8.SE | RULE8.SW | RULE8.NW);
+        return rule.frames[BLOB_SLOT.get(blob) ?? 0] ?? -1;
+    });
 }

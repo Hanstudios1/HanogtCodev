@@ -4,6 +4,7 @@
  * "LeftArrow"…); buttons and axes come from the project's input actions.
  */
 import { defaultInputSettings, GAMEPAD_AXES, GAMEPAD_BUTTONS, keyboardHalfOf, playerKeys, type GamepadButtonName, type InputAction, type InputSettings, type InputSourceSpec } from "../input-actions";
+import { vibrate, type VibrationHost } from "../touch-controls";
 
 export type { InputSourceSpec } from "../input-actions";
 
@@ -67,6 +68,28 @@ const MAX_PADS = 4;
 /** On-screen touch buttons also press these gamepad buttons, so actions whose keys were rebound still answer them. */
 const TOUCH_PAD: Record<string, GamepadButtonName> = { LeftArrow: "DpadLeft", RightArrow: "DpadRight", UpArrow: "DpadUp", DownArrow: "DpadDown", Space: "A", LeftControl: "X" };
 
+/** Source of the arrow keys the virtual joystick (V6) holds while it is pushed past half way. */
+const STICK = "stick";
+/** How far the joystick must lean (0–1) before it also holds an arrow key. */
+const STICK_KEY_THRESHOLD = 0.5;
+
+/** Adds or removes `source` from what holds `item`; true when the item became held or free. */
+function holdBy<T>(sources: Map<T, Set<string>>, item: T, source: string, down: boolean): boolean {
+    const set = sources.get(item);
+    const was = Boolean(set?.size);
+    if (down) {
+        if (set) set.add(source);
+        else sources.set(item, new Set([source]));
+    } else if (set) {
+        set.delete(source);
+        if (!set.size) sources.delete(item);
+    }
+    return was !== Boolean(sources.get(item)?.size);
+}
+
+/** An axis action the virtual joystick feeds as an analog stick (so its arrow keys must not make it digital). */
+const leftStickAction = (action: InputAction) => action.gamepadAxis === "LeftStickX" || action.gamepadAxis === "LeftStickY";
+
 export class InputManager {
     private readonly held = new Set<string>();
     private readonly pressedFrame = new Set<string>();
@@ -79,6 +102,8 @@ export class InputManager {
     private readonly pendingMouseDown = new Set<number>();
     private readonly pendingMouseUp = new Set<number>();
     private readonly virtualHeld = new Set<string>();
+    /** What holds each on-screen key: the classic buttons, a touch button's action or the joystick (V6). */
+    private readonly virtualSources = new Map<string, Set<string>>();
     /** Key edges from the physical keyboard and from the on-screen buttons, kept apart for player views. */
     private keyPressedFrame = new Set<string>();
     private keyReleasedFrame = new Set<string>();
@@ -89,6 +114,18 @@ export class InputManager {
     private readonly pendingTouchPressed = new Set<string>();
     private readonly pendingTouchReleased = new Set<string>();
     private readonly touchPad = new Set<GamepadButtonName>();
+    private readonly touchPadSources = new Map<GamepadButtonName, Set<string>>();
+    /** The virtual joystick (V6) in gamepad terms: x right, y down, after its own dead zone. */
+    private touchStick: [number, number] = [0, 0];
+    /** Input actions held by the on-screen buttons (V6), what holds them, and their edges. */
+    private readonly touchActions = new Set<string>();
+    private readonly touchActionSources = new Map<string, Set<string>>();
+    private readonly pendingActionPressed = new Set<string>();
+    private readonly pendingActionReleased = new Set<string>();
+    private actionPressedFrame = new Set<string>();
+    private actionReleasedFrame = new Set<string>();
+    /** Input.Vibrate goes here (tests replace it); the default uses the browser's gamepads or navigator.vibrate. */
+    haptics: (milliseconds: number, strength: number) => string = (milliseconds, strength) => vibrate(typeof navigator !== "undefined" ? navigator as unknown as VibrationHost : null, milliseconds, strength);
     private readonly axes = new Map<string, AxisState>();
     private actions = new Map<string, InputAction>();
     private deadZone = 0.2;
@@ -252,6 +289,15 @@ export class InputManager {
         this.pendingMouseDown.clear();
         this.pendingMouseUp.clear();
         this.virtualHeld.clear();
+        this.virtualSources.clear();
+        this.touchPadSources.clear();
+        this.touchStick = [0, 0];
+        this.touchActions.clear();
+        this.touchActionSources.clear();
+        this.pendingActionPressed.clear();
+        this.pendingActionReleased.clear();
+        this.actionPressedFrame.clear();
+        this.actionReleasedFrame.clear();
         this.keyPressedFrame.clear();
         this.keyReleasedFrame.clear();
         this.touchPressedFrame.clear();
@@ -287,20 +333,88 @@ export class InputManager {
         }
     }
 
-    /** On-screen touch buttons map onto regular keys (and the matching gamepad buttons). */
-    setVirtualKey(key: string, down: boolean) {
-        if (down) {
-            if (!this.held.has(key) && !this.virtualHeld.has(key)) this.pendingPressed.add(key);
-            if (!this.virtualHeld.has(key)) this.pendingTouchPressed.add(key);
-            this.virtualHeld.add(key);
-        } else {
-            if (this.virtualHeld.has(key)) this.pendingTouchReleased.add(key);
-            this.virtualHeld.delete(key);
-            if (!this.held.has(key)) this.pendingReleased.add(key);
+    /**
+     * On-screen touch buttons map onto regular keys (and the matching gamepad
+     * buttons). `source` tells apart what holds a key (a button, a touch
+     * button's action, the joystick), so releasing one keeps the others.
+     */
+    setVirtualKey(key: string, down: boolean, source = "button") {
+        if (holdBy(this.virtualSources, key, source, down)) {
+            if (down) {
+                if (!this.held.has(key)) this.pendingPressed.add(key);
+                this.pendingTouchPressed.add(key);
+                this.virtualHeld.add(key);
+            } else {
+                this.pendingTouchReleased.add(key);
+                this.virtualHeld.delete(key);
+                if (!this.held.has(key)) this.pendingReleased.add(key);
+            }
         }
+        // The joystick's arrows don't press the d-pad: Horizontal/Vertical read the stick itself.
         const pad = TOUCH_PAD[key];
-        if (pad && down) this.touchPad.add(pad);
-        else if (pad) this.touchPad.delete(pad);
+        if (pad && source !== STICK) this.setTouchPadButton(pad, down, `key:${source}`);
+    }
+
+    private setTouchPadButton(button: GamepadButtonName, down: boolean, source: string) {
+        holdBy(this.touchPadSources, button, source, down);
+        if (this.touchPadSources.has(button)) this.touchPad.add(button);
+        else this.touchPad.delete(button);
+    }
+
+    /**
+     * The virtual joystick (V6): x right and y up, length 0–1, after its dead
+     * zone. Axis actions bound to the left stick (Horizontal and Vertical by
+     * default) read it as an analog stick; pushed past half way it also holds
+     * the arrow keys, so games that read keys work too.
+     */
+    setTouchStick(x: number, y: number) {
+        const clamp = (value: number) => (Number.isFinite(value) ? Math.max(-1, Math.min(1, value)) : 0);
+        this.touchStick = [clamp(x), -clamp(y)];
+        this.setVirtualKey("LeftArrow", x < -STICK_KEY_THRESHOLD, STICK);
+        this.setVirtualKey("RightArrow", x > STICK_KEY_THRESHOLD, STICK);
+        this.setVirtualKey("UpArrow", y > STICK_KEY_THRESHOLD, STICK);
+        this.setVirtualKey("DownArrow", y < -STICK_KEY_THRESHOLD, STICK);
+    }
+
+    /** The joystick's current value (x right, y up). */
+    get touchStickValue(): { x: number; y: number } {
+        return { x: this.touchStick[0], y: -this.touchStick[1] || 0 };
+    }
+
+    /**
+     * An on-screen button (V6) pressing an input action: the action answers
+     * GetButton/GetAxis, and its keys and gamepad buttons are held too (so
+     * Input.GetKey(KeyCode.Space) sees the Jump button). Unknown names press
+     * the key of that name.
+     */
+    setTouchAction(name: string, down: boolean, button = 0) {
+        const source = `touch:${button}`;
+        const action = this.actions.get(name);
+        if (!action) {
+            this.setVirtualKey(normalizeKeyName(name), down, source);
+            return;
+        }
+        if (holdBy(this.touchActionSources, name, source, down)) {
+            if (down) {
+                this.touchActions.add(name);
+                this.pendingActionPressed.add(name);
+            } else {
+                this.touchActions.delete(name);
+                this.pendingActionReleased.add(name);
+            }
+        }
+        for (const key of action.positive) if (!key.startsWith("Mouse")) this.setVirtualKey(key, down, source);
+        for (const pad of action.gamepadPositive) this.setTouchPadButton(pad, down, source);
+    }
+
+    /** A touch button's action (V6) for player views. */
+    touchAction(name: string, kind: EdgeKind) {
+        return (kind === "held" ? this.touchActions : kind === "pressed" ? this.actionPressedFrame : this.actionReleasedFrame).has(name);
+    }
+
+    /** Input.Vibrate(milliseconds, strength): gamepad rumble or the phone's vibration, if there is any. */
+    vibrate(milliseconds: number, strength = 1): string {
+        return this.haptics(milliseconds, strength);
     }
 
     /** Called once at the start of every frame. */
@@ -319,6 +433,10 @@ export class InputManager {
         this.pendingKeyReleased.clear();
         this.pendingTouchPressed.clear();
         this.pendingTouchReleased.clear();
+        this.actionPressedFrame = new Set(this.pendingActionPressed);
+        this.actionReleasedFrame = new Set(this.pendingActionReleased);
+        this.pendingActionPressed.clear();
+        this.pendingActionReleased.clear();
         this.mouseDownFrame.clear();
         this.mouseUpFrame.clear();
         for (const button of this.pendingMouseDown) this.mouseDownFrame.add(button);
@@ -407,9 +525,17 @@ export class InputManager {
         return (kind === "held" ? this.held : kind === "pressed" ? this.keyPressedFrame : this.keyReleasedFrame).has(key);
     }
 
-    /** A key pressed through the on-screen touch buttons. */
-    touchKey(key: string, kind: EdgeKind) {
+    /** A key pressed through the on-screen touch buttons (`withStick` false: not by the joystick's arrows). */
+    touchKey(key: string, kind: EdgeKind, withStick = true) {
+        if (!withStick && this.virtualSources.get(key)?.size === 1 && this.virtualSources.get(key)?.has(STICK)) return false;
         return (kind === "held" ? this.virtualHeld : kind === "pressed" ? this.touchPressedFrame : this.touchReleasedFrame).has(key);
+    }
+
+    /** The joystick as a left stick, in gamepad terms (y down), for the axis of an action. */
+    touchStickAxis(action: InputAction): number {
+        if (!leftStickAction(action)) return 0;
+        const value = this.touchStick[action.gamepadAxis === "LeftStickX" ? 0 : 1];
+        return (action.invert ? -value : value) || 0;
     }
 
     mouseButton(button: number, kind: EdgeKind) {
@@ -441,21 +567,29 @@ export class InputManager {
         return Math.sign(raw) * Math.min(1, scaled) * (invert ? -1 : 1);
     }
 
-    /** −1…1 from the action's keys and d-pad buttons. */
+    /** −1…1 from the action's keys, d-pad buttons and touch button (V6). */
     private keyAxis(action: InputAction): number {
-        const positive = action.positive.some((key) => this.keyHeld(key)) || action.gamepadPositive.some((name) => this.padHeld.has(name));
-        const negative = action.negative.some((key) => this.keyHeld(key)) || action.gamepadNegative.some((name) => this.padHeld.has(name));
+        // A left-stick axis reads the joystick as a stick, not through its arrow keys.
+        const withStick = !leftStickAction(action);
+        const positive = action.positive.some((key) => this.keyHeld(key, withStick)) || action.gamepadPositive.some((name) => this.padHeld.has(name)) || this.touchActions.has(action.name);
+        const negative = action.negative.some((key) => this.keyHeld(key, withStick)) || action.gamepadNegative.some((name) => this.padHeld.has(name));
         return (positive ? 1 : 0) - (negative ? 1 : 0);
     }
 
-    /** The action's analog stick after the dead zone (rescaled so it starts at 0). */
+    /** The action's analog stick after the dead zone (rescaled so it starts at 0), or the virtual joystick (V6). */
     private stickAxis(action: InputAction): number {
         if (!action.gamepadAxis) return 0;
-        return this.deadZoned(this.padAxes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0, action.invert);
+        const pad = this.deadZoned(this.padAxes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0, action.invert);
+        const touch = this.touchStickAxis(action);
+        return Math.abs(touch) > Math.abs(pad) ? touch : pad;
     }
 
-    private keyHeld(key: string) {
+    private keyHeld(key: string, withStick = true) {
         if (key.startsWith("Mouse")) return this.mouseHeld.has(Number(key.slice(5)));
+        if (!withStick && !this.held.has(key)) {
+            const sources = this.virtualSources.get(key);
+            return Boolean(sources && [...sources].some((source) => source !== STICK));
+        }
         return this.isHeld(key);
     }
 
@@ -545,21 +679,24 @@ export class InputManager {
         const action = this.actions.get(name);
         if (!action) return this.getKey(name);
         return [...action.positive, ...action.negative].some((key) => this.keyHeld(key))
-            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padHeld.has(button));
+            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padHeld.has(button))
+            || this.touchActions.has(name);
     }
 
     getButtonDown(name: string) {
         const action = this.actions.get(name);
         if (!action) return this.getKeyDown(name);
         return [...action.positive, ...action.negative].some((key) => this.keyPressed(key))
-            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padPressed.has(button));
+            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padPressed.has(button))
+            || this.actionPressedFrame.has(name);
     }
 
     getButtonUp(name: string) {
         const action = this.actions.get(name);
         if (!action) return this.getKeyUp(name);
         return [...action.positive, ...action.negative].some((key) => this.keyReleased(key))
-            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padReleased.has(button));
+            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padReleased.has(button))
+            || this.actionReleasedFrame.has(name);
     }
 
     get attached() {
@@ -586,12 +723,12 @@ export class PlayerInputView {
         this.axes.clear();
     }
 
-    private keys(list: readonly string[], kind: EdgeKind): boolean {
+    private keys(list: readonly string[], kind: EdgeKind, withStick = true): boolean {
         for (const key of playerKeys(list, this.spec)) {
             if (key.startsWith("Mouse") ? this.manager.mouseButton(Number(key.slice(5)), kind) : this.manager.keyboardKey(key, kind)) return true;
         }
         // The on-screen buttons press the binding's own keys, whatever half they are on.
-        return this.spec.touch && list.some((key) => !key.startsWith("Mouse") && this.manager.touchKey(key, kind));
+        return this.spec.touch && list.some((key) => !key.startsWith("Mouse") && this.manager.touchKey(key, kind, withStick));
     }
 
     private buttons(list: readonly GamepadButtonName[], kind: EdgeKind): boolean {
@@ -601,14 +738,17 @@ export class PlayerInputView {
     }
 
     private keyAxis(action: InputAction): number {
-        const positive = this.keys(action.positive, "held") || this.buttons(action.gamepadPositive, "held");
-        const negative = this.keys(action.negative, "held") || this.buttons(action.gamepadNegative, "held");
+        const withStick = !leftStickAction(action);
+        const positive = this.keys(action.positive, "held", withStick) || this.buttons(action.gamepadPositive, "held") || (this.spec.touch && this.manager.touchAction(action.name, "held"));
+        const negative = this.keys(action.negative, "held", withStick) || this.buttons(action.gamepadNegative, "held");
         return (positive ? 1 : 0) - (negative ? 1 : 0);
     }
 
     private stickAxis(action: InputAction): number {
-        if (!action.gamepadAxis || this.spec.pad === null) return 0;
-        return this.manager.deadZoned(this.manager.padSlot(this.spec.pad).axes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0, action.invert);
+        if (!action.gamepadAxis) return 0;
+        const pad = this.spec.pad === null ? 0 : this.manager.deadZoned(this.manager.padSlot(this.spec.pad).axes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0, action.invert);
+        const touch = this.spec.touch ? this.manager.touchStickAxis(action) : 0;
+        return Math.abs(touch) > Math.abs(pad) ? touch : pad;
     }
 
     /** Smooths keyboard axes like the shared input does (once per frame). */
@@ -653,7 +793,8 @@ export class PlayerInputView {
     private button(name: string, kind: EdgeKind): boolean {
         const action = this.manager.action(name);
         if (!action) return this.key(name, kind);
-        return this.keys([...action.positive, ...action.negative], kind) || this.buttons([...action.gamepadPositive, ...action.gamepadNegative], kind);
+        return this.keys([...action.positive, ...action.negative], kind) || this.buttons([...action.gamepadPositive, ...action.gamepadNegative], kind)
+            || (this.spec.touch && this.manager.touchAction(name, kind));
     }
 
     getButton(name: string) {

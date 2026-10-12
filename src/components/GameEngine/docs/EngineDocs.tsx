@@ -5,14 +5,14 @@ import Link from "next/link";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { API_MEMBERS, TYPE_MEMBERS } from "@/components/GameEngine/editor/completions";
 import { engineLocale } from "@/components/GameEngine/editor/text";
-import { V3_FEATURES, V4_FEATURES, V5_FEATURES, type WhatsNewItem } from "@/components/GameEngine/whats-new";
+import { V3_FEATURES, V4_FEATURES, V5_FEATURES, V6_FEATURES, type WhatsNewItem } from "@/components/GameEngine/whats-new";
 import { FIRST_GAME } from "./first-game";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { useI18n } from "@/lib/i18n";
 
 /** Section anchors stay the same in every language so shared links keep working. */
 const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
-    { id: "yenilikler", tr: "V5'te yenilikler", en: "What's new in V5" },
+    { id: "yenilikler", tr: "V6'da yenilikler", en: "What's new in V6" },
     { id: "baslarken", tr: "Başlarken", en: "Getting started" },
     { id: "ilk-oyun", tr: "İlk oyunun: adım adım", en: "Your first game, step by step" },
     { id: "editor", tr: "Editör", en: "The editor" },
@@ -21,17 +21,23 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "cpp", tr: "C++ ile script", en: "Scripting in C++" },
     { id: "yasam-dongusu", tr: "Yaşam döngüsü", en: "Lifecycle" },
     { id: "girdi", tr: "Girdi, giriş eylemleri ve gamepad", en: "Input, input actions and gamepads" },
+    { id: "dokunmatik", tr: "Dokunmatik kontroller ve titreşim", en: "Touch controls and vibration" },
     { id: "cok-oyunculu", tr: "Yerel çok oyunculu", en: "Local multiplayer" },
     { id: "fizik", tr: "Fizik ve çarpışmalar", en: "Physics and collisions" },
+    { id: "katmanlar", tr: "Katmanlar ve çarpışma tablosu", en: "Layers and the collision matrix" },
     { id: "karakter", tr: "Character Controller 2D", en: "Character Controller 2D" },
     { id: "kamera", tr: "Kamera takibi ve sarsıntı", en: "Camera follow and shake" },
     { id: "eklemler", tr: "Eklemler: Distance ve Spring", en: "Joints: Distance and Spring" },
     { id: "tilemap", tr: "Tilemap ve karo boyama", en: "Tilemaps and tile painting" },
+    { id: "kural-karolari", tr: "Kural karoları, animasyonlu karolar ve tek yönlü platformlar", en: "Rule tiles, animated tiles and one-way platforms" },
     { id: "yol-bulma", tr: "Yol bulma ve Nav Agent 2D", en: "Path finding and Nav Agent 2D" },
     { id: "prefab", tr: "Prefab, Instantiate, Destroy", en: "Prefabs, Instantiate, Destroy" },
+    { id: "prefab-baglantilari", tr: "Prefab bağlantıları: Uygula ve Geri döndür", en: "Prefab links: Apply and Revert" },
+    { id: "havuzlar", tr: "Nesne havuzları", en: "Object pools" },
     { id: "coroutine", tr: "Coroutine ve Invoke", en: "Coroutines and Invoke" },
     { id: "animasyon", tr: "Animasyon, Tween ve Timer", en: "Animation, Tween and Timer" },
     { id: "animator", tr: "Animator durum makinesi", en: "Animator state machine" },
+    { id: "animasyon-olaylari", tr: "Animasyon olayları", en: "Animation events" },
     { id: "sahneler", tr: "Sahneler", en: "Scenes" },
     { id: "ui-ses", tr: "UI, HUD ve ses", en: "UI, HUD and sound" },
     { id: "ui-kontroller", tr: "Kaydırıcı, anahtar ve metin kutusu", en: "Sliders, toggles and input fields" },
@@ -39,12 +45,15 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "ses-dosyalari", tr: "Ses dosyaları ve müzik", en: "Audio files and music" },
     { id: "modeller", tr: "3D modeller (GLB)", en: "3D models (GLB)" },
     { id: "ortam", tr: "Ortam ve ekran efektleri", en: "Environment and screen effects" },
+    { id: "parcaciklar", tr: "Parçacıklar", en: "Particles" },
     { id: "kayit", tr: "Kayıt: PlayerPrefs ve SaveSystem", en: "Saving: PlayerPrefs and SaveSystem" },
     { id: "yayinlama", tr: "Yayınlama ve dışa aktarma", en: "Publishing and exporting" },
     { id: "skor-tablolari", tr: "Skor tabloları ve başarımlar", en: "Leaderboards and achievements" },
     { id: "api", tr: "API referansı", en: "API reference" },
+    { id: "motor-kurallari", tr: "Motor kuralları", en: "Engine rules" },
     { id: "farklar", tr: "Unity'den farklar", en: "Differences from Unity" },
     { id: "guvenlik", tr: "Güvenlik ve sınırlar", en: "Security and limits" },
+    { id: "hata-ayiklama", tr: "Hata ayıklama: log noktaları ve betik süreleri", en: "Debugging: log points and script timings" },
     { id: "sorunlar", tr: "Sık karşılaşılan sorunlar", en: "Troubleshooting" },
 ];
 
@@ -122,7 +131,7 @@ function Tip({ children }: { children: ReactNode }) {
     return <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4 text-[14px] text-zinc-700 dark:text-zinc-300">💡 {children}</div>;
 }
 
-function WhatsNewList({ tr, items = V5_FEATURES }: { tr: boolean; items?: WhatsNewItem[] }) {
+function WhatsNewList({ tr, items = V6_FEATURES }: { tr: boolean; items?: WhatsNewItem[] }) {
     return (
         <ul className="grid gap-3 sm:grid-cols-2">
             {items.map((feature) => {
@@ -160,9 +169,11 @@ function ApiReference() {
 function DocsTR() {
     return (
         <>
-                            <Section id="yenilikler" title="V5'te yenilikler">
-                                <p>Hanogt Engine V5; Animator durum makinesi, Arcade skor tabloları ve başarımlar, oyun içi çeviri, aynı ekranda dört oyuncuya kadar yerel çok oyunculu, SaveSystem ile kayıt yuvaları, GLB 3D modeller, yeni ekran efektleri ve kendi sitenizde yayınlayabileceğiniz web paketiyle geliyor. Önceki sürümlerle kaydedilen projeler açıldığında V5 biçimine taşınır ve verileriniz korunur; davranışı değişen yerlerde (ör. <K>GetComponent&lt;Animator&gt;()</K> ve <K>CrossFade</K>) eski oyunlar kendi sürümlerinin kurallarıyla çalışmaya devam eder.</p>
+                            <Section id="yenilikler" title="V6'da yenilikler">
+                                <p>Hanogt Engine V6; katmanlar ve çarpışma tablosu, nesne havuzları, yeni parçacık sistemi, kural karoları ve tek yönlü platformlar, dokunmatik joystick ve titreşim, animasyon olayları, prefab bağlantıları, log noktaları ve betik başına süre ölçümüyle geliyor; dışa aktarılan oyunlar da artık daha hafif. Önceki sürümlerle kaydedilen projeler açıldığında V6 biçimine taşınır ve verileriniz korunur; davranışı değişen yerlerde (ör. <K>LayerMask</K> ve ışın maskeleri) eski oyunlar kendi sürümlerinin kurallarıyla çalışır. <b>Ayarlar → Proje → Motor kuralları</b> bir projeyi tek tıkla V6 kurallarına geçirir.</p>
                                 <WhatsNewList tr />
+                                <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">V5 ile gelenler</h3>
+                                <WhatsNewList tr items={V5_FEATURES} />
                                 <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">V4 ile gelenler</h3>
                                 <WhatsNewList tr items={V4_FEATURES} />
                                 <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">V3 ile gelenler</h3>
@@ -171,7 +182,7 @@ function DocsTR() {
 
                             <Section id="baslarken" title="Başlarken">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: V5 ile gelen Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru; V4 ile gelen Gök Kulesi, Labirent Avı ve Sapan Ustası; Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++); V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu; ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
+                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: V6 ile gelen Mermi Fırtınası ve Tepe Koşusu; V5 ile gelen Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru; V4 ile gelen Gök Kulesi, Labirent Avı ve Sapan Ustası; Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++); V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu; ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
                                     <li>Giriş yaptıysanız proje hesabınıza (bulut) kaydedilir; misafir olarak oluşturulan projeler bu tarayıcıda (IndexedDB) saklanır.</li>
                                     <li>Üstteki <b>▶ Oynat</b> düğmesi (Ctrl+P) oyunu editörün içinde çalıştırır. Durdurduğunuzda sahne oynatmadan önceki haline döner.</li>
                                     <li>Scriptlere çift tıklayarak kod editörünü açın; değişiklikler otomatik derlenir, hatalar satır satır gösterilir.</li>
@@ -364,7 +375,29 @@ if (Input.GetButtonDown("Jump")) Jump();     // Space ya da gamepad A
 if (Input.GetButton("Fire1")) Shoot();
 if (Input.GetButtonDown("Dash")) Dash();     // Ayarlar → Girdi'de eklediğiniz eylem
 string[] pads = Input.GetJoystickNames();    // bağlı gamepad'ler`}</Code>
-                                <p>Gamepad&apos;ler tarayıcının Gamepad API&apos;siyle okunur (Xbox ve PlayStation düzeni); tarayıcı bir gamepad&apos;i ancak bir düğmesine basılınca bildirir. Çubukların <b>ölü bölgesi</b> Girdi sekmesinden ayarlanır. Mobilde, proje ayarlarında açıksa ekranda yön tuşları ve A/B düğmeleri gösterilir; bunlar gamepad&apos;in d-pad&apos;i ve A/X düğmeleri gibi davranır, eylemleri değiştirseniz de çalışmaya devam eder.</p>
+                                <p>Gamepad&apos;ler tarayıcının Gamepad API&apos;siyle okunur (Xbox ve PlayStation düzeni); tarayıcı bir gamepad&apos;i ancak bir düğmesine basılınca bildirir. Çubukların <b>ölü bölgesi</b> Girdi sekmesinden ayarlanır. Telefon ve tabletlerde ekranda bir joystick ya da yön tuşlarıyla eylem düğmeleri gösterilir; ayrıntılar <a href="#dokunmatik" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Dokunmatik kontroller</a> bölümünde.</p>
+                            </Section>
+
+                            <Section id="dokunmatik" title="Dokunmatik kontroller ve titreşim">
+                                <p>Telefon ve tabletlerde oyunun üstünde dokunmatik kontroller görünür (bilgisayarda gizlidir). <b>Ayarlar → Dokunmatik</b> sekmesinde açıp kapatır, yön kontrolünü ve düğmeleri seçersiniz; oyun çalışırken Oyun görünümündeki telefon düğmesi kontrolleri bilgisayarda da gösterir, joystick&apos;i fareyle deneyebilirsiniz.</p>
+                                <Table head={["Ayar", "Ne yapar?"]} rows={[
+                                    ["Sanal joystick", "Analog bir çubuk: Horizontal ve Vertical eksenlerini (sol çubuğa bağlı her ekseni) -1 ile 1 arasında analog değerlerle besler. Yarıdan fazla itilince ok tuşlarına da basar; Input.GetKey(KeyCode.LeftArrow) ile yazılmış oyunlar da çalışır."],
+                                    ["Ok tuşları (V5)", "Önceki sürümlerin dört yön tuşu. V5 ve öncesinde kaydedilen projeler bununla açılır."],
+                                    ["Konum, boyut, ölü bölge", "Joystick solda ya da sağda durur, düğmeler öbür taraftadır. Ölü bölge, merkeze yakın küçük kaymaları sıfır sayar; ötesinde değer 0'dan yeniden başlar."],
+                                    ["Düğmeler (en fazla 4)", "Her biri bir giriş eylemine basar: GetButton, GetButtonDown ve GetButtonUp çalışır, eylemin klavye tuşları ve gamepad düğmeleri de basılı sayılır. Düğme eklenmezse V5'teki gibi A (Space) ve B (LeftControl) gösterilir."],
+                                ]} />
+                                <Code>{`float x = Input.GetAxis("Horizontal");     // joystick: -1…1 arası analog değer
+if (Input.GetButtonDown("Jump")) Jump();   // "Jump" düğmesi, Space ya da gamepad A
+
+void OnCollisionEnter2D(Collision2D hit)
+{
+    if (hit.relativeVelocity.magnitude > 8f)
+        Input.Vibrate(150, 0.6f);          // 150 ms, %60 güç
+}
+
+Input.Vibrate(0);                          // süren titreşimi durdurur
+Handheld.Vibrate();                        // Unity'deki gibi kısa ve tam güç`}</Code>
+                                <p><K>Input.Vibrate(milisaniye, güç)</K> bağlı gamepad&apos;lerin titreşim motorunu çalıştırır; gamepad yoksa telefonu <K>navigator.vibrate</K> ile titretir (telefonda güç ayarlanamaz). İkisi de yoksa (ör. iPhone Safari ya da masaüstü) hiçbir şey olmaz ve hata vermez. Süre en fazla 5 saniyedir; tarayıcılar titreşimi ancak oyuncu sayfaya bir kez dokunduktan sonra izin verir.</p>
                             </Section>
 
                             <Section id="cok-oyunculu" title="Yerel çok oyunculu">
@@ -422,6 +455,37 @@ void FixedUpdate()
         if (contact.normal.y > 0.5f) grounded = true;   // ayağımızın altında
     }
 }`}</Code>
+                            </Section>
+
+                            <Section id="katmanlar" title="Katmanlar ve çarpışma tablosu">
+                                <p>V6 ile her nesne 16 fizik katmanından birindedir. <b>Ayarlar → Katmanlar</b>&apos;da katmanlara ad verin (0 numaralı katman her zaman <K>Default</K>&apos;tur) ve <b>Çarpışma tablosu</b>&apos;nda hangi katmanların birbirine çarpacağını işaretleyin. Nesnenin katmanını Inspector&apos;daki <b>Katman</b> alanından seçersiniz. İşareti kaldırılan iki katmandaki nesneler birbirinin içinden geçer ve aralarında tetikleyici olayı da oluşmaz: oyuncunun kendi mermileri, düşmanların birbirine takılmaması ya da yalnızca oyuncunun basabildiği platformlar için idealdir.</p>
+                                <Code>{`public LayerMask zeminMaskesi;   // Inspector'da katmanları işaretleyin
+
+void Update()
+{
+    // Yalnızca zemin katmanlarına bakan ışın: oyuncunun kendi çarpıştırıcısına takılmaz.
+    RaycastHit2D yer = Physics2D.Raycast(transform.position, Vector2.down, 0.6f, zeminMaskesi);
+    bool yerde = yer;
+
+    int dusmanlar = LayerMask.GetMask("Enemy", "Boss");
+    Collider2D yakin = Physics2D.OverlapCircle(transform.position, 3f, dusmanlar);
+}
+
+void Hayalet()
+{
+    gameObject.layer = LayerMask.NameToLayer("Ghost");           // başka katmana taşı
+    Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Ghost"));
+}`}</Code>
+                                <Table head={["API", "Ne yapar?"]} rows={[
+                                    [<K key="a">LayerMask.GetMask(&quot;A&quot;, &quot;B&quot;)</K>, "Adı verilen katmanların maskesi (bit başına bir katman). Bilinmeyen bir ad Konsol'da bir kez uyarır."],
+                                    [<K key="b">LayerMask.NameToLayer / LayerToName</K>, "Katman adından numara (yoksa -1) ve numaradan ad."],
+                                    [<K key="c">gameObject.layer</K>, "Nesnenin katmanı (0–15); atama nesneyi hemen o katmana taşır."],
+                                    [<K key="d">Physics.Raycast(…, mesafe, maske)</K>, "2D ve 3D ışınlar, RaycastAll, Linecast, SphereCast, CircleCast ve Overlap sorguları son parametre olarak katman maskesi alır."],
+                                    [<K key="e">Physics.IgnoreLayerCollision(a, b, true)</K>, "Oyun sırasında tablodaki bir çifti kapatır (false açar). GetIgnoreLayerCollision ile okunur."],
+                                    [<K key="f">Physics.IgnoreCollision(c1, c2, true)</K>, "Yalnızca bu iki çarpıştırıcı birbirinin içinden geçer."],
+                                ]} />
+                                <Tip>Bir katmana <K>Ignore Raycast</K> adını verirseniz, maske vermeden atılan ışınlar ve fare olayları (<K>OnMouseDown</K>) o katmandaki nesneleri atlar; <K>Physics.AllLayers</K> ise her katmana çarpar. Inspector&apos;da hiçbir katmanı işaretlenmemiş bir <K>LayerMask</K> alanı Unity&apos;deki gibi <b>Hiçbiri</b>&apos;dir ve ışın hiçbir şeye çarpmaz; Konsol bunu bir kez hatırlatır.</Tip>
+                                <p>Eski kurallarla çalışan projelerde (V5 ve öncesi) katmanlar ve çarpışma tablosu fizikte geçerlidir; betiklerdeki <K>LayerMask</K> işlevleri, ışın maskeleri, <K>gameObject.layer</K> ataması ve <K>IgnoreLayerCollision</K> ise V6 kurallarıyla çalışır, böylece eski oyunlar değişmeden oynar.</p>
                             </Section>
 
                             <Section id="karakter" title="Character Controller 2D">
@@ -500,6 +564,23 @@ void Start()
                                 <p>Hücre koordinatları Unity&apos;deki gibidir: X sağa, Y yukarı doğru artar. Bir tilemap en fazla 512 × 256 hücre ve 48 palet karosu içerebilir. Tilemap&apos;ler 2D oyunlar için tasarlanmıştır; 3D&apos;de nesnenin XY düzleminde çizilir.</p>
                             </Section>
 
+                            <Section id="kural-karolari" title="Kural karoları, animasyonlu karolar ve tek yönlü platformlar">
+                                <p>V6 ile her palet karosunun bir <b>Karo türü</b> vardır: Normal, Kural karosu ya da Animasyonlu. Türü, Tilemap Inspector&apos;ında karoyu seçince açılan ayarlardan değiştirirsiniz. Kural ve animasyonlu karolar <b>Doku atlası</b>ndaki kareleri çizer; atlası olmayan tilemap&apos;te düz renkte kalırlar.</p>
+                                <Table head={["Karo", "Ne yapar?"]} rows={[
+                                    ["Kural karosu", "Komşularına bakıp atlastan uygun kareyi seçer (otomatik karo). 4 komşu (kuzey, doğu, güney, batı) 16 durum verir; 8 komşu köşeleri de sayar ve 47 durumlu “blob” karo setini kullanır. Boyadığınızda ya da sildiğinizde çevresindeki karolar da kendini günceller; oyun sırasında SetTile ile yapılan değişiklikler de öyle."],
+                                    ["Animasyonlu karo", "Kareler listesindeki atlas karelerini verilen hızda (kare/sn) sırayla gösterir: su, lav, yanıp sönen ışıklar. Oyun durunca animasyon da durur."],
+                                    ["Tek yönlü platform", "Çarpışan bir karoda açılır. Üstüne düşen cisim durur ve zeminde sayılır; alttan zıplayan içinden geçip üstüne konar, yandan gelen içinden geçer. Yol bulma bu karoları duvar saymaz."],
+                                ]} />
+                                <p><b>Kural karosu tanımlamak:</b> karoyu seçip <b>Kural karelerini düzenle…</b> düğmesine basın. Penceredeki her kutu bir komşu durumudur: ortadaki kare karonun kendisi, dolu kareler aynı karonun bulunduğu komşular, boş kareler boş komşulardır; soluk köşeler o durumda fark etmez. Bir kutu seçin ve atlasta uygun kareyi tıklayın; seçim sıradaki kutuya geçer. Atlasınızda 16 ya da 47 kare bu sırayla diziliyse <b>Atlastan sırayla doldur</b> hepsini tek tıkla atar. Kare atanmamış durumlarda karonun kendi atlas karesi çizilir. <b>Başka karolara da bağlanır</b> açıksa karo yalnızca kendi türüyle değil, tilemap&apos;teki her karoyla birleşir.</p>
+                                <Code language="Durum numaraları">{`4 komşu:  durum = K 1 + D 2 + G 4 + B 8 (dolu yanların toplamı)
+          0 = tek başına, 5 = kuzey + güney (dikey), 15 = dört yanı dolu
+8 komşu:  K 1, KD 2, D 4, GD 8, G 16, GB 32, B 64, KB 128
+          bir köşe yalnızca iki yanı da doluysa sayılır; 47 durum bu
+          toplamlara göre küçükten büyüğe sıralanır (0 tek başına, 46 her yanı dolu)`}</Code>
+                                <Tip>Tek yönlü platformdan aşağı inmek için platformları ayrı bir tilemap&apos;e koyun ve aşağı tuşuna basılınca kısa bir süre çarpışmayı kapatın: <K>Physics2D.IgnoreCollision(GetComponent&lt;Collider2D&gt;(), platformlar, true);</K> ve 0,3 saniye sonra <K>false</K> ile geri açın (V6 kuralları).</Tip>
+                                <p><b>Tepe Koşusu</b> şablonu üçünü birlikte kullanır: kural karosuyla boyanmış tepeler, kare kare akan sular, alttan zıplanan köprüler; oyun sırasında konan toprak bloklar da kenarlarını kendisi seçer.</p>
+                            </Section>
+
                             <Section id="yol-bulma" title="Yol bulma ve Nav Agent 2D">
                                 <p>2D projelerde motor, statik çarpıştırıcılardan ve katı karolardan bir gezinme ızgarası kurar ve A* algoritmasıyla duvarların etrafından en kısa yolu bulur. Karolar ya da engeller oyun sırasında değişince ızgara kendiliğinden güncellenir.</p>
                                 <p><b>Nav Agent 2D</b> eklenen nesne hedefine bu yolla yürür. <b>Target</b> alanında bir nesne seçerseniz onu sürekli kovalar (<b>Repath Interval</b> aralıklarla yeni yol hesaplanır); boşsa <K>SetDestination</K> ile verilen noktaya gider. Rigidbody&apos;si varsa hızla, yoksa doğrudan hareket eder. <b>Show Path</b> oynarken yolu çizer.</p>
@@ -527,6 +608,47 @@ Destroy(enemy, 3f);                  // 3 saniye sonra yok et
 Destroy(gameObject);                 // bu nesneyi yok et
 GameObject p = Resources.Load<GameObject>("Bullet"); // prefab'ı adıyla yükle`}</Code>
                                 <p>Unity&apos;deki gibi, yok edilen bir nesne ya da betik <K>null</K> ile karşılaştırıldığında eşit sayılır: <K>if (hedef != null)</K> kontrolü, hedef <K>Destroy</K> ile silindiyse <K>false</K> döner. Başka bir betikten çağırdığınız metodun içinde başlattığınız <K>Timer</K> ve <K>Tween</K>&apos;ler o metodun betiğine aittir; çağıran nesne yok olsa da çalışmaya devam ederler.</p>
+                            </Section>
+
+                            <Section id="prefab-baglantilari" title="Prefab bağlantıları: Uygula ve Geri döndür">
+                                <p>V6&apos;da sahneye konan bir prefab kopyası prefab&apos;ını hatırlar (Hiyerarşi&apos;de mavi görünür). Inspector&apos;ın üstünde <b>Prefab: ad</b> çubuğu çıkar; kopyada prefab&apos;tan farklı olan alanların solunda mavi bir çizgi, değişen bileşenlerin başlığında &quot;değişti&quot; ya da &quot;eklendi&quot; yazar.</p>
+                                <Table head={["Düğme", "Ne yapar?"]} rows={[
+                                    ["Seç", "Prefab'ı Proje panelinde seçer ve Inspector'da gösterir (kaç kopyası olduğu da yazar)."],
+                                    ["Uygula", "Bu kopyadaki değişiklikleri prefab'a yazar; diğer kopyalar da güncellenir, ama kendi değiştirdikleri alanlar korunur. Kopyaya eklenen bileşenler ve alt nesneler prefab'a geçer, silinenler prefab'dan da çıkar."],
+                                    ["Geri döndür", "Kopyanın değişikliklerini siler ve prefab'daki hâline döndürür; eklenen alt nesneler kalkar, eksik olanlar geri gelir."],
+                                ]} />
+                                <p>Kopyanın kökünün konumu, dönüşü, adı ve üst nesnesi kopyanındır: bunlar değişiklik sayılmaz ve Uygula onları prefab&apos;a taşımaz. Bir nesnede <b>Prefab oluştur</b> dediğinizde o nesne de yeni prefab&apos;ın kopyası olur. Prefab&apos;lar iç içe bağlanmaz; oyun sırasında <K>Instantiate</K> ve <K>Pool.Spawn</K> her zaman prefab&apos;ın son hâlini kullanır. Her işlem Ctrl+Z ile geri alınabilir.</p>
+                            </Section>
+
+                            <Section id="havuzlar" title="Nesne havuzları">
+                                <p>Saniyede onlarca mermi, kıvılcım ya da düşman çıkan oyunlarda <K>Instantiate</K> ve <K>Destroy</K> yerine havuz kullanın: <K>Pool</K> bir prefab&apos;ın kopyalarını yok etmez, kapatır ve bir sonraki <K>Spawn</K>&apos;da yeniden kullanır. Prefab&apos;ı adıyla (<K>&quot;Bullet&quot;</K>) ya da Inspector&apos;dan atanmış bir <K>GameObject</K> alanıyla verebilirsiniz.</p>
+                                <Code>{`public GameObject bulletPrefab;
+
+void Start()
+{
+    Pool.Prewarm(bulletPrefab, 30);            // oyun başlarken 30 kapalı kopya hazırla
+}
+
+void Fire()
+{
+    GameObject b = Pool.Spawn(bulletPrefab, firePoint.position, firePoint.rotation);
+    b.GetComponent<Rigidbody2D>().velocity = transform.right * 12f;
+    Pool.Despawn(b, 2f);                        // 2 saniye sonra havuza geri dön
+}
+
+// Mermi betiğinde:
+void OnEnable() { hasar = 1; }                  // her Spawn'da çalışır: alanları burada sıfırlayın
+void OnTriggerEnter2D(Collider2D other) { Pool.Despawn(gameObject); }`}</Code>
+                                <Table head={["API", "Ne yapar?"]} rows={[
+                                    [<K key="a">Pool.Prewarm(prefab, adet)</K>, "Kapalı kopyalar hazırlar ve havuzda bekleyen kopya sayısını döndürür. Kopyaların Awake'i ilk Spawn'da çalışır."],
+                                    [<K key="b">Pool.Spawn(prefab, konum[, dönüş])</K>, "Bekleyen bir kopyayı (yoksa yenisini) o konumda açıp GameObject olarak döndürür. Spawn<T> ile kopyanın T bileşeni gelir."],
+                                    [<K key="c">Pool.Despawn(nesne[, saniye])</K>, "Kopyayı kapatıp havuza koyar; gecikme verilirse o kadar sonra. Arada yeniden Spawn edilen kopyaya eski gecikme dokunmaz."],
+                                    [<K key="d">Pool.Count / CountInactive / CountAll</K>, "Kullanımdaki, havuzda bekleyen ve toplam kopya sayısı."],
+                                    [<K key="e">Pool.SetCapacity(prefab, sayı)</K>, "Bir prefab için en fazla kopya (varsayılan 200, en çok 1000). Hepsi kullanımdayken Spawn en eski kopyayı geri alır ve Konsol bir kez uyarır."],
+                                    [<K key="f">Pool.Clear(prefab)</K>, "Havuzda bekleyen kopyaları yok eder."],
+                                ]} />
+                                <p><b>Yaşam döngüsü:</b> her <K>Spawn</K> <K>OnEnable</K>&apos;ı çağırır; <K>Awake</K> ve <K>Start</K> yalnızca kopyanın ilk Spawn&apos;ında çalışır. <K>Despawn</K> <K>OnDisable</K>&apos;ı çağırır ve kopyanın coroutine, <K>Invoke</K>, <K>Timer</K> ve <K>Tween</K>&apos;lerini durdurur. Spawn kopyaya prefab&apos;ın ölçeğini ve (dönüş verilmediyse) dönüşünü geri verir, Rigidbody hızını sıfırlar, Animation, Animator ve parçacıkları baştan başlatır; betik alanları ise eski değerlerini korur, onları <K>OnEnable</K>&apos;da sıfırlayın. Kopyalar sahneye aittir: sahne değişince yok olurlar. Editördeki istatistik panosu (Oynat → istatistikler) kullanımdaki ve toplam kopya sayısını gösterir.</p>
+                                <Tip><b>Mermi Fırtınası</b> şablonu havuzları, katmanları ve Parçacıklar V2&apos;yi birlikte kullanır: yüzlerce düşman mermisi birkaç yüz kopyayla döner, mermiler çarpışma tablosu sayesinde birbirini hiç denemez.</Tip>
                             </Section>
 
                             <Section id="coroutine" title="Coroutine ve Invoke">
@@ -608,6 +730,28 @@ bool running = animator.GetCurrentAnimatorStateInfo(0).IsName("Run");
 animator.CrossFade("Victory", 0.2f);   // geçişleri beklemeden bir duruma karışarak geç`}</Code>
                                 <p>Oyun çalışırken Animator sekmesi geçerli durumu canlı vurgular; parametreleri oradan değiştirip geçişleri deneyebilirsiniz. Zindan Kaçışı şablonundaki kahraman Idle, Run, Jump, Fall ve Hurt durumlarıyla eksiksiz bir örnektir.</p>
                                 <Tip>Hasar gibi kısa bir durumun yarıda kesilmemesi için ona Her Durum&apos;dan bir trigger ile girin ve çıkışını koşulsuz bırakın (çıkış zamanıyla); zıplama ve düşme geçişlerini de Her Durum yerine yer durumlarından (Idle, Run) başlatın.</Tip>
+                            </Section>
+
+                            <Section id="animasyon-olaylari" title="Animasyon olayları">
+                                <p>Animasyon olayı, klip belli bir zamana geldiğinde nesnedeki betiklerin bir metodunu çağırır: yürürken ayak sesi, kılıç savrulurken vuruşun tam anı, zıplamanın en tepesinde toz. Animation bileşeninde klibi açın, <b>Olaylar</b> bölümünde <b>+</b> ile olay ekleyin; zamanı, metot adını (öneriler nesnedeki betiklerden gelir) ve isterseniz bir parametre (float, int ya da string) seçin. Klibin üstündeki şeritte olaylar sarı çizgiyle görünür.</p>
+                                <Code>{`public class Footsteps : MonoBehaviour
+{
+    // Walk klibinde 0.25 sn'de "Step" (string: "left"), 0.75 sn'de "Step" (string: "right")
+    public void Step(string foot)
+    {
+        Audio.Play("step");
+        Debug.Log(foot + " ayak");
+    }
+
+    // Attack klibinde 0.4 sn'de "Hit" (int: 2)
+    public void Hit(int damage) { /* menzildeki düşmana hasar ver */ }
+}`}</Code>
+                                <Table head={["Klip", "Olay ne zaman çalışır?"]} rows={[
+                                    ["Döngü (Loop)", "Her turda bir kez. 0 saniyedeki olay klip başlarken ve her yeni turda çalışır."],
+                                    ["Bir kez (Once)", "Bir kez; klibin tam sonundaki olay OnAnimationComplete'ten önce çalışır."],
+                                    ["Gidip gelen (Ping Pong)", "Hem giderken hem dönerken; dönüş noktalarındaki olaylar bir kez."],
+                                ]} />
+                                <p>Olay, <K>SendMessage</K> gibi nesnedeki her betiğin o adlı metodunu çalıştırır; Animator durumlarının oynattığı kliplerde de çalışır. Metot bulunamazsa ya da parametre beklediği hâlde olayın değeri yoksa Konsol bir kez uyarır. Oyun hızı (<K>Time.timeScale</K>) ve klip hızı olayların zamanını da etkiler; çok büyük bir kare atlamasında bile bir güncelleme en fazla 64 olay çalıştırır.</p>
                             </Section>
 
                             <Section id="sahneler" title="Sahneler">
@@ -753,6 +897,26 @@ Timer.After(0.35f, () => ScreenEffects.Reset());       // sahnenin kendi ayarın
                                 <Tip>Sis rengini gökyüzü geçişinin alt rengiyle aynı yapın; uzaktaki nesneler ufka karışır. Sahne görünümündeki ✨ düğmesi efektleri düzenlerken de gösterir.</Tip>
                             </Section>
 
+                            <Section id="parcaciklar" title="Parçacıklar">
+                                <p><b>Particle System</b> bileşeni ateş, duman, kıvılcım, yağmur ve patlamalar için binlerce küçük parçacık çıkarır. V6 ile Inspector&apos;da şunlar var:</p>
+                                <Table head={["Ayar", "Ne yapar?"]} rows={[
+                                    ["Şekil", "Nokta: nesnenin konumundan (V5'teki gibi). Çember: XY düzlemindeki bir halkadan dışarı doğru; Yay ile yarım halka, Kalınlık 0 ile yalnızca kenar. Koni: bir diskten koni açısıyla açılarak. Kutu: kutunun içinin her yerinden. Kenar: nesnenin X eksenindeki bir çizgiden (yağmur, şelale)."],
+                                    ["Zamanlı patlamalar", "Her döngünün başından itibaren Zaman saniyede Adet parçacık; Tekrar kez, Aralık saniye arayla. Tekrar 0 ise sistem oynadıkça her aralıkta tekrarlar. Başlangıç patlaması her döngünün başında bir kez çıkar."],
+                                    ["Ömür boyu renk geçişi", "2–8 renk durağı; her durağın konumu (0 doğum, 1 ölüm), rengi ve opaklığı var. Kapalıyken başlangıç rengi bitiş rengine dönerken solar."],
+                                    ["Boyut eğrisi", "Başlangıç, orta ve bitiş boyutundan geçen yumuşak bir eğri; değerlerin dışına taşmaz. Kapalıyken boyut düz bir çizgiyle değişir."],
+                                    ["Görsel", "Projedeki bir görseli her parçacıkta çizer; parçacık rengi görseli boyar. Kare görseller en iyi sonucu verir."],
+                                    ["Gravity Modifier", "Sahnenin yerçekiminin parçacıklara ne kadar etki ettiği (0 = hiç, negatif = yukarı)."],
+                                    ["Alt yayıcı", "Bir parçacık ölünce seçilen nesnenin Particle System'i o noktadan Ölüm başına kadar parçacık çıkarır: havai fişek, kıvılcım saçan mermiler. Tek seviyedir. Alt yayıcı oluştur, ayarları hazır bir alt nesne ekler."],
+                                ]} />
+                                <Code>{`ParticleSystem ps = GetComponent<ParticleSystem>();
+ps.shape.shapeType = "Circle";   // Point, Circle, Cone, Box, Edge
+ps.shape.radius = 2f;
+ps.shape.arc = 180f;             // yarım halka
+ps.Emit(30);                     // şekilden 30 parçacık
+ps.Play();`}</Code>
+                                <p>V5 ve öncesinde yapılan parçacık sistemleri açıldığında aynı görünür: şekilleri Nokta, renkleri başlangıçtan bitişe, boyutları düz bir çizgiyle değişir.</p>
+                            </Section>
+
                             <Section id="kayit" title="Kayıt: PlayerPrefs ve SaveSystem">
                                 <p>Ayarlar ve rekorlar gibi küçük değerler için <b>PlayerPrefs</b>:</p>
                                 <Code>{`int best = PlayerPrefs.GetInt("best", 0);
@@ -822,11 +986,22 @@ void OnAchievementUnlocked(string id)
                                 <ApiReference />
                             </Section>
 
+                            <Section id="motor-kurallari" title="Motor kuralları">
+                                <p>Her proje, yapıldığı motorun <b>kurallarını</b> saklar: sonraki bir sürüm bir davranışı değiştirdiğinde eski oyunlar eskisi gibi oynar. V6 ile yapılan projeler V6, V5 projeleri V5, V4 projeleri V4, daha eskileri V3 kurallarıyla çalışır. Yeni özelliklerin çoğu (havuzlar, parçacıklar, kural karoları, joystick, animasyon olayları…) her kuralla çalışır; kurallar yalnızca değişen davranışları belirler.</p>
+                                <p><b>Ayarlar → Proje → Motor kuralları</b> projenin kurallarını ve V6 kurallarına geçince nelerin değişeceğini listeler. <b>V6 kurallarına geç</b> projeyi tek tıkla taşır; oyunu deneyin, bir şey beklediğiniz gibi çalışmazsa aynı yerdeki <b>Geri al</b> eski kurallara döndürür (proje kaydedilip yeniden açılsa da).</p>
+                                <Table head={["Kurallar", "Değişen davranışlar"]} rows={[
+                                    ["V4", "GetComponent<Slider>() UI kaydırıcısını bulur; ses adları büyük-küçük harf ayırmadan eşlenir ve bulunamayan ses uyarı verir."],
+                                    ["V5", "GetComponent<Animator>() durum makinesini verir; Animation.CrossFade süreyle geçiş yapar; Application.systemLanguage oyuncunun dilini verir."],
+                                    ["V6", "LayerMask işlevleri ve ışın maskeleri, gameObject.layer ataması, IgnoreLayerCollision ve IgnoreCollision çalışır; maskesiz ışınlar Ignore Raycast katmanını atlar."],
+                                ]} />
+                            </Section>
+
                             <Section id="farklar" title="Unity'den farklar">
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>Hazır ses efektleri prosedüreldir (<K>Audio.Play(&quot;coin&quot;)</K>); kendi seslerinizi WAV, MP3 ya da OGG olarak yükleyebilirsiniz. <K>AudioClip</K> bir ses adı gibi çalışır ve konumsal (3D) ses yoktur.</li>
                                     <li>Kapsül/mesh çarpıştırıcılar kutu olarak yaklaştırılır; açısal fizik basitleştirilmiştir (küreler görsel olarak yuvarlanır).</li>
-                                    <li>Katman maskeleri (LayerMask) ve <K>IgnoreCollision</K> yok sayılır; bunun yerine etiket ve tetikleyici kullanın.</li>
+                                    <li>16 fizik katmanı vardır (Unity&apos;de 32) ve hazır katman yoktur: yalnızca 0 numaralı <K>Default</K>. Adı <K>Ignore Raycast</K> olan bir katman, Unity&apos;dekine benzer biçimde maskesiz ışınlarda atlanır.</li>
+                                    <li>Kural karoları, animasyonlu karolar ve tek yönlü platformlar ayrı paket ya da <K>PlatformEffector2D</K> gerektirmez; palet karosunun ayarlarıdır. Kural karoları yalnızca komşu durumuna göre kare seçer (dönen ya da rastgele kurallar yoktur).</li>
                                     <li>UI olarak Text, Button, Panel/Image, Progress Bar, Slider, Toggle ve Input Field vardır; Canvas düzen bileşenleri (Layout Group, Scroll View, Dropdown) yoktur. Sahnedeki nesneleri tıklanabilir yapmak için <K>OnMouseDown</K> kullanın.</li>
                                     <li>NavMesh yerine 2D ızgarada A* kullanılır (Nav Agent 2D); 3D projelerde ajanlar hedefe düz çizgide yürür. Eklemlerden Distance ve Spring vardır; Hinge, Slider ve Wheel eklemleri yoktur.</li>
                                     <li>Animator tek katmanlıdır: blend tree, katmanlar, avatar maskeleri ve IK yoktur. Animator&apos;ı olmayan bir nesnede <K>GetComponent&lt;Animator&gt;()</K> Animation bileşenini verir ve <K>SetTrigger(&quot;Zıpla&quot;)</K> aynı adlı klibi oynatır (V4&apos;teki gibi).</li>
@@ -845,6 +1020,20 @@ void OnAchievementUnlocked(string id)
                                     <li>SaveSystem oyun başına 20 yuva, yuva başına 256 KB ve toplam 512 KB tutar; bir oyunda en fazla 16 dil ve 2000 dil anahtarı, 5 skor tablosu ve 30 başarım olabilir. Skorlar sunucuda tablonun sınırlarına, en kısa oynama süresine ve gönderim sınırına göre denetlenir.</li>
                                     <li>Arcade&apos;e yayınlanan oyunlar herkese açıktır. Kişisel veri, parola veya gizli anahtar paylaşmayın; kurallara aykırı içerik kaldırılır.</li>
                                 </ul>
+                            </Section>
+
+                            <Section id="hata-ayiklama" title="Hata ayıklama: log noktaları ve betik süreleri">
+                                <p><b>Log noktası</b>, kodu değiştirmeden bir satıra eklenen <K>Debug.Log</K> gibidir. Script düzenleyicide satır numarasının solundaki boşluğa tıklayın (ya da araç çubuğundaki elmas düğmesiyle imleçteki satıra ekleyin), mesajı yazıp Enter&apos;a basın. Oyun editörde çalışırken o satır her çalıştığında mesaj Konsol&apos;a yazılır; Konsol satırına tıklayınca koddaki yere gidilir.</p>
+                                <Code language="Log noktası mesajı">{`hız = {speed}, konum = {transform.position}
+kalan can: {health} / {maxHealth}   isabet: {hits > 3}
+{{süslü parantez}} yazmak için ikişer tane kullanın`}</Code>
+                                <ul className="list-disc space-y-1 pl-5">
+                                    <li>Süslü parantez içindeki ifade o satırdaki yerel değişkenleri, alanları ve motor API&apos;sini okur. Atama (<K>=</K>, <K>++</K>) yapılamaz; hata veren bir ifade mesajın içinde açıklamasıyla görünür.</li>
+                                    <li>Mesaj satır çalışmadan önce yazılır; döngüdeki satır her turda, coroutine&apos;deki satır her devam edişte yazar. Aynı satırda iç içe duran deyimler (<K>if (x) y();</K>) bir kez sayılır.</li>
+                                    <li><b>Kare sonunda duraklat</b> işaretliyse log noktası bir kesme noktası gibi de çalışır: satır çalıştığında kare tamamlanır, sonra oyun duraklar (yuvarlak kırmızı işaret); <b>Bir kare ilerle</b> ile adım adım devam edebilir, Watch panelinden değerlere bakabilirsiniz.</li>
+                                    <li>İçi boş elmas olarak görünen log noktası kapalıdır. Log noktaları projeyle kaydedilir, kod düzenlenince satırlarıyla birlikte kayar; yayınlanan ya da dışa aktarılan oyunda hiç çalışmaz.</li>
+                                </ul>
+                                <p><b>Betik süreleri:</b> oyun çalışırken Sahne ve Oyun sekmelerinin yanındaki istatistik düğmesi (nabız simgesi) FPS ve nesne sayılarının altında her betik sınıfının kare başına harcadığı süreyi milisaniye olarak listeler; en yavaş betik en üsttedir. Süre o betiğin kendi kodunu ölçer (Update, FixedUpdate, olaylar, coroutine ve zamanlayıcılar; çağırdığı başka betiklerin süresi onlara yazılır). 1 ms üstü sarı, 4 ms üstü kırmızı görünür; 60 FPS için bir karenin tamamı 16,7 ms&apos;dir. Ölçüm yalnızca pano açıkken yapılır.</p>
                             </Section>
 
                             <Section id="sorunlar" title="Sık karşılaşılan sorunlar">
@@ -874,9 +1063,11 @@ void OnAchievementUnlocked(string id)
 function DocsEN() {
     return (
         <>
-                            <Section id="yenilikler" title="What's new in V5">
-                                <p>Hanogt Engine V5 brings the Animator state machine, Arcade leaderboards and achievements, in-game translations, local multiplayer for up to four players on one screen, save slots with SaveSystem, GLB 3D models, new screen effects and a web package you can host on your own site. Projects saved with earlier versions are migrated to the V5 format when you open them and none of your data is lost; where behavior changed (for example <K>GetComponent&lt;Animator&gt;()</K> and <K>CrossFade</K>), older games keep running with the rules of their own version.</p>
+                            <Section id="yenilikler" title="What's new in V6">
+                                <p>Hanogt Engine V6 brings layers and the collision matrix, object pools, a new particle system, rule tiles and one-way platforms, a touch joystick and vibration, animation events, prefab links, log points and per-script timings, and exported games are lighter too. Projects saved with earlier versions are migrated to the V6 format when you open them and none of your data is lost; where behavior changed (for example <K>LayerMask</K> and raycast masks), older games keep running with the rules of their own version. <b>Settings → Project → Engine rules</b> moves a project to the V6 rules in one click.</p>
                                 <WhatsNewList tr={false} />
+                                <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">Shipped with V5</h3>
+                                <WhatsNewList tr={false} items={V5_FEATURES} />
                                 <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">Shipped with V4</h3>
                                 <WhatsNewList tr={false} items={V4_FEATURES} />
                                 <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">Shipped with V3</h3>
@@ -885,7 +1076,7 @@ function DocsEN() {
 
                             <Section id="baslarken" title="Getting started">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: Star Duel (two players), Dungeon Escape and Meteor Storm from V5; Sky Tower, Maze Hunt and Slingshot Master from V4; Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++); Tilemap Adventure, Clicker Factory and Foggy Runner from V3; or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
+                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: Bullet Storm and Hill Run from V6; Star Duel (two players), Dungeon Escape and Meteor Storm from V5; Sky Tower, Maze Hunt and Slingshot Master from V4; Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++); Tilemap Adventure, Clicker Factory and Foggy Runner from V3; or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
                                     <li>When you are signed in, the project is saved to your account (cloud); projects created as a guest are stored in this browser (IndexedDB).</li>
                                     <li>The <b>▶ Play</b> button at the top (Ctrl+P) runs the game inside the editor. When you stop, the scene returns to how it was before you pressed Play.</li>
                                     <li>Double-click a script to open the code editor; changes are compiled automatically and errors are shown line by line.</li>
@@ -1078,7 +1269,29 @@ if (Input.GetButtonDown("Jump")) Jump();     // Space or gamepad A
 if (Input.GetButton("Fire1")) Shoot();
 if (Input.GetButtonDown("Dash")) Dash();     // an action you added in Settings → Input
 string[] pads = Input.GetJoystickNames();    // connected gamepads`}</Code>
-                                <p>Gamepads are read with the browser&apos;s Gamepad API (Xbox and PlayStation layouts); browsers only report a gamepad once one of its buttons is pressed. The sticks&apos; <b>dead zone</b> is set in the Input tab. On phones, when enabled in the project settings, on-screen arrow keys and A/B buttons are shown; they act as the gamepad&apos;s d-pad and A/X buttons and keep working when you change the actions.</p>
+                                <p>Gamepads are read with the browser&apos;s Gamepad API (Xbox and PlayStation layouts); browsers only report a gamepad once one of its buttons is pressed. The sticks&apos; <b>dead zone</b> is set in the Input tab. On phones and tablets a joystick or arrow pad and action buttons are shown on screen; see <a href="#dokunmatik" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Touch controls</a>.</p>
+                            </Section>
+
+                            <Section id="dokunmatik" title="Touch controls and vibration">
+                                <p>On phones and tablets touch controls appear over the game (they are hidden on computers). Turn them on or off and pick the direction control and the buttons in <b>Settings → Touch</b>; while the game runs, the phone button of the Game view shows them on a computer too, so you can try the joystick with the mouse.</p>
+                                <Table head={["Setting", "What it does"]} rows={[
+                                    ["Virtual joystick", "An analog stick: it feeds the Horizontal and Vertical axes (every axis bound to the left stick) with analog values between -1 and 1. Pushed past half way it also presses the arrow keys, so games written with Input.GetKey(KeyCode.LeftArrow) work too."],
+                                    ["Arrow pad (V5)", "The four direction buttons of earlier versions. Projects saved with V5 and earlier open with it."],
+                                    ["Position, size, dead zone", "The joystick sits on the left or the right, the buttons on the other side. The dead zone counts small moves near the centre as zero; past it the value starts again from 0."],
+                                    ["Buttons (up to 4)", "Each presses an input action: GetButton, GetButtonDown and GetButtonUp work, and the action's keyboard keys and gamepad buttons count as pressed too. Without buttons, A (Space) and B (LeftControl) are shown as in V5."],
+                                ]} />
+                                <Code>{`float x = Input.GetAxis("Horizontal");     // joystick: an analog value from -1 to 1
+if (Input.GetButtonDown("Jump")) Jump();   // the "Jump" button, Space or gamepad A
+
+void OnCollisionEnter2D(Collision2D hit)
+{
+    if (hit.relativeVelocity.magnitude > 8f)
+        Input.Vibrate(150, 0.6f);          // 150 ms at 60% strength
+}
+
+Input.Vibrate(0);                          // stops a running vibration
+Handheld.Vibrate();                        // short and full strength, as in Unity`}</Code>
+                                <p><K>Input.Vibrate(milliseconds, strength)</K> runs the rumble motors of connected gamepads; without one it vibrates the phone with <K>navigator.vibrate</K> (phones can&apos;t change the strength). When there is neither (for example Safari on iPhone, or a desktop) nothing happens and no error is raised. A vibration lasts at most 5 seconds; browsers only allow it after the player has touched the page once.</p>
                             </Section>
 
                             <Section id="cok-oyunculu" title="Local multiplayer">
@@ -1136,6 +1349,37 @@ void FixedUpdate()
         if (contact.normal.y > 0.5f) grounded = true;   // under our feet
     }
 }`}</Code>
+                            </Section>
+
+                            <Section id="katmanlar" title="Layers and the collision matrix">
+                                <p>With V6 every object is on one of 16 physics layers. Name your layers in <b>Settings → Layers</b> (layer 0 is always <K>Default</K>) and tick which layers collide in the <b>Collision matrix</b>. Pick an object&apos;s layer in the <b>Layer</b> field of the Inspector. Objects on two layers whose box is unticked pass through each other, and no trigger events happen between them either: just right for the player&apos;s own bullets, enemies that shouldn&apos;t snag on each other or platforms only the player can stand on.</p>
+                                <Code>{`public LayerMask groundMask;   // tick the layers in the Inspector
+
+void Update()
+{
+    // A ray that only looks at ground layers: it never hits the player's own collider.
+    RaycastHit2D ground = Physics2D.Raycast(transform.position, Vector2.down, 0.6f, groundMask);
+    bool grounded = ground;
+
+    int enemies = LayerMask.GetMask("Enemy", "Boss");
+    Collider2D near = Physics2D.OverlapCircle(transform.position, 3f, enemies);
+}
+
+void BecomeGhost()
+{
+    gameObject.layer = LayerMask.NameToLayer("Ghost");           // move to another layer
+    Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Ghost"));
+}`}</Code>
+                                <Table head={["API", "What it does"]} rows={[
+                                    [<K key="a">LayerMask.GetMask(&quot;A&quot;, &quot;B&quot;)</K>, "The mask of the named layers (one bit per layer). An unknown name warns once in the Console."],
+                                    [<K key="b">LayerMask.NameToLayer / LayerToName</K>, "A layer's number from its name (-1 if there is none) and its name from its number."],
+                                    [<K key="c">gameObject.layer</K>, "The object's layer (0–15); setting it moves the object to that layer right away."],
+                                    [<K key="d">Physics.Raycast(…, distance, mask)</K>, "2D and 3D raycasts, RaycastAll, Linecast, SphereCast, CircleCast and the Overlap queries take a layer mask as their last parameter."],
+                                    [<K key="e">Physics.IgnoreLayerCollision(a, b, true)</K>, "Turns a pair of the matrix off while the game runs (false turns it on). Read it with GetIgnoreLayerCollision."],
+                                    [<K key="f">Physics.IgnoreCollision(c1, c2, true)</K>, "Only these two colliders pass through each other."],
+                                ]} />
+                                <Tip>Name a layer <K>Ignore Raycast</K> and raycasts without a mask, as well as mouse events (<K>OnMouseDown</K>), skip the objects on it; <K>Physics.AllLayers</K> hits every layer. A <K>LayerMask</K> field with no layer ticked in the Inspector is <b>Nothing</b>, as in Unity, and the ray hits nothing; the Console reminds you once.</Tip>
+                                <p>In projects with older rules (V5 and before) the layers and the collision matrix apply to physics, while the <K>LayerMask</K> functions, raycast masks, setting <K>gameObject.layer</K> and <K>IgnoreLayerCollision</K> in scripts work with V6 rules, so old games keep playing as they did.</p>
                             </Section>
 
                             <Section id="karakter" title="Character Controller 2D">
@@ -1214,6 +1458,23 @@ void Start()
                                 <p>Cell coordinates work like Unity&apos;s: X grows to the right and Y grows upwards. A tilemap can hold up to 512 × 256 cells and 48 palette tiles. Tilemaps are made for 2D games; in 3D they are drawn on the object&apos;s XY plane.</p>
                             </Section>
 
+                            <Section id="kural-karolari" title="Rule tiles, animated tiles and one-way platforms">
+                                <p>Since V6 every palette tile has a <b>Tile type</b>: Normal, Rule tile or Animated. Change it in the settings that open when you select the tile in the Tilemap Inspector. Rule and animated tiles draw cells of the <b>Texture atlas</b>; on a tilemap without an atlas they keep their plain color.</p>
+                                <Table head={["Tile", "What it does"]} rows={[
+                                    ["Rule tile", "Looks at its neighbours and picks the matching atlas cell (auto-tiling). 4 neighbours (north, east, south, west) give 16 cases; 8 neighbours also count the corners and use the 47 cases of a “blob” tileset. When you paint or erase it, the tiles around it update too, and so do changes made with SetTile while the game runs."],
+                                    ["Animated tile", "Shows the atlas cells of its frame list one after another at the given speed (frames/s): water, lava, blinking lights. The animation stops when the game is paused."],
+                                    ["One-way platform", "Turned on for a colliding tile. A body falling onto it stops and counts as grounded; a body jumping from below passes through and lands on top, and one coming from the side passes through. Path finding doesn't treat these tiles as walls."],
+                                ]} />
+                                <p><b>Defining a rule tile:</b> select the tile and press <b>Edit rule cells…</b>. Each box in the dialog is a neighbour case: the middle square is the tile itself, filled squares are neighbours holding the same tile and empty squares are empty neighbours; faded corners don&apos;t matter for that case. Pick a box and click the matching cell in the atlas; the selection moves to the next box. If your atlas holds the 16 or 47 cells in this order, <b>Fill in order from the atlas</b> sets them all with one click. Cases without a cell draw the tile&apos;s own atlas cell. With <b>Joins other tiles too</b> the tile joins every tile of the tilemap, not only its own kind.</p>
+                                <Code language="Case numbers">{`4 neighbours: case = N 1 + E 2 + S 4 + W 8 (the sum of the filled sides)
+              0 = alone, 5 = north + south (vertical), 15 = all four sides
+8 neighbours: N 1, NE 2, E 4, SE 8, S 16, SW 32, W 64, NW 128
+              a corner only counts when both of its sides are filled; the 47
+              cases are sorted by these sums (0 alone, 46 surrounded)`}</Code>
+                                <Tip>To drop down through a one-way platform, put the platforms on their own tilemap and switch the collision off for a moment when the down key is pressed: <K>Physics2D.IgnoreCollision(GetComponent&lt;Collider2D&gt;(), platforms, true);</K> and turn it back on with <K>false</K> 0.3 seconds later (V6 rules).</Tip>
+                                <p>The <b>Hill Run</b> template uses all three: hills painted with a rule tile, water that plays frame by frame and bridges you jump up through; dirt blocks placed during the game pick their own edges too.</p>
+                            </Section>
+
                             <Section id="yol-bulma" title="Path finding and Nav Agent 2D">
                                 <p>In 2D projects the engine builds a navigation grid from static colliders and solid tiles and finds the shortest way around walls with the A* algorithm. When tiles or obstacles change during the game, the grid updates by itself.</p>
                                 <p>An object with a <b>Nav Agent 2D</b> walks to its destination along that path. Pick an object in <b>Target</b> and it keeps chasing it (a new path is found every <b>Repath Interval</b>); when empty it goes to the point given with <K>SetDestination</K>. With a Rigidbody it moves by velocity, otherwise directly. <b>Show Path</b> draws the path while playing.</p>
@@ -1241,6 +1502,47 @@ Destroy(enemy, 3f);                  // destroy after 3 seconds
 Destroy(gameObject);                 // destroy this object
 GameObject p = Resources.Load<GameObject>("Bullet"); // load a prefab by name`}</Code>
                                 <p>As in Unity, a destroyed object or script compares equal to <K>null</K>: <K>if (target != null)</K> is <K>false</K> once the target was removed with <K>Destroy</K>. A <K>Timer</K> or <K>Tween</K> started inside a method that another script calls belongs to that method&apos;s script, so it keeps running even if the caller is destroyed.</p>
+                            </Section>
+
+                            <Section id="prefab-baglantilari" title="Prefab links: Apply and Revert">
+                                <p>Since V6 a prefab copy placed in a scene remembers its prefab (it shows in blue in the Hierarchy). A <b>Prefab: name</b> bar appears at the top of the Inspector; fields where the copy differs from the prefab get a blue line on their left, and changed components say &quot;changed&quot; or &quot;added&quot; in their header.</p>
+                                <Table head={["Button", "What it does"]} rows={[
+                                    ["Select", "Selects the prefab in the Project panel and shows it in the Inspector (with how many copies it has)."],
+                                    ["Apply", "Writes this copy's changes into the prefab; the other copies update too, but keep the fields they changed themselves. Components and child objects added to the copy go into the prefab, deleted ones leave the prefab too."],
+                                    ["Revert", "Drops the copy's changes and brings back the prefab's version; added child objects go away and missing ones come back."],
+                                ]} />
+                                <p>The position, rotation, name and parent of the copy&apos;s root belong to the copy: they are not overrides and Apply doesn&apos;t move them into the prefab. When you use <b>Create prefab</b> on an object, that object becomes a copy of the new prefab. Prefabs don&apos;t nest; while the game runs, <K>Instantiate</K> and <K>Pool.Spawn</K> always use the prefab as it is. Every action can be undone with Ctrl+Z.</p>
+                            </Section>
+
+                            <Section id="havuzlar" title="Object pools">
+                                <p>In games that fire dozens of bullets, sparks or enemies a second, use a pool instead of <K>Instantiate</K> and <K>Destroy</K>: <K>Pool</K> never destroys a prefab&apos;s copies, it switches them off and reuses them on the next <K>Spawn</K>. Pass the prefab by name (<K>&quot;Bullet&quot;</K>) or as a <K>GameObject</K> field set in the Inspector.</p>
+                                <Code>{`public GameObject bulletPrefab;
+
+void Start()
+{
+    Pool.Prewarm(bulletPrefab, 30);            // get 30 switched-off copies ready at the start
+}
+
+void Fire()
+{
+    GameObject b = Pool.Spawn(bulletPrefab, firePoint.position, firePoint.rotation);
+    b.GetComponent<Rigidbody2D>().velocity = transform.right * 12f;
+    Pool.Despawn(b, 2f);                        // back to the pool after 2 seconds
+}
+
+// In the bullet's script:
+void OnEnable() { damage = 1; }                 // runs on every Spawn: reset fields here
+void OnTriggerEnter2D(Collider2D other) { Pool.Despawn(gameObject); }`}</Code>
+                                <Table head={["API", "What it does"]} rows={[
+                                    [<K key="a">Pool.Prewarm(prefab, count)</K>, "Makes switched-off copies and returns how many wait in the pool. A copy's Awake runs on its first Spawn."],
+                                    [<K key="b">Pool.Spawn(prefab, position[, rotation])</K>, "Switches a waiting copy (or a new one) on at that position and returns it as a GameObject. Spawn<T> returns the copy's T component."],
+                                    [<K key="c">Pool.Despawn(obj[, seconds])</K>, "Switches the copy off and puts it back in the pool, after a delay if you give one. A copy spawned again in between isn't touched by the old delay."],
+                                    [<K key="d">Pool.Count / CountInactive / CountAll</K>, "Copies in use, waiting in the pool and in total."],
+                                    [<K key="e">Pool.SetCapacity(prefab, count)</K>, "The most copies of a prefab (200 by default, up to 1000). When all are in use, Spawn takes back the oldest copy and the Console warns once."],
+                                    [<K key="f">Pool.Clear(prefab)</K>, "Destroys the copies waiting in the pool."],
+                                ]} />
+                                <p><b>Lifecycle:</b> every <K>Spawn</K> calls <K>OnEnable</K>; <K>Awake</K> and <K>Start</K> run only on a copy&apos;s first Spawn. <K>Despawn</K> calls <K>OnDisable</K> and stops the copy&apos;s coroutines, <K>Invoke</K> calls, <K>Timer</K>s and <K>Tween</K>s. Spawn gives the copy back the prefab&apos;s scale and (unless you pass one) its rotation, stops its Rigidbody and restarts its Animation, Animator and particles; script fields keep their values, so reset them in <K>OnEnable</K>. Copies belong to the scene: they go away when the scene changes. The editor&apos;s stats overlay (Play → stats) shows the copies in use and in total.</p>
+                                <Tip>The <b>Bullet Storm</b> template uses pools, layers and Particles V2 together: hundreds of enemy bullets cycle through a few hundred copies, and thanks to the collision matrix the bullets never test each other.</Tip>
                             </Section>
 
                             <Section id="coroutine" title="Coroutines and Invoke">
@@ -1322,6 +1624,28 @@ bool running = animator.GetCurrentAnimatorStateInfo(0).IsName("Run");
 animator.CrossFade("Victory", 0.2f);   // blend into a state without waiting for transitions`}</Code>
                                 <p>While the game runs, the Animator tab highlights the current state live; change parameters there to try the transitions. The hero of the Dungeon Escape template, with its Idle, Run, Jump, Fall and Hurt states, is a complete example.</p>
                                 <Tip>To keep a short state such as Hurt from being cut off, enter it from Any State with a trigger and leave it without conditions (on its exit time); start the jump and fall transitions from the ground states (Idle, Run) rather than from Any State.</Tip>
+                            </Section>
+
+                            <Section id="animasyon-olaylari" title="Animation events">
+                                <p>An animation event calls a method of the object&apos;s scripts when a clip reaches a given time: a footstep while walking, the exact moment a sword hits, dust at the top of a jump. Open the clip in the Animation component, add an event with <b>+</b> under <b>Events</b> and pick its time, the method name (suggestions come from the object&apos;s scripts) and, if you like, a parameter (float, int or string). Events show as yellow marks on the strip above the list.</p>
+                                <Code>{`public class Footsteps : MonoBehaviour
+{
+    // In the Walk clip: "Step" at 0.25 s (string: "left") and at 0.75 s (string: "right")
+    public void Step(string foot)
+    {
+        Audio.Play("step");
+        Debug.Log(foot + " foot");
+    }
+
+    // In the Attack clip: "Hit" at 0.4 s (int: 2)
+    public void Hit(int damage) { /* damage the enemy in reach */ }
+}`}</Code>
+                                <Table head={["Clip", "When does the event run?"]} rows={[
+                                    ["Loop", "Once every lap. An event at 0 seconds runs when the clip starts and on every new lap."],
+                                    ["Once", "Once; an event at the very end runs before OnAnimationComplete."],
+                                    ["Ping Pong", "Going forward and coming back; events at the turning points once."],
+                                ]} />
+                                <p>Like <K>SendMessage</K>, an event runs the method with that name on every script of the object; it also works in clips played by Animator states. When no script has the method, or the method needs a parameter the event doesn&apos;t give, the Console warns once. The game speed (<K>Time.timeScale</K>) and the clip speed move the events along too; even after a very long frame, one update runs at most 64 events.</p>
                             </Section>
 
                             <Section id="sahneler" title="Scenes">
@@ -1467,6 +1791,26 @@ Timer.After(0.35f, () => ScreenEffects.Reset());       // back to the scene's ow
                                 <Tip>Give the fog the same color as the bottom of the sky gradient so far-away objects melt into the horizon. The ✨ button in the Scene view shows the effects while you edit.</Tip>
                             </Section>
 
+                            <Section id="parcaciklar" title="Particles">
+                                <p>The <b>Particle System</b> component emits thousands of small particles for fire, smoke, sparks, rain and explosions. With V6 the Inspector offers:</p>
+                                <Table head={["Setting", "What it does"]} rows={[
+                                    ["Shape", "Point: from the object's position (as in V5). Circle: outwards from a ring in the XY plane; Arc makes a half ring, Thickness 0 keeps the rim only. Cone: from a disc, fanning out by the cone angle. Box: from anywhere inside the box. Edge: from a line on the object's X axis (rain, waterfalls)."],
+                                    ["Timed bursts", "Count particles at Time seconds after each loop starts, Cycles times, Interval seconds apart. With Cycles 0 it repeats every interval while the system plays. The start burst fires once at the start of every loop."],
+                                    ["Color over lifetime", "2–8 color stops, each with a position (0 = born, 1 = dies), a color and an opacity. When it is off, the start color turns into the end color as the particle fades."],
+                                    ["Size curve", "A smooth curve through the start, middle and end sizes that never overshoots them. When it is off, the size changes in a straight line."],
+                                    ["Image", "Draws an image of the project on every particle, tinted by the particle color. Square images work best."],
+                                    ["Gravity Modifier", "How much the scene's gravity pulls the particles (0 = not at all, negative = upwards)."],
+                                    ["Sub-emitter", "When a particle dies, the chosen object's Particle System emits Per death particles from that point: fireworks, bullets that throw sparks. It is one level deep. Create sub-emitter adds a child object that is set up for it."],
+                                ]} />
+                                <Code>{`ParticleSystem ps = GetComponent<ParticleSystem>();
+ps.shape.shapeType = "Circle";   // Point, Circle, Cone, Box, Edge
+ps.shape.radius = 2f;
+ps.shape.arc = 180f;             // half a ring
+ps.Emit(30);                     // 30 particles from the shape
+ps.Play();`}</Code>
+                                <p>Particle systems made with V5 and before look the same when you open them: their shape is Point, their color goes from start to end and their size changes in a straight line.</p>
+                            </Section>
+
                             <Section id="kayit" title="Saving: PlayerPrefs and SaveSystem">
                                 <p><b>PlayerPrefs</b> for small values such as settings and high scores:</p>
                                 <Code>{`int best = PlayerPrefs.GetInt("best", 0);
@@ -1536,11 +1880,22 @@ void OnAchievementUnlocked(string id)
                                 <ApiReference />
                             </Section>
 
+                            <Section id="motor-kurallari" title="Engine rules">
+                                <p>Every project keeps the <b>rules</b> of the engine it was made with: when a later version changes a behaviour, old games keep playing as they did. Projects made with V6 run with V6 rules, V5 projects with V5, V4 projects with V4 and older ones with V3. Most new features (pools, particles, rule tiles, the joystick, animation events…) work with any rules; the rules only decide the behaviours that changed.</p>
+                                <p><b>Settings → Project → Engine rules</b> shows the project&apos;s rules and lists what changes with the V6 rules. <b>Upgrade to V6 rules</b> moves the project with one click; try the game, and if something doesn&apos;t work as you expect, <b>Undo</b> in the same place takes it back to the old rules (even after the project was saved and opened again).</p>
+                                <Table head={["Rules", "Behaviours that change"]} rows={[
+                                    ["V4", "GetComponent<Slider>() finds the UI slider; sound names match whatever their case and a missing sound warns."],
+                                    ["V5", "GetComponent<Animator>() returns the state machine; Animation.CrossFade blends over time; Application.systemLanguage names the player's language."],
+                                    ["V6", "The LayerMask functions and raycast masks, setting gameObject.layer, IgnoreLayerCollision and IgnoreCollision work; raycasts without a mask skip the Ignore Raycast layer."],
+                                ]} />
+                            </Section>
+
                             <Section id="farklar" title="Differences from Unity">
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>The built-in sound effects are procedural (<K>Audio.Play(&quot;coin&quot;)</K>); you can upload your own sounds as WAV, MP3 or OGG files. An <K>AudioClip</K> works like the name of a sound, and there is no positional (3D) audio.</li>
                                     <li>Capsule/mesh colliders are approximated as boxes, and angular physics is simplified (spheres roll visually).</li>
-                                    <li>Layer masks (LayerMask) and <K>IgnoreCollision</K> are ignored; use tags and triggers instead.</li>
+                                    <li>There are 16 physics layers (Unity has 32) and no built-in layers besides layer 0, <K>Default</K>. A layer named <K>Ignore Raycast</K> is skipped by raycasts without a mask, much like in Unity.</li>
+                                    <li>Rule tiles, animated tiles and one-way platforms need no extra package or <K>PlatformEffector2D</K>; they are settings of a palette tile. Rule tiles pick a cell only by the neighbour case (there are no rotated or random rules).</li>
                                     <li>The UI has Text, Button, Panel/Image, Progress Bar, Slider, Toggle and Input Field components; there are no Canvas layout components (Layout Group, Scroll View, Dropdown). Use <K>OnMouseDown</K> to make scene objects clickable.</li>
                                     <li>Path finding uses A* on a 2D grid instead of a NavMesh (Nav Agent 2D); in 3D projects agents walk to their target in a straight line. Distance and Spring joints are available; Hinge, Slider and Wheel joints are not.</li>
                                     <li>The Animator has a single layer: there are no blend trees, layers, avatar masks or IK. On an object without an Animator, <K>GetComponent&lt;Animator&gt;()</K> returns its Animation component and <K>SetTrigger(&quot;Jump&quot;)</K> plays the clip with the same name (as in V4).</li>
@@ -1559,6 +1914,20 @@ void OnAchievementUnlocked(string id)
                                     <li>SaveSystem keeps 20 slots per game, 256 KB per slot and 512 KB in total; a game can have up to 16 languages and 2000 localization keys, 5 leaderboards and 30 achievements. The server checks scores against the leaderboard&apos;s bounds, the minimum play time and a sending limit.</li>
                                     <li>Games published on the Arcade are public. Don&apos;t share personal data, passwords or secret keys; content that breaks the rules is removed.</li>
                                 </ul>
+                            </Section>
+
+                            <Section id="hata-ayiklama" title="Debugging: log points and script timings">
+                                <p>A <b>log point</b> is like a <K>Debug.Log</K> added to a line without changing the code. In the script editor, click the gutter left of a line number (or use the diamond button in the toolbar for the cursor&apos;s line), type the message and press Enter. While the game runs in the editor, the message is written to the Console every time that line runs; clicking the Console line takes you back to the code.</p>
+                                <Code language="Log point message">{`speed = {speed}, position = {transform.position}
+health left: {health} / {maxHealth}   hit: {hits > 3}
+use two of them to write {{braces}}`}</Code>
+                                <ul className="list-disc space-y-1 pl-5">
+                                    <li>An expression in braces reads the local variables, fields and engine API at that line. Assignments (<K>=</K>, <K>++</K>) aren&apos;t allowed; an expression that fails shows its error inside the message.</li>
+                                    <li>The message is written before the line runs; a line in a loop prints on every lap and a line in a coroutine every time it resumes. Statements nested on one line (<K>if (x) y();</K>) count once.</li>
+                                    <li>With <b>Pause at the end of the frame</b> ticked, a log point also works like a breakpoint: when the line runs, the frame finishes and then the game pauses (a round red mark); continue frame by frame with <b>Step one frame</b> and look at values in the Watch panel.</li>
+                                    <li>A log point drawn as a hollow diamond is switched off. Log points are saved with the project and move with their lines as you edit the code; published or exported games never run them.</li>
+                                </ul>
+                                <p><b>Script timings:</b> while the game runs, the stats button next to the Scene and Game tabs (the pulse icon) lists, under the FPS and object counts, how many milliseconds each script class takes per frame, slowest first. A script&apos;s time is its own code (Update, FixedUpdate, events, coroutines and timers; other scripts it calls count for them). Over 1 ms shows yellow, over 4 ms red; at 60 FPS a whole frame is 16.7 ms. Scripts are only timed while the panel is open.</p>
                             </Section>
 
                             <Section id="sorunlar" title="Troubleshooting">

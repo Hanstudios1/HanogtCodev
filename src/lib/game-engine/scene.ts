@@ -15,10 +15,12 @@ import {
 } from "./components";
 import { emptyArcadeSettings } from "./arcade";
 import { defaultInputSettings } from "./input-actions";
+import { defaultLayerSettings } from "./layers";
 import { emptyLocalization } from "./localization";
 import { createEngineId, nowIso } from "./ids";
 import { combineTRS, IDENTITY_TRS, quatFromEulerDeg, type TRS } from "./math";
 import { cloneJson, defaultSceneSettings } from "./schema";
+import { defaultTouchLayout } from "./touch-controls";
 import {
     GAME_ENGINE_SCHEMA_VERSION,
     type ComponentOfType,
@@ -111,6 +113,44 @@ export function collectSubtree(entities: GameEntity[], rootId: string): GameEnti
     return entities.filter((entity) => ids.has(entity.id));
 }
 
+/**
+ * Points the entity references inside a component (script fields, UI event
+ * targets, follow/nav targets, joints, sub-emitters) at other ids: those found
+ * in `idMap` change, the rest stay. Returns a copy.
+ */
+export function remapComponentRefs(component: GameComponent, idMap: ReadonlyMap<string, string>): GameComponent {
+    const cloned = { ...component } as GameComponent;
+    if (cloned.type === "uiButton" && cloned.onClick.targetId && idMap.has(cloned.onClick.targetId)) {
+        cloned.onClick = { ...cloned.onClick, targetId: idMap.get(cloned.onClick.targetId) as string };
+    }
+    if ((cloned.type === "cameraFollow" || cloned.type === "navAgent2D") && cloned.targetId && idMap.has(cloned.targetId)) {
+        cloned.targetId = idMap.get(cloned.targetId) as string;
+    }
+    if (cloned.type === "joint" && cloned.connectedId && idMap.has(cloned.connectedId)) {
+        cloned.connectedId = idMap.get(cloned.connectedId) as string;
+    }
+    if (cloned.type === "particleSystem" && cloned.subEmitterId && idMap.has(cloned.subEmitterId)) {
+        cloned.subEmitterId = idMap.get(cloned.subEmitterId) as string;
+    }
+    const remap = (event: { targetId: string | null; method: string }) => (event.targetId && idMap.has(event.targetId) ? { ...event, targetId: idMap.get(event.targetId) as string } : event);
+    if (cloned.type === "uiSlider" || cloned.type === "uiToggle") cloned.onValueChanged = remap(cloned.onValueChanged);
+    if (cloned.type === "uiInputField") {
+        cloned.onValueChanged = remap(cloned.onValueChanged);
+        cloned.onEndEdit = remap(cloned.onEndEdit);
+    }
+    if (cloned.type === "script") {
+        // Entity references inside the subtree follow the clone.
+        const fields = { ...cloned.fields };
+        for (const [key, value] of Object.entries(fields)) {
+            if (value && typeof value === "object" && "ref" in value && value.ref === "entity" && value.id && idMap.has(value.id)) {
+                fields[key] = { ref: "entity", id: idMap.get(value.id) as string };
+            }
+        }
+        cloned.fields = fields;
+    }
+    return cloned;
+}
+
 /** Deep-clones entities with fresh entity and component ids, keeping internal parent links. */
 export function cloneEntitiesWithNewIds(entities: GameEntity[], rootParentId: string | null = null): GameEntity[] {
     const idMap = new Map<string, string>();
@@ -121,35 +161,7 @@ export function cloneEntitiesWithNewIds(entities: GameEntity[], rootParentId: st
         copy.parentId = entity.parentId && idMap.has(entity.parentId)
             ? idMap.get(entity.parentId) as string
             : rootParentId;
-        copy.components = copy.components.map((component) => {
-            const cloned = { ...component, id: createEngineId("cmp") } as GameComponent;
-            if (cloned.type === "uiButton" && cloned.onClick.targetId && idMap.has(cloned.onClick.targetId)) {
-                cloned.onClick = { ...cloned.onClick, targetId: idMap.get(cloned.onClick.targetId) as string };
-            }
-            if ((cloned.type === "cameraFollow" || cloned.type === "navAgent2D") && cloned.targetId && idMap.has(cloned.targetId)) {
-                cloned.targetId = idMap.get(cloned.targetId) as string;
-            }
-            if (cloned.type === "joint" && cloned.connectedId && idMap.has(cloned.connectedId)) {
-                cloned.connectedId = idMap.get(cloned.connectedId) as string;
-            }
-            const remap = (event: { targetId: string | null; method: string }) => (event.targetId && idMap.has(event.targetId) ? { ...event, targetId: idMap.get(event.targetId) as string } : event);
-            if (cloned.type === "uiSlider" || cloned.type === "uiToggle") cloned.onValueChanged = remap(cloned.onValueChanged);
-            if (cloned.type === "uiInputField") {
-                cloned.onValueChanged = remap(cloned.onValueChanged);
-                cloned.onEndEdit = remap(cloned.onEndEdit);
-            }
-            if (cloned.type === "script") {
-                // Entity references inside the subtree follow the clone.
-                const fields = { ...cloned.fields };
-                for (const [key, value] of Object.entries(fields)) {
-                    if (value && typeof value === "object" && "ref" in value && value.ref === "entity" && value.id && idMap.has(value.id)) {
-                        fields[key] = { ref: "entity", id: idMap.get(value.id) as string };
-                    }
-                }
-                cloned.fields = fields;
-            }
-            return cloned;
-        });
+        copy.components = copy.components.map((component) => ({ ...remapComponentRefs(component, idMap), id: createEngineId("cmp") } as GameComponent));
         return copy;
     });
 }
@@ -201,6 +213,7 @@ export function createEntityFromPreset(preset: EntityPreset, dimension: GameDime
         id: createEngineId("entity"),
         name,
         tag,
+        layer: 0,
         parentId: null,
         active: true,
         components: [transform, ...components],
@@ -323,10 +336,14 @@ export function createBlankProject(name: string, dimension: GameDimension, id = 
             pixelArt: false,
             showFps: false,
             touchControls: true,
-            rules: 5,
+            touchLayout: defaultTouchLayout(),
+            rules: 6,
+            rulesBefore: null,
             input: defaultInputSettings(),
             localization: emptyLocalization(),
             arcade: emptyArcadeSettings(),
+            layers: defaultLayerSettings(),
+            logPoints: [],
         },
         metadata: { createdAt: timestamp, updatedAt: timestamp },
     };
@@ -339,6 +356,8 @@ export function getActiveScene(project: GameProjectDocument): SceneDocument {
 export function prefabFromEntities(entities: GameEntity[], name: string): PrefabAsset {
     const cloned = cloneEntitiesWithNewIds(entities, null);
     cloned[0].parentId = null;
+    // Prefabs don't nest: their objects link to no other prefab.
+    for (const entity of cloned) delete entity.prefab;
     const rootTransform = getTransform(cloned[0]);
     rootTransform.position = { x: 0, y: 0, z: 0 };
     return { id: createEngineId("prefab"), name, entities: cloned };

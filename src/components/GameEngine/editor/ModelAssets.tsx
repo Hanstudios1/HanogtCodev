@@ -45,6 +45,7 @@ export function addModelObject(draft: GameProjectDocument, model: ModelAsset, po
         id,
         name: uniqueEntityName(model.name, scene.objects.map((item) => item.name)),
         tag: "Untagged",
+        layer: 0,
         parentId: null,
         active: true,
         components: [createTransform({ position }), createMeshRenderer({ modelId: model.id })],

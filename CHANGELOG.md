@@ -1,5 +1,82 @@
 # Değişiklik Günlüğü
 
+## 0.3.35 — 2026-10-12
+
+### Hanogt Engine V6: katmanlar, nesne havuzları, Parçacıklar V2, kural karoları, dokunmatik kontroller ve hata ayıklama
+
+- **Sürüm:** proje şeması 6, `ENGINE_VERSION` 6, motor kuralları 6. Eski
+  projeler açılırken otomatik taşınır ve kendi kurallarını korur; değişen
+  davranış yalnızca V6 kurallarında geçerli. Ayarlar → Proje → Motor
+  kuralları, projenin kurallarını ve V6'da nelerin değiştiğini gösterir;
+  "V6 kurallarına yükselt" geri alınabilir (`settings.rulesBefore`).
+- **Daha hafif oynatıcı:** editörün kamera kontrolleri, gizmo'ları, seçim
+  ve ızgara kodu `render/editor-renderer.ts`'ye taşındı; sprite şekilleri
+  three'nin eğri sınıfları olmadan çiziliyor. `public/engine/player.js`
+  1241 KiB'tan 1164 KiB'a indi (V6 özellikleriyle birlikte net −77 KiB).
+  Derleme ayarları `scripts/player-build-options.mjs`'te ortak.
+- **Katmanlar ve çarpışma tablosu:** 16 adlandırılmış katman (0
+  "Default"), nesnenin katmanı, Ayarlar → Katmanlar'da simetrik çarpışma
+  tablosu; temaslar ve tetikleyiciler tabloya uyar.
+  `LayerMask.GetMask/NameToLayer/LayerToName`, `gameObject.layer`, 2D/3D
+  ışın ve örtüşme sorgularında katman maskesi,
+  `Physics.IgnoreLayerCollision`, `Physics2D.IgnoreCollision`, "Ignore
+  Raycast" katmanı.
+- **Nesne havuzları:**
+  `Pool.Prewarm/Spawn/Spawn<T>/Despawn(obj, gecikme)/Count/CountAll/SetCapacity/Clear`;
+  geri dönen kopyalar yok edilmez, devre dışı kalır. Prefab başına sınır
+  varsayılan 200, en fazla 1000; dolunca en eski kopya yeniden kullanılır.
+- **Parçacıklar V2:** nokta, çember, koni, kutu ve kenar şekilleri;
+  tekrarlayan zamanlı patlamalar; çok duraklı renk geçişi;
+  başlangıç/orta/bitiş boyut eğrisi; projedeki görsellerden doku;
+  yerçekimi çarpanı; parçacık ölünce ateşlenen alt yayıcı (tek seviye).
+  V5 parçacıkları aynı görünür.
+- **Tilemap:** 4 ya da 8 komşuya bakan kural karoları (16 ve 47 karelik
+  setler, kural kareleri penceresi), animasyonlu karolar, yalnızca üstten
+  taşıyan tek yönlü platformlar; kural karosu boyamak komşuları da
+  günceller.
+- **Dokunmatik kontroller:** Ayarlar → Dokunmatik: sanal joystick
+  (sol/sağ, boyut, ölü bölge; Horizontal/Vertical eksenlerini besler) ya
+  da ok tuşları, eylemlere bağlı en fazla 4 düğme, Oyun görünümünde telefon
+  önizlemesi. `Input.Vibrate(ms, güç)` ve `Handheld.Vibrate()` gamepad ya
+  da telefon titreşimini kullanır, yoksa hiçbir şey yapmaz.
+- **Animasyon olayları:** klip belirli bir anda betikteki bir metodu
+  (parametresiz, float, int ya da string ile) çağırır; Animasyon panelinin
+  zaman çizelgesinde düzenlenir.
+- **Prefab bağlantıları:** sahnedeki kopyalar prefab'larını hatırlar;
+  Inspector'da "Prefab: ad", Seç, Uygula (prefab'a ve diğer kopyalara
+  aktarır, onların kendi değişiklikleri korunur) ve Geri döndür; değişen
+  alanlar işaretli.
+- **Hata ayıklama:** betik düzenleyicisinin kenarından log noktaları
+  (koda dokunmadan `{ifade}` içeren mesaj yazar, isteğe bağlı kare sonunda
+  duraklatır, yalnızca editörde) ve istatistiklerde betik başına kare
+  süresi.
+- **İki yeni şablon:** Mermi Fırtınası ve Tepe Koşusu; ikisinin de otomatik
+  oynanış testi var.
+- Motor belgelerinde her özellik için Türkçe ve İngilizce bölümler; SSS,
+  Hanogt AI bilgi tabanı ve ajanı, kullanım kılavuzu, kayıt ve hakkında
+  sayfaları ile planlar V6'ya güncellendi.
+
+### Kullanım kılavuzu: sekiz yeni sayfa
+
+- **Kod Editörü:** Atölye araçları (Sorunlar paneli, dosyalarda arama,
+  yerel geçmiş, Zen modu, Emmet, Vim tuşları, ANSI renkleri) ve
+  kısayolları.
+- **Hanogt AI:** "Düşünme ve ayarlar" ile "Kendi anahtarın ve API"
+  (kendi anahtarla bağlantılar, geliştirici API anahtarları, gruplarda
+  `/ai`); plan sayıları `src/lib/plans.ts`'ten okunur.
+- **Hanogt Social:** Mesaj yazmak (bahsetme, komutlar, GIF, yıldızlar,
+  plana göre mesaj uzunluğu ve dosya sınırları), Grup kuralları, Botlar ve
+  AutoMod; arama sayfası tam görünümü, ekran paylaşımını ve sesli
+  kanalları anlatıyor.
+- **Güvenlik:** Giriş kontrolleri (Google'dan sonra şifre, yakın zamanda
+  giriş şartı, diğer oturumları kapatma, kurtarma isteği).
+- **Hesap:** ayar bölümlerine Hanogt AI eklendi; "Plus ve Pro
+  ayrıcalıkları" sayfası yalnızca ücretli planlara özel avantajları
+  listeliyor.
+- **SSS:** Google ile girişte şifre, yerel geçmiş, düşünme paneli ve
+  AutoMod için dört yeni yanıt. Kitap 52 sayfa; Hanogt AI bilgi tabanı
+  yeni sayfaları da tarıyor.
+
 ## 0.3.34 — 2026-10-07
 
 ### Arcade ve Media: sayfa sayfa yükleme, türler, yıldız puanları, yapımcı sayfaları

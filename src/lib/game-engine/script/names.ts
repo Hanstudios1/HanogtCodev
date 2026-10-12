@@ -28,6 +28,8 @@ export const GLOBAL_NAMES = new Set([
     "Pathfinding", "AudioSource",
     // V5: Animator.StringToHash, screen effects, localization
     "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput", "SaveSystem", "JsonUtility", "Leaderboard", "Achievements",
+    // V6: object pools, phone vibration
+    "Pool", "Handheld",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",
@@ -50,6 +52,10 @@ export const INT_RESULT_MEMBERS = new Set([
     "tileCount", "CountTiles", "clipCount",
     "GetInteger", "StringToHash", "shortNameHash", "fullPathHash", "nameHash", "tagHash", "parameterCount", "layerCount", "pixelate",
     "playerIndex", "playerNumber", "gamepadCount", "maxPlayers", "slotCount", "unlockedCount",
+    // V6: layers and masks
+    "GetMask", "NameToLayer", "GetLayerCollisionMask", "AllLayers", "DefaultRaycastLayers", "IgnoreRaycastLayer",
+    // V6: object pools
+    "Prewarm", "CountInactive", "CountAll", "GetCapacity", "defaultCapacity",
 ]);
 
 /** API members returning float. */

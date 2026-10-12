@@ -137,6 +137,8 @@ export function extractGroupName(text: string): string {
 
 // ------------------------------------------------------------------ games
 const GAME_WORDS: Array<[RegExp, string]> = [
+    [/\b(?:bullet ?hell|mermi (?:yagmuru|firtinasi)|danmaku|bullet storm)\b/, "bullet-storm-2d"],
+    [/\b(?:rule tile\w*|kural karo\w*|one[- ]way|tek yonlu|hill run|tepe kosusu|joystick\w*|dokunmatik platform\w*)\b/, "hill-run-2d"],
     [/\b(?:duel\w*|iki kisilik|2 kisilik|two players?|2 players?|local multiplayer|yerel cok oyuncu\w*)\b/, "star-duel-2d"],
     [/\b(?:zindan\w*|dungeon\w*|escape game|kacis oyun\w*)\b/, "dungeon-escape-2d"],
     [/\b(?:meteor\w*|retro shooter|retro nisanci\w*|crt)\b/, "meteor-retro-2d"],

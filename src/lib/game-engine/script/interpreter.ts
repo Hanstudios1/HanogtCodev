@@ -7,8 +7,9 @@
  * freezing the tab.
  */
 import type { ScriptFieldValue } from "../types";
-import type { Argument, BlockStmt, Expr, MethodDecl, Stmt, TypeRef } from "./ast";
+import type { Argument, BlockStmt, Expr, IdentResolution, MethodDecl, Stmt, TypeRef } from "./ast";
 import type { CompiledProgram } from "./compiler";
+import { BEHAVIOUR_MEMBERS } from "./names";
 import {
     callBuiltinMethod,
     constructBuiltin,
@@ -60,6 +61,8 @@ export interface ScriptHost {
     construct(typeName: string, args: VMValue[]): VMValue | typeof NOT_FOUND;
     /** Name of the sound an AudioClip field set in the Inspector points to (V4). */
     audioClipName?(ref: string): string;
+    /** A log point that pauses was reached (V6): the game pauses when the frame ends. */
+    logPointPause?(source: { scriptName: string; line: number }): void;
 }
 
 const NORMAL = 0;
@@ -87,6 +90,15 @@ interface Frame {
     scope: Scope;
     returnValue: VMValue;
     line: number;
+    /** Line of the innermost statement running (log points fire once per statement line, V6). */
+    stmtLine?: number;
+}
+
+/** A log point ready to run (V6): text and expressions, by "script name:line". */
+export interface CompiledLogPoint {
+    parts: Array<string | { source: string; expr: Expr | null }>;
+    /** Pause the game at the end of the frame too. */
+    pause?: boolean;
 }
 
 type LValue = { get: () => VMValue; set: (value: VMValue) => void };
@@ -112,6 +124,9 @@ export class Interpreter {
     callArgTypes: Array<string | null> = [];
     private readonly stdlib: Map<string, VMValue>;
     private globalsInitialised = false;
+    /** V6: log points of the editor's play mode ("Player.cs:12" → message); null = none (no cost). */
+    logPoints: Map<string, CompiledLogPoint> | null = null;
+    private inLogPoint = false;
 
     readonly program: CompiledProgram;
     readonly host: ScriptHost;
@@ -296,6 +311,8 @@ export class Interpreter {
         if (type === "bool" && typeof value === "boolean") return value;
         if (type === "string" && typeof value === "string") return value;
         if (type === "KeyCode" && typeof value === "string") return value;
+        // V6: a LayerMask field holds the mask of the layers ticked in the Inspector.
+        if (type === "LayerMask" && typeof value === "number") return Math.trunc(value);
         // V4: sounds are passed around by name (Audio.Play(clip), source.PlayOneShot(clip)).
         if (type === "AudioClip" && typeof value === "string") return value ? this.host.audioClipName?.(value) ?? value : null;
         if (this.program.enums.has(type) && typeof value === "number") return value;
@@ -460,6 +477,7 @@ export class Interpreter {
     coerce(value: VMValue, typeName: string, typeRef?: TypeRef): VMValue {
         switch (typeName) {
             case "int":
+            case "LayerMask":
                 if (typeof value === "number") return Number.isFinite(value) ? Math.trunc(value) : 0;
                 if (typeof value === "boolean") return value ? 1 : 0;
                 return value;
@@ -559,6 +577,77 @@ export class Interpreter {
     }
 
     private exec(stmt: Stmt, frame: Frame): number {
+        if (!this.logPoints) return this.execStatement(stmt, frame);
+        const outer = frame.stmtLine;
+        frame.stmtLine = stmt.line;
+        // A statement nested on its parent's line (if (x) y();) doesn't print again.
+        if (stmt.line !== outer) this.hitLogPoint(stmt.line, frame);
+        try {
+            return this.execStatement(stmt, frame);
+        } finally {
+            frame.stmtLine = outer;
+        }
+    }
+
+    /** Prints a log point's message when the line has one (expressions read in the line's scope). */
+    private hitLogPoint(line: number, frame: Frame) {
+        const point = this.logPoints?.get(`${frame.scriptName}:${line}`);
+        if (!point || this.inLogPoint) return;
+        this.inLogPoint = true;
+        const steps = this.steps;
+        try {
+            const text = point.parts.map((part) => {
+                if (typeof part === "string") return part;
+                if (!part.expr) return `{${part.source}?}`;
+                try {
+                    this.resolveNames(part.expr, frame);
+                    return toDisplayString(this.eval(part.expr, frame), frame.dialect, this);
+                } catch (error) {
+                    return `{${part.source}: ${error instanceof Error ? error.message : String(error)}}`;
+                }
+            }).join("");
+            this.host.log("info", text, { scriptName: frame.scriptName, line });
+            if (point.pause) this.host.logPointPause?.({ scriptName: frame.scriptName, line });
+        } finally {
+            // Reading values doesn't count against the game's step budget.
+            this.steps = steps;
+            this.inLogPoint = false;
+        }
+    }
+
+    /** Resolves the names of a log point expression where the line runs (the compiler never saw it). */
+    private resolveNames(node: unknown, frame: Frame) {
+        if (!node || typeof node !== "object") return;
+        if (Array.isArray(node)) {
+            for (const item of node) this.resolveNames(item, frame);
+            return;
+        }
+        const record = node as Record<string, unknown>;
+        if (record.type === "Ident") {
+            const expr = node as Extract<Expr, { type: "Ident" }>;
+            expr.res = this.resolveName(expr.name, frame);
+            return;
+        }
+        for (const [key, value] of Object.entries(record)) if (key !== "res" && value && typeof value === "object") this.resolveNames(value, frame);
+    }
+
+    private resolveName(name: string, frame: Frame): IdentResolution {
+        for (let scope: Scope | null = frame.scope; scope; scope = scope.parent) if (scope.vars.has(name)) return { kind: "local" };
+        const cls = frame.cls;
+        if (cls) {
+            const field = cls.findField(name);
+            if (field) return field.isStatic ? { kind: "static", className: cls.staticOwner(name)?.name ?? cls.name } : { kind: "field", className: cls.name };
+            if (cls.findProperty(name)) return { kind: "field", className: cls.name };
+            if (cls.hasMethodNamed(name)) return { kind: "method", className: cls.name };
+            if (cls.isBehaviour && BEHAVIOUR_MEMBERS.has(name)) return { kind: "behaviour", name };
+        }
+        if (this.program.enums.has(name)) return { kind: "enum", name };
+        if (this.program.classes.has(name)) return { kind: "class", name };
+        if (this.program.functions.has(name)) return { kind: "function", name };
+        return { kind: "global", name };
+    }
+
+    private execStatement(stmt: Stmt, frame: Frame): number {
         this.tick();
         frame.line = stmt.line;
         switch (stmt.type) {
@@ -774,6 +863,18 @@ export class Interpreter {
                 return this.wrapError(error, stmt, frame);
             }
         }
+        if (!this.logPoints) return yield* this.execStatementGen(stmt, frame);
+        const outer = frame.stmtLine;
+        frame.stmtLine = stmt.line;
+        if (stmt.line !== outer) this.hitLogPoint(stmt.line, frame);
+        try {
+            return yield* this.execStatementGen(stmt, frame);
+        } finally {
+            frame.stmtLine = outer;
+        }
+    }
+
+    private *execStatementGen(stmt: Stmt, frame: Frame): Generator<VMValue, number, void> {
         this.tick();
         frame.line = stmt.line;
         switch (stmt.type) {

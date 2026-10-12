@@ -1,15 +1,103 @@
 "use client";
 
 /** Inspector of the Animation component: clips, tracks and keyframes with easing. */
-import { ChevronDown, ChevronRight, Film, Plus, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, ChevronRight, Film, Plus, Trash2, X, Zap } from "lucide-react";
+import { useId, useMemo, useState } from "react";
 import { animationPreset, type AnimationPreset } from "@/lib/game-engine/animation";
-import { ANIMATION_PROPERTIES, EASINGS, type AnimationClip, type AnimationComponent, type AnimationKey, type AnimationProperty, type AnimationValue, type Vector3 } from "@/lib/game-engine/types";
+import { ANIMATION_EVENT_PARAMETERS, ANIMATION_PROPERTIES, EASINGS, type AnimationClip, type AnimationComponent, type AnimationEvent, type AnimationEventParameter, type AnimationKey, type AnimationProperty, type AnimationValue, type Vector3 } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { useComponentEdit, type Editor } from "./inspector-fields";
 import { useEditorState } from "./store";
 import type { TextKey } from "./text";
-import { Button, ColorInput, Dropdown, FieldRow, IconButton, NumberInput, SelectInput, SliderInput, TextInput, Toggle, VectorInput, type MenuItem } from "./ui";
+import { scriptMethodNames } from "./UIEditors";
+import { Button, ColorInput, Dropdown, FieldRow, IconButton, NumberInput, SelectInput, SliderInput, TextInput, Toggle, VectorInput, inputClass, type MenuItem } from "./ui";
+
+const EVENT_PARAMETER_LABELS: Record<AnimationEventParameter, TextKey> = {
+    none: "animEventNoParameter",
+    float: "animEventFloat",
+    int: "animEventInt",
+    string: "animEventString",
+};
+
+/** Animation events of a clip (V6): a timeline of markers and one row per event. */
+function ClipEvents({ clip, edit, disabled, methods }: {
+    clip: AnimationClip;
+    edit: (field: string, recipe: (clip: AnimationClip) => void) => void;
+    disabled: boolean;
+    methods: string[];
+}) {
+    const { t } = useEditor();
+    const listId = useId();
+    const events = clip.events ?? [];
+    const duration = Math.max(0.01, clip.duration);
+    const update = (index: number, field: string, recipe: (event: AnimationEvent) => void, sort = false) => edit(`event:${index}:${field}`, (draft) => {
+        const event = draft.events?.[index];
+        if (!event) return;
+        recipe(event);
+        if (sort) draft.events?.sort((a, b) => a.time - b.time);
+    });
+    return (
+        <div className="mt-1.5 rounded-md border border-white/[0.06] bg-black/20 p-1.5">
+            <div className="mb-1 flex items-center gap-1">
+                <Zap className="h-3 w-3 text-amber-300" />
+                <span className="flex-1 text-[11px] font-bold text-zinc-300">{t("animEvents")}</span>
+                <IconButton icon={Plus} label={t("animAddEvent")} size="sm" disabled={disabled || events.length >= 32} onClick={() => edit("event:add", (draft) => {
+                    const list = draft.events ?? [];
+                    const last = list[list.length - 1];
+                    list.push({ time: Math.min(draft.duration, last ? Math.round((last.time + draft.duration / 4) * 100) / 100 : Math.round(draft.duration * 50) / 100), method: methods[0] ?? "", parameter: "none", value: "" });
+                    list.sort((a, b) => a.time - b.time);
+                    draft.events = list;
+                })} />
+            </div>
+            <div className="relative mx-1 mb-1 h-3 rounded-sm bg-white/[0.06]" aria-hidden="true">
+                {events.map((event, index) => (
+                    <span key={index} title={`${event.time}s · ${event.method}`} className="absolute top-0 h-3 w-[3px] rounded-sm bg-amber-300" style={{ left: `calc(${Math.min(100, (event.time / duration) * 100)}% - 1px)` }} />
+                ))}
+            </div>
+            {events.map((event, index) => (
+                <div key={`${index}:${event.time}:${event.method}`} className="mb-1 space-y-1 rounded border border-white/[0.05] p-1">
+                    <div className="grid grid-cols-[64px_1fr_24px] items-center gap-1">
+                        <NumberInput label="t" value={event.time} min={0} max={clip.duration} step={0.05} disabled={disabled} onChange={(time) => update(index, "time", (draft) => { draft.time = Math.min(clip.duration, Math.max(0, time)); }, true)} />
+                        <input
+                            list={listId}
+                            defaultValue={event.method}
+                            disabled={disabled}
+                            maxLength={64}
+                            placeholder={t("animEventMethod")}
+                            aria-label={t("animEventMethod")}
+                            onBlur={(change) => {
+                                const method = change.target.value.trim();
+                                if (method !== event.method && (method === "" || /^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(method))) update(index, "method", (draft) => { draft.method = method; });
+                                else change.target.value = event.method;
+                            }}
+                            onKeyDown={(key) => { if (key.key === "Enter") (key.target as HTMLInputElement).blur(); }}
+                            className={inputClass}
+                        />
+                        <IconButton icon={X} label={t("animRemoveEvent")} size="sm" tone="danger" disabled={disabled} onClick={() => edit(`event:${index}:remove`, (draft) => { draft.events?.splice(index, 1); })} />
+                    </div>
+                    <div className="grid grid-cols-[minmax(0,7rem)_1fr] items-center gap-1">
+                        <SelectInput<AnimationEventParameter>
+                            value={event.parameter}
+                            disabled={disabled}
+                            onChange={(parameter) => update(index, "parameter", (draft) => {
+                                draft.parameter = parameter;
+                                draft.value = parameter === "string" ? "" : 0;
+                            })}
+                            options={ANIMATION_EVENT_PARAMETERS.map((parameter) => ({ value: parameter, label: t(EVENT_PARAMETER_LABELS[parameter]) }))}
+                        />
+                        {event.parameter === "string"
+                            ? <TextInput value={String(event.value)} maxLength={200} disabled={disabled} onChange={(value) => update(index, "value", (draft) => { draft.value = value.slice(0, 200); })} />
+                            : event.parameter !== "none"
+                                ? <NumberInput value={Number(event.value) || 0} integer={event.parameter === "int"} step={event.parameter === "int" ? 1 : 0.1} disabled={disabled} onChange={(value) => update(index, "value", (draft) => { draft.value = event.parameter === "int" ? Math.round(value) : value; })} />
+                                : <span />}
+                    </div>
+                </div>
+            ))}
+            <datalist id={listId}>{methods.map((name) => <option key={name} value={name} />)}</datalist>
+            <p className="px-0.5 text-[10.5px] leading-snug text-zinc-500">{t("animEventsHint")}</p>
+        </div>
+    );
+}
 
 const TRACK_LABELS: Record<AnimationProperty, TextKey> = {
     position: "trackPosition",
@@ -66,13 +154,15 @@ function KeyValueInput({ property, value, onChange, disabled, is2D }: { property
     }
 }
 
-function ClipEditor({ clip, index, edit, disabled, is2D, onRemove }: {
+function ClipEditor({ clip, index, edit, disabled, is2D, onRemove, methods }: {
     clip: AnimationClip;
     index: number;
     edit: (field: string, recipe: (clip: AnimationClip) => void) => void;
     disabled: boolean;
     is2D: boolean;
     onRemove: () => void;
+    /** Script methods on the object (animation event suggestions). */
+    methods: string[];
 }) {
     const { t } = useEditor();
     const [open, setOpen] = useState(index === 0);
@@ -101,6 +191,7 @@ function ClipEditor({ clip, index, edit, disabled, is2D, onRemove }: {
                     <FieldRow label={t("duration")}><NumberInput value={clip.duration} min={0.01} max={600} step={0.05} disabled={disabled} onChange={(duration) => edit("duration", (draft) => {
                         draft.duration = duration;
                         for (const track of draft.tracks) for (const key of track.keys) key.time = Math.min(key.time, duration);
+                        for (const event of draft.events ?? []) event.time = Math.min(event.time, duration);
                     })} /></FieldRow>
                     <FieldRow label={t("wrapMode")}>
                         <SelectInput value={clip.wrap} disabled={disabled} onChange={(wrap) => edit("wrap", (draft) => { draft.wrap = wrap; })} options={[{ value: "once", label: t("wrapOnce") }, { value: "loop", label: t("wrapLoop") }, { value: "pingPong", label: t("wrapPingPong") }]} />
@@ -142,6 +233,7 @@ function ClipEditor({ clip, index, edit, disabled, is2D, onRemove }: {
                             options={[{ value: "" as AnimationProperty, label: `+ ${t("addTrack")}` }, ...unused.map((property) => ({ value: property, label: t(TRACK_LABELS[property]) }))]}
                         />
                     ) : null}
+                    <ClipEvents clip={clip} edit={edit} disabled={disabled} methods={methods} />
                 </div>
             ) : null}
         </div>
@@ -149,7 +241,8 @@ function ClipEditor({ clip, index, edit, disabled, is2D, onRemove }: {
 }
 
 export default function AnimationEditor({ entity, component, disabled }: Editor<AnimationComponent>) {
-    const { store, t } = useEditor();
+    const { store, t, program } = useEditor();
+    const methods = useMemo(() => scriptMethodNames(entity.components, program, 1), [entity.components, program]);
     const is2D = useEditorState(store, (state) => state.project.dimension === "2d");
     const edit = useComponentEdit(entity.id, component);
     const sprite = entity.components.find((item) => item.type === "spriteRenderer");
@@ -189,6 +282,7 @@ export default function AnimationEditor({ entity, component, disabled }: Editor<
                     index={index}
                     is2D={is2D}
                     disabled={disabled}
+                    methods={methods}
                     edit={(field, recipe) => edit(`clip:${index}:${field}`, (draft) => {
                         const target = draft.clips[index];
                         if (!target) return;

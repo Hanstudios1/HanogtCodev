@@ -1,10 +1,13 @@
 "use client";
 
 /** Building blocks shared by the component editors in the Inspector. */
-import { createContext, useContext } from "react";
+import { Check, ChevronDown } from "lucide-react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { ALL_LAYERS, describeLayerMask } from "@/lib/game-engine/layers";
 import { KEY_CODES } from "@/lib/game-engine/script/stdlib";
-import { UI_ANCHORS, type GameComponent, type GameEntity, type UIAnchor } from "@/lib/game-engine/types";
+import { MAX_LAYERS, UI_ANCHORS, type GameComponent, type GameEntity, type UIAnchor } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
+import { openSettings } from "./settings-events";
 import { applyValueChanges, diffValues, valueAt, writtenLeaf } from "./multi-edit";
 import { findEntity, updateComponent } from "./operations";
 import { useEditorState } from "./store";
@@ -92,4 +95,73 @@ export function TextureSelect({ value, onChange, disabled }: { value: string | n
 
 export function KeyCodeSelect({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled: boolean }) {
     return <SelectInput value={value} disabled={disabled} onChange={onChange} options={KEY_CODES.map((key) => ({ value: key, label: key }))} />;
+}
+
+/** "Edit layers…" opens Project settings → Layers. */
+const EDIT_LAYERS = "__edit_layers__";
+
+/** An object's physics layer (V6): the named layers, its own layer if it has no name, and a link to the Layers tab. */
+export function LayerSelect({ value, onChange, disabled, mixed }: { value: number; onChange: (layer: number) => void; disabled: boolean; mixed?: boolean }) {
+    const { store, t } = useEditor();
+    const names = useEditorState(store, (state) => state.project.settings.layers.names);
+    const options = names.map((name, layer) => ({ value: String(layer), label: `${layer}: ${name || t("layerUnnamed")}`, named: Boolean(name) }))
+        .filter((option) => option.named || Number(option.value) === value)
+        .map(({ value: layer, label }) => ({ value: layer, label }));
+    return (
+        <SelectInput
+            value={mixed ? "" : String(value)}
+            disabled={disabled}
+            onChange={(next) => {
+                if (next === EDIT_LAYERS) openSettings("layers");
+                else if (next !== "") onChange(Number(next));
+            }}
+            options={[...(mixed ? [{ value: "", label: "—" }] : []), ...options, { value: EDIT_LAYERS, label: t("editLayers") }]}
+        />
+    );
+}
+
+/** A LayerMask script field (V6): tick the layers the mask contains. */
+export function LayerMaskInput({ value, onChange, disabled }: { value: number; onChange: (mask: number) => void; disabled: boolean }) {
+    const { store, t } = useEditor();
+    const names = useEditorState(store, (state) => state.project.settings.layers.names);
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!open) return;
+        const onDown = (event: PointerEvent) => {
+            if (!ref.current?.contains(event.target as Node)) setOpen(false);
+        };
+        window.addEventListener("pointerdown", onDown);
+        return () => window.removeEventListener("pointerdown", onDown);
+    }, [open]);
+    const mask = value & ALL_LAYERS;
+    const label = mask === ALL_LAYERS ? t("layerMaskEverything") : mask === 0 ? t("layerMaskNothing") : describeLayerMask(names, mask);
+    const row = (key: string, text: string, checked: boolean, next: number) => (
+        <button key={key} type="button" role="menuitemcheckbox" aria-checked={checked} onClick={() => onChange(next)} className="flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-[12px] text-zinc-200 hover:bg-white/[0.07]">
+            <span className="grid h-3.5 w-3.5 shrink-0 place-items-center rounded border border-white/20">{checked ? <Check className="h-3 w-3 text-indigo-300" /> : null}</span>
+            <span className="truncate">{text}</span>
+        </button>
+    );
+    return (
+        <div ref={ref} className="relative">
+            <button type="button" disabled={disabled} onClick={() => setOpen(!open)} className={cx("flex h-7 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-zinc-950/70 px-2 text-left text-[12px] text-zinc-100 hover:border-white/20 disabled:opacity-50")}>
+                <span className="truncate">{label}</span>
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+            </button>
+            {open ? (
+                <div role="menu" className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 p-1 shadow-2xl shadow-black/50">
+                    {row("nothing", t("layerMaskNothing"), mask === 0, 0)}
+                    {row("everything", t("layerMaskEverything"), mask === ALL_LAYERS, -1)}
+                    <div className="my-1 h-px bg-white/[0.07]" />
+                    {Array.from({ length: MAX_LAYERS }, (_, layer) => layer).filter((layer) => names[layer] || mask & (1 << layer)).map((layer) => {
+                        const bit = 1 << layer;
+                        const checked = (mask & bit) !== 0;
+                        return row(String(layer), `${layer}: ${names[layer] || t("layerUnnamed")}`, checked, checked ? mask & ~bit : mask | bit);
+                    })}
+                    <div className="my-1 h-px bg-white/[0.07]" />
+                    <button type="button" onClick={() => { setOpen(false); openSettings("layers"); }} className="flex h-7 w-full items-center rounded-md px-2 text-left text-[12px] text-indigo-300 hover:bg-white/[0.07]">{t("editLayers")}</button>
+                </div>
+            ) : null}
+        </div>
+    );
 }

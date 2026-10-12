@@ -4,7 +4,7 @@ import { Check, Crosshair, Eye, Grid3x3, LocateFixed, Sparkles, SquareDashed } f
 import { useEffect, useMemo, useRef, useState, type MutableRefObject, type PointerEvent as ReactPointerEvent } from "react";
 import { createSpriteRenderer, createTransform } from "@/lib/game-engine/components";
 import { createEngineId } from "@/lib/game-engine/ids";
-import { SceneRenderer, type GizmoMode, type SnapSettings } from "@/lib/game-engine/render/renderer";
+import { EditorSceneRenderer, type GizmoMode, type SnapSettings } from "@/lib/game-engine/render/editor-renderer";
 import { sceneFrame } from "@/lib/game-engine/render/scene-frame";
 import { uniqueName } from "@/lib/game-engine/scene";
 import { addModelObject, MODEL_DRAG_TYPE } from "./ModelAssets";
@@ -66,7 +66,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
     const painter = useTilePainter(tilePainter, (state) => state);
     const scene = activeScene(project);
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const rendererRef = useRef<SceneRenderer | null>(null);
+    const rendererRef = useRef<EditorSceneRenderer | null>(null);
     const frame = useMemo(() => sceneFrame(scene, project.dimension), [scene, project.dimension]);
     const frameRef = useRef(frame);
     const [grid, setGrid] = useState(true);
@@ -113,10 +113,9 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
-        let renderer: SceneRenderer;
+        let renderer: EditorSceneRenderer;
         try {
-            renderer = new SceneRenderer(container, {
-                mode: "editor",
+            renderer = new EditorSceneRenderer(container, {
                 shadows,
                 antialias,
                 pixelArt,
@@ -395,6 +394,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
                     id: createEngineId("entity"),
                     name: uniqueName(texture?.name ?? "Sprite", sceneDraft.objects.map((item) => item.name)),
                     tag: "Untagged",
+                    layer: 0,
                     parentId: null,
                     active: true,
                     components: [createTransform({ position: point, scale: { x: aspect >= 1 ? aspect : 1, y: aspect >= 1 ? 1 : 1 / aspect, z: 1 } }), sprite],
