@@ -228,3 +228,25 @@ test("every Hugging Face source says how it is read, in the languages and famili
         assert.ok(Number.isInteger(source.cap) && source.cap > 0, `${source.id}: cap`);
     }
 });
+
+test("the pool is written and read line by line, never as one string past V8's limit", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "hanogt-jsonl-"));
+    try {
+        const file = path.join(dir, "train.jsonl");
+        // Long reasoning traces with non-ASCII text; 40 MB written through the stream, read back line by line.
+        const rows = Array.from({ length: 400 }, (_, index) => ({ id: `s${index}`, messages: [{ role: "assistant", content: `Çözüm ${index}: ${"ğüşıöç λ ∑ ".repeat(8_000)}` }] }));
+        await mix.writeJsonl(file, rows);
+        const back = await mix.readJsonl(file);
+        assert.equal(back.length, rows.length);
+        assert.deepEqual(back[399], rows[399]);
+        // Blank lines are skipped when reading.
+        await writeFile(file, '{"a":1}\n\n{"a":2}\n');
+        assert.deepEqual(await mix.readJsonl(file), [{ a: 1 }, { a: 2 }]);
+    } finally {
+        await rm(dir, { recursive: true, force: true });
+    }
+    // The ~300k-sample v3 pool is gigabytes of text; joining it into one string threw "RangeError: Invalid string length" on Kaggle.
+    const source = await readFile(new URL("training/mix.mjs", ROOT), "utf8");
+    assert.doesNotMatch(source, /(train|evaluation)\.map\(sampleLine\)\.join/, "train.jsonl and eval.jsonl must be streamed");
+    assert.doesNotMatch(source, /await readFile\(file, "utf8"\);\s*const samples/, "input files must be read as a stream");
+});

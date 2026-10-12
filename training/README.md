@@ -111,6 +111,8 @@ Her çalıştırma sırasıyla şunları yapar:
      - bağdaştırıcı deponun kökünde, her turun kopyası `rounds/round-00N/` altında.
    - Havuzda yeni örnek kalmadıysa eğitim durur ve bunu yazar; kayda yeni kaynak eklenince yeni turlar başlar.
 
+**Kaggle dışında:** `training/evren/` aynı hattı Slurm ve Apptainer kullanan bir GPU kümesinde çalıştırır. Örneğin SSB'nin EVREN platformunda tek bir H200, 27B tabanı 16-bit LoRA ile eğitir. Kredi, koşullar ve doğrulanması gerekenler `training/evren/README.md`'de.
+
 **Bir tur ne kadar sürer?** Varsayılan tur 20.000 örnektir. v3'te düşünmeli örnekler uzun olduğundan örnek başına kabaca 1.000–1.500 token düşer, yani tur 20–30 milyon token eder. 2× T4'te bu kabaca 10–20 saattir; tur birden çok oturuma bölünür ve her oturum son ara kayıttan sürer. Kaggle haftada ~30 saat GPU verir: haftada yaklaşık bir-iki tur. Gerçek süre ilk turun kaydında (`state/rounds.json`) görünür.
 
 **Artificial Analysis puanı:** Artificial Analysis yalnızca herkese açık modelleri ölçer; özel ince ayarlı modelimizin resmi puanı olmaz. Bu yüzden puanı belirleyen asıl şey taban modeldir:
