@@ -13,7 +13,8 @@ Aşağıdaki bilgiler 12 Ekim 2026'da haberlerden ve platformun tanıtım sayfal
   - GPU saati, GPU başına saatte **10–35 kredi** tutar.
   - Kredi; veri seti yükleyerek, veri etiketleyerek veya eğitilmiş modeli paylaşarak kazanılır.
   - Bakiye yetmezse iş başlamaz.
-- **Hazır modeller:** 11–14 açık ağırlıklı dil modeli, OpenAI uyumlu bir API üzerinden sunulur. API çağrıları **1 Kasım 2026'ya kadar** krediden düşmez.
+- **Hazır modeller:** 11–14 açık ağırlıklı dil modeli, OpenAI uyumlu bir API üzerinden sunulur. API çağrıları **1 Kasım 2026'ya kadar** krediden düşmez. Bu muafiyet yalnızca API (LLM Çıkarımı) içindir; GPU rezervasyonları ve eğitim işleri kredi harcamaya devam eder.
+- **Para:** aylık ücret ya da kart yoktur; harcanan şey kredidir. Kredi kayıtta verilir ve katkıyla kazanılır.
 - **Veri:** istemler, yanıtlar ve iş verileri Türkiye'deki sunucularda işlenir.
 
 ## Bizim eğitimimiz için ne demek?
@@ -70,9 +71,30 @@ Bunlar netleşmeden ücretli ya da uzun bir iş başlatmayın:
 
 ## EVREN'in hazır modelleri Hanogt AI'da kullanılabilir mi?
 
-Teknik olarak evet, çünkü API OpenAI uyumludur ve Hanogt AI yalnızca `HANOGT_AI_BASE_URL`, `HANOGT_AI_MODEL` ve `HANOGT_AI_API_KEY` ister. Önce iki şey doğrulanmalı:
+Teknik olarak evet, kodda değişiklik gerekmez: Hanogt AI herhangi bir OpenAI uyumlu `https` adresini kabul eder ve yalnızca `HANOGT_AI_BASE_URL`, `HANOGT_AI_MODEL` ve `HANOGT_AI_API_KEY` ister.
 
-- kullanım koşullarının herkese açık, ticari bir hizmete izin verip vermediği;
-- 1 Kasım 2026'dan sonraki kredi kuralları.
+Aşağıdaki adres ve model adları 28 Ekim 2026'da haberlerden ve topluluk rehberlerinden derlendi; platformun kendi sayfasından doğrulayın.
 
-Ardından Gizlilik Politikası'ndaki model sağlayıcısı bilgisi güncellenmelidir.
+1. `evren.ssyz.org.tr` adresinde e-Devlet ile giriş yapın.
+2. Üst menüden **LLM Çıkarımı**'nı açın, kullanım şartlarını okuyup onaylayın ve bir API anahtarı oluşturun (anahtarlar `evren.ssyz.org.tr/api-keys` sayfasında yönetilir). Anahtar yalnızca ortam değişkenine yazılır; koda ya da sohbete yazılmaz.
+3. Model listesinden bir model seçin (`evren.ssyz.org.tr/llm/models` ya da API'nin `/models` uç noktası). Rehberlerde geçen adlar: `evren/qwen3.8-flash-next`, `evren/glm-5.3`, `evren/deepseek-v4-flash`.
+4. Vercel'de **Production** ortam değişkenlerini ayarlayın ve yeniden dağıtın:
+   - `HANOGT_AI_BASE_URL=https://evren-llmapi.ssyz.org.tr/v1`
+   - `HANOGT_AI_MODEL=<seçilen modelin tam adı>`
+   - `HANOGT_AI_API_KEY=<EVREN anahtarı>`
+5. `/ai` sayfasında bir soru sorun. Uç nokta hata verirse Hanogt AI kendiliğinden tarayıcıdaki Çekirdek'e geçer; site bozulmaz.
+
+Geçmeden önce:
+
+- **Kullanım koşulları:** herkese açık, ticari bir hizmete izin veriyor mu?
+- **1 Kasım 2026'dan sonrası:** her çağrı krediden düşer. Kredi bitince Hanogt AI Çekirdek'e geçer. Süre dolmadan ya kredili devam edilir ya da eski ayara dönülür.
+- **Gizlilik Politikası:** model sağlayıcısı bölümü (şu an Hugging Face, ABD) EVREN (Savunma Sanayii Başkanlığı, Türkiye) olarak güncellenmelidir.
+
+## Ücretsiz dönemde eğitim verisi üretmek
+
+1 Kasım 2026'ya kadar API ücretsiz olduğu için EVREN'deki açık ağırlıklı modellerle (Qwen, DeepSeek, GLM) eğitim verisi üretmek de bir seçenektir. Üretilen veri, Kaggle'daki ücretsiz eğitimde kullanılır. Bunun için iki şart vardır:
+
+- EVREN'in kullanım şartları çıktıların başka bir modeli eğitmek için kullanılmasına izin vermelidir;
+- seçilen modelin lisansı buna izin vermelidir (Apache-2.0 ya da MIT).
+
+Veri politikası (`training/README.md`) kapalı modellerin çıktısını dışarıda tutar; açık ağırlıklı modellerin çıktısı bu iki şartla kabul edilir. Günlük token sınırı olabilir.
