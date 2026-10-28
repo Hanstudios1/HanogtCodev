@@ -1,6 +1,6 @@
 # Değişiklik Günlüğü
 
-## 0.3.35 — 2026-10-12
+## 0.3.35 — 2026-10-28
 
 ### Hanogt Engine V6: katmanlar, nesne havuzları, Parçacıklar V2, kural karoları, dokunmatik kontroller ve hata ayıklama
 

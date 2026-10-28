@@ -26,7 +26,7 @@ export const UPDATES: UpdateEntry[] = [
     {
         id: "v0.3.35",
         version: "v0.3.35",
-        date: "2026-10-12",
+        date: "2026-10-28",
         title: { TR: "Hanogt Engine V6", EN: "Hanogt Engine V6" },
         desc: { TR: "Oyun motoruna katmanlar ve çarpışma tablosu, nesne havuzları, Parçacıklar V2, kural karoları, telefonda joystick ve titreşim, animasyon olayları, prefab bağlantıları ve log noktaları geldi; dışa aktarılan oyunlar daha hafif. Kullanım kılavuzunda sekiz yeni sayfa var.", EN: "The game engine gains layers and a collision matrix, object pools, Particles V2, rule tiles, a joystick and vibration on phones, animation events, prefab links and log points; exported games are lighter. The guide has eight new pages." },
         items: [
